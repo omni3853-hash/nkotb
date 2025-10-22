@@ -11,8 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { EventModal } from "@/components/event-modal";
-import type { Event } from "@/components/event-modal";
+import { EventModal, type Event } from "@/components/event-modal";
 import { HeroSection } from "@/components/events/hero-section";
 import { LiveStatsDashboard } from "@/components/events/live-stats-dashboard";
 import { RecommendationsSection } from "@/components/events/recommendations-section";

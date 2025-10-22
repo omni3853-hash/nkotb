@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://premiertalentagency.com'),
   title: "Premier Talent Agency - Celebrity Booking Platform",
   description: "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
   keywords: [
