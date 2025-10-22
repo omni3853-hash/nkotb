@@ -10,6 +10,8 @@ export type AuthStep =
   | "reset-password"
   | "password-reset-success";
 
+type OtpMode = "verify-email" | "login";
+
 interface AuthContextType {
   currentStep: AuthStep;
   setCurrentStep: (step: AuthStep) => void;
@@ -17,6 +19,8 @@ interface AuthContextType {
   setUserEmail: (email: string) => void;
   resetToken: string;
   setResetToken: (token: string) => void;
+  otpMode: OtpMode;
+  setOtpMode: (m: OtpMode) => void;
   resetAuth: () => void;
 }
 
@@ -26,11 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState<AuthStep>("login");
   const [userEmail, setUserEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
+  const [otpMode, setOtpMode] = useState<OtpMode>("verify-email");
 
   const resetAuth = () => {
     setCurrentStep("login");
     setUserEmail("");
     setResetToken("");
+    setOtpMode("verify-email");
   };
 
   return (
@@ -42,6 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserEmail,
         resetToken,
         setResetToken,
+        otpMode,
+        setOtpMode,
         resetAuth,
       }}
     >
@@ -51,9 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
+  return ctx;
 }
