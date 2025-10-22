@@ -1,88 +1,112 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Shield, ArrowLeft, RefreshCw } from "lucide-react";
+import { useState, useRef, useEffect, useContext } from "react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
+import { toast } from "sonner";
+import { UserContext } from "@/contexts/UserContext";
+import { useRouter } from "next/navigation";
+import { AuthApi } from "@/api/auth.api";
 
 export function TwoFAForm() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isResending, setIsResending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { setCurrentStep, userEmail } = useAuth();
+  const { setCurrentStep, userEmail, otpMode } = useAuth();
+  const { login: setSession } = useContext(UserContext);
+  const router = useRouter();
 
-  // Countdown timer
   useEffect(() => {
     if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setTimeLeft((s) => s - 1), 1000);
+      return () => clearTimeout(t);
     }
   }, [timeLeft]);
 
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return; // Prevent multiple characters
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    if (value.length > 1) return;
+    const next = [...otp];
+    next[index] = value.replace(/\D/g, "");
+    setOtp(next);
+    if (value && index < 5) inputRefs.current[index + 1]?.focus();
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !otp[index] && index > 0) inputRefs.current[index - 1]?.focus();
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, 6);
-    const newOtp = [...otp];
-
-    for (let i = 0; i < pastedData.length && i < 6; i++) {
-      newOtp[i] = pastedData[i];
-    }
-
-    setOtp(newOtp);
-
-    // Focus the next empty input or the last one
-    const nextEmptyIndex = newOtp.findIndex((digit) => digit === "");
-    const focusIndex = nextEmptyIndex === -1 ? 5 : nextEmptyIndex;
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const next = [...otp];
+    for (let i = 0; i < pasted.length && i < 6; i++) next[i] = pasted[i];
+    setOtp(next);
+    const nextEmpty = next.findIndex((d) => d === "");
+    const focusIndex = nextEmpty === -1 ? 5 : nextEmpty;
     inputRefs.current[focusIndex]?.focus();
   };
 
+  const resendPayload =
+    otpMode === "login"
+      ? { email: userEmail, type: "login" as const }
+      : { email: userEmail, type: "verify-email" as const };
+
   const handleResendCode = async () => {
-    setIsResending(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsResending(false);
-    setTimeLeft(60);
-    setOtp(["", "", "", "", "", ""]);
+    try {
+      setIsResending(true);
+      await AuthApi.sendOtp(resendPayload);
+      toast.message("Verification code sent");
+      setTimeLeft(60);
+      setOtp(["", "", "", "", "", ""]);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.message || "Failed to resend code";
+      toast.error(msg);
+    } finally {
+      setIsResending(false);
+    }
   };
 
-  const isOtpComplete = otp.every((digit) => digit !== "");
+  const isOtpComplete = otp.every((d) => d !== "");
+
+  const redirectByRole = (role?: string) => {
+    if (role === "ADMIN") router.replace("/admin-dashboard");
+    else router.replace("/user-dashboard");
+  };
 
   const handleVerify = async () => {
-    if (!isOtpComplete) return;
+    if (!isOtpComplete || !userEmail) return;
+    const code = otp.join("");
 
-    // Simulate verification API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // In a real app, redirect to dashboard or next step
-    console.log("Verification successful!");
+    try {
+      setIsVerifying(true);
+      if (otpMode === "verify-email") {
+        await AuthApi.verifyEmail({ email: userEmail, otp: code, type: "verify-email" });
+        toast.success("Email verified. Please sign in.");
+        setCurrentStep("login");
+        return;
+      }
+      const data = await AuthApi.verifyLoginOtp({ email: userEmail, otp: code, type: "login" });
+      if (data?.token && data?.user) {
+        setSession({ token: data.token, user: data.user });
+        toast.success("Login verified");
+        redirectByRole(String(data.user.role));
+      } else {
+        toast.error("Unexpected response");
+      }
+    } catch (err: any) {
+      console.log(err)
+      const msg = err?.response?.data?.message || err?.response?.message || "Invalid or expired code";
+      toast.error(msg);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
     <div className="w-full max-w-sm">
-      {/* Logo */}
       <div className="mb-12">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-emerald-900 rounded-sm flex items-center justify-center">
@@ -92,32 +116,26 @@ export function TwoFAForm() {
         </div>
       </div>
 
-      {/* Back button */}
       <div className="mb-6">
         <button
-          onClick={() => setCurrentStep("signup")}
+          onClick={() => setCurrentStep(otpMode === "verify-email" ? "signup" : "login")}
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to signup
+          Back
         </button>
       </div>
 
-      {/* Icon and Heading */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-emerald-900 mb-2">
-          Verify Your Account
+          {otpMode === "login" ? "Verify Login" : "Verify Your Account"}
         </h1>
         <p className="text-sm text-gray-600">
           We've sent a 6-digit verification code to{" "}
-          <span className="font-semibold text-emerald-900">
-            {userEmail || "your email address"}
-          </span>
-          . Please enter it below to complete your registration.
+          <span className="font-semibold text-emerald-900">{userEmail || "your email address"}</span>. Enter it below.
         </p>
       </div>
 
-      {/* OTP Input Fields */}
       <div className="mb-6">
         <div className="flex justify-between gap-3">
           {otp.map((digit, index) => (
@@ -140,47 +158,40 @@ export function TwoFAForm() {
         </div>
       </div>
 
-      {/* Resend Code Section */}
       <div className="mb-6 text-center">
         {timeLeft > 0 ? (
           <p className="text-sm text-gray-600">
-            Resend code in{" "}
-            <span className="font-semibold text-emerald-900">{timeLeft}s</span>
+            Resend code in <span className="font-semibold text-emerald-900">{timeLeft}s</span>
           </p>
         ) : (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             onClick={handleResendCode}
+            isLoading={isResending}
             disabled={isResending}
-            className="text-sm text-emerald-900 hover:text-emerald-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
+            loadingText="Sending…"
+            className="mx-auto"
           >
-            {isResending ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Resend verification code"
-            )}
-          </button>
+            Resend verification code
+          </Button>
         )}
       </div>
 
-      {/* Verify Button */}
       <Button
         onClick={handleVerify}
+        isLoading={isVerifying}
+        disabled={!isOtpComplete || isVerifying}
+        loadingText="Verifying…"
         className="w-full bg-emerald-900 hover:bg-emerald-800 text-white font-semibold py-6 rounded-lg mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!isOtpComplete}
       >
-        Verify Account
+        Verify
       </Button>
 
-      {/* Help Text */}
       <div className="text-center">
         <p className="text-xs text-gray-500">
           Didn't receive the code? Check your spam folder or{" "}
-          <button className="text-emerald-900 hover:underline font-medium">
-            contact support
-          </button>
+          <button className="text-emerald-900 hover:underline font-medium">contact support</button>
         </p>
       </div>
     </div>

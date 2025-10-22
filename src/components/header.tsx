@@ -27,8 +27,8 @@ export function Header() {
             <span className="sr-only">Your Company</span>
             <img
               alt=""
-              src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=white"
-              className="h-8 w-auto"
+              src="/logo-white.png"
+              className="h-12 w-auto"
             />
           </a>
         </div>

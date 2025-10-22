@@ -10,10 +10,10 @@ export function Footer() {
             <div className="flex items-center gap-2 mb-4">
               <img
                 alt="CelBookings"
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=white"
-                className="h-8 w-auto"
+                src="/logo-white.png"
+                className="h-12 w-auto"
               />
-              <span className="text-xl font-bold">CelBookings</span>
+             
             </div>
             <p className="text-zinc-400 mb-6 max-w-md">
               Your premier destination for celebrity bookings. Connect with

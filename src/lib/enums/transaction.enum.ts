@@ -1,0 +1,21 @@
+export enum TransactionType {
+    DEPOSIT = 'DEPOSIT',
+    WITHDRAWAL = 'WITHDRAWAL',
+    PAYMENT = 'PAYMENT',
+    REFUND = 'REFUND',
+    FEE = 'FEE',
+    BONUS = 'BONUS',
+    TRANSFER = 'TRANSFER'
+}
+
+export enum PaymentMethod {
+    CREDIT_CARD = 'CREDIT_CARD',
+    DEBIT_CARD = 'DEBIT_CARD',
+    BANK_TRANSFER = 'BANK_TRANSFER',
+    PAYPAL = 'PAYPAL',
+    STRIPE = 'STRIPE',
+    CRYPTO = 'CRYPTO',
+    CASH = 'CASH',
+    MOBILE_MONEY = 'MOBILE_MONEY',
+    WIRE_TRANSFER = 'WIRE_TRANSFER'
+}
