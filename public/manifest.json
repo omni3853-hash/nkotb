@@ -1,0 +1,27 @@
+{
+  "name": "Premier Talent Agency - Celebrity Booking Platform",
+  "short_name": "Premier Talent Agency",
+  "description": "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#065f46",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["entertainment", "business", "lifestyle"],
+  "lang": "en-US",
+  "dir": "ltr"
+}

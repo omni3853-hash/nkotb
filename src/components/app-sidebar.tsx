@@ -116,6 +116,25 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       <Sidebar collapsible="icon" {...props}>
         {/* Body */}
         <SidebarContent>
+          {/* Logo Header */}
+          <div className="p-4 border-b border-emerald-700/30">
+            <div className="flex items-center gap-3">
+              <img
+                alt="Premier Talent Agency Logo"
+                src="/logo-white.png"
+                className="h-8 w-auto"
+              />
+              <div className="min-w-0">
+                <h3 className="text-white font-semibold text-sm">
+                  Premier Talent Agency
+                </h3>
+                <p className="text-[11px] text-zinc-400">
+                  Celebrity Booking Platform
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Profile Card (expanded only) */}
           {!isCollapsed && (
             <div className="p-4 border-b border-emerald-700/30">

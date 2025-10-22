@@ -74,6 +74,11 @@ export function SiteHeader({ isUser = false, title = "Dashboard" }: SiteHeaderPr
           <div className="flex items-center gap-1 lg:gap-2">
             <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
             <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+            <img
+              alt="Premier Talent Agency Logo"
+              src="/logo-white.png"
+              className="h-8 w-auto mr-2"
+            />
             <h1 className="text-base font-medium">{title}</h1>
           </div>
 

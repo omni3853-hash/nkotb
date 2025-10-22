@@ -48,6 +48,15 @@ export function HeroSection() {
 
   return (
     <div className="w-full h-full relative flex flex-col items-center justify-center p-12 text-white">
+      {/* Logo Header */}
+      <div className="absolute top-8 left-8 z-20">
+        <img
+          alt="Premier Talent Agency Logo"
+          src="/logo-white.png"
+          className="h-12 w-auto"
+        />
+      </div>
+      
       {/* Content */}
       <div className="relative max-w-2xl flex flex-col items-center justify-end h-full">
         {/* Hero Image - positioned behind text, centered */}

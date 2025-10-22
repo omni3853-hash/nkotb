@@ -1055,7 +1055,7 @@ export default function Example() {
             <div data-scroll-animate id="about-content">
               <div className="mb-8">
                 <h4 className="text-xs border w-fit px-3 py-1.5 bg-emerald-50 to-amber-50 border-emerald-500/30 rounded-full font-semibold text-emerald-600 mb-6">
-                  ABOUT premiertalentagency
+                  ABOUT Premier Talent Agency
                 </h4>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-emerald-900 mb-6">
                   Where Dreams Meet{" "}
@@ -1064,7 +1064,7 @@ export default function Example() {
                   </span>
                 </h2>
                 <p className="text-sm sm:text-base text-zinc-500 mb-3">
-                  Founded in 2020, premiertalentagency has revolutionized the celebrity
+                  Founded in 2020, Premier Talent Agency has revolutionized the celebrity
                   booking industry by creating a seamless, secure, and
                   transparent platform that connects fans with their favorite
                   stars. We've facilitated over 10,000 successful bookings

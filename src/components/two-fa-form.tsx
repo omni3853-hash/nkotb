@@ -109,10 +109,12 @@ export function TwoFAForm() {
     <div className="w-full max-w-sm">
       <div className="mb-12">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-emerald-900 rounded-sm flex items-center justify-center">
-            <span className="text-white font-bold text-sm">L</span>
-          </div>
-          <span className="font-semibold text-2xl text-black">Logo</span>
+          <img
+            alt="Premier Talent Agency Logo"
+            src="/logo.png"
+            className="h-10 w-auto"
+          />
+          <span className="font-semibold text-2xl text-black">Premier Talent Agency</span>
         </div>
       </div>
 
