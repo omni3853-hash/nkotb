@@ -500,7 +500,7 @@ export function OnboardingModal({
               <Crown className="w-10 h-10 text-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to CelBookings!</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to premiertalentagency!</h2>
               <p className="text-gray-600 text-lg">Your premium booking platform for exclusive experiences</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
@@ -541,7 +541,7 @@ export function OnboardingModal({
               <CardContent className="space-y-4 text-sm text-gray-600">
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">1. Service Description</h4>
-                  <p>CelBookings provides a platform for booking exclusive experiences with verified celebrities and public figures.</p>
+                  <p>premiertalentagency provides a platform for booking exclusive experiences with verified celebrities and public figures.</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">2. User Responsibilities</h4>
@@ -557,7 +557,7 @@ export function OnboardingModal({
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">5. Limitation of Liability</h4>
-                  <p>CelBookings acts as an intermediary platform and is not responsible for celebrity availability or behavior.</p>
+                  <p>premiertalentagency acts as an intermediary platform and is not responsible for celebrity availability or behavior.</p>
                 </div>
               </CardContent>
             </Card>

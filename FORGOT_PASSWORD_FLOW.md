@@ -1,6 +1,6 @@
 # Forgot Password Flow Documentation
 
-This document describes the complete forgot password implementation for the CelBookings application.
+This document describes the complete forgot password implementation for the premiertalentagency application.
 
 ## Overview
 

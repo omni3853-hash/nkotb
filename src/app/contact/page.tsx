@@ -117,7 +117,7 @@ export default function ContactPage() {
       icon: Mail,
       title: "Email Us",
       description: "Send us an email and we'll respond within 2 hours",
-      details: "support@celbookings.com",
+      details: "support@premiertalentagency.com",
       color: "from-emerald-100 to-emerald-200",
       textColor: "text-emerald-600",
     },

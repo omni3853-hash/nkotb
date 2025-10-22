@@ -49,7 +49,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 
-interface Event {
+export interface Event {
   id: number;
   title: string;
   date: string;
@@ -69,6 +69,7 @@ interface Event {
   viewsToday: number;
   bookingsToday: number;
   status: string;
+  startTime?: Date;
 }
 
 interface EventModalProps {

@@ -38,6 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { EventModal } from "@/components/event-modal";
+import type { Event } from "@/components/event-modal";
 
 // Sample events data
 const allEvents = [
@@ -243,16 +244,14 @@ export default function EventsPage() {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [liveViews, setLiveViews] = useState(4523);
   const [liveBookings, setLiveBookings] = useState(127);
-  const [selectedEvent, setSelectedEvent] = useState<
-    (typeof allEvents)[0] | null
-  >(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userBalance, setUserBalance] = useState(500); // User's in-app balance
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [bookingData, setBookingData] = useState<{
-    event: (typeof allEvents)[0] | null;
+    event: Event | null;
     ticketQuantity: number;
     selectedTicketType: string;
     totalPrice: number;
@@ -321,7 +320,7 @@ export default function EventsPage() {
     );
   };
 
-  const handleEventClick = (event: (typeof allEvents)[0]) => {
+  const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
@@ -332,7 +331,7 @@ export default function EventsPage() {
   };
 
   const handleBookingRequest = (
-    event: (typeof allEvents)[0],
+    event: Event,
     ticketQuantity: number,
     selectedTicketType: string,
     totalPrice: number
@@ -384,7 +383,7 @@ export default function EventsPage() {
     setBookingData(null);
   };
 
-  const EventCard = ({ event }: { event: (typeof allEvents)[0] }) => {
+  const EventCard = ({ event }: { event: Event }) => {
     const ticketPercentage =
       ((event.totalTickets - event.ticketsLeft) / event.totalTickets) * 100;
 

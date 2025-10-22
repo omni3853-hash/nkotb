@@ -22,7 +22,7 @@ const reviews = [
     role: "Event Planner",
     company: "Elite Events Co.",
     rating: 5,
-    text: "CelBookings made booking Taylor Swift for our corporate gala incredibly seamless. The entire process was transparent, professional, and the celebrity showed up exactly as promised. Highly recommend!",
+    text: "premiertalentagency made booking Taylor Swift for our corporate gala incredibly seamless. The entire process was transparent, professional, and the celebrity showed up exactly as promised. Highly recommend!",
     image: "/professional-woman-diverse.png",
     verified: true,
   },
@@ -32,7 +32,7 @@ const reviews = [
     role: "CEO",
     company: "Tech Innovations Inc.",
     rating: 5,
-    text: "We've used CelBookings for three major events now. Their team goes above and beyond to ensure everything is perfect. The quality of talent and professionalism is unmatched in the industry.",
+    text: "We've used premiertalentagency for three major events now. Their team goes above and beyond to ensure everything is perfect. The quality of talent and professionalism is unmatched in the industry.",
     image: "/professional-man.jpg",
     verified: true,
   },
@@ -42,7 +42,7 @@ const reviews = [
     role: "Wedding Planner",
     company: "Dream Weddings",
     rating: 5,
-    text: "Getting a celebrity performer for our client's wedding was a dream come true thanks to CelBookings. The platform is user-friendly and the support team is incredibly responsive.",
+    text: "Getting a celebrity performer for our client's wedding was a dream come true thanks to premiertalentagency. The platform is user-friendly and the support team is incredibly responsive.",
     image: "/diverse-woman-smiling.png",
     verified: true,
   },
@@ -52,7 +52,7 @@ const reviews = [
     role: "Marketing Director",
     company: "Global Brands Ltd.",
     rating: 5,
-    text: "The ROI on our celebrity endorsement campaign through CelBookings was phenomenal. Their expertise in matching the right talent to our brand was invaluable.",
+    text: "The ROI on our celebrity endorsement campaign through premiertalentagency was phenomenal. Their expertise in matching the right talent to our brand was invaluable.",
     image: "/professional-man.png",
     verified: true,
   },
@@ -62,7 +62,7 @@ const reviews = [
     role: "Event Coordinator",
     company: "Premium Events",
     rating: 5,
-    text: "Outstanding service from start to finish. CelBookings handled all the logistics, negotiations, and coordination. I could focus on other aspects of the event knowing everything was in expert hands.",
+    text: "Outstanding service from start to finish. premiertalentagency handled all the logistics, negotiations, and coordination. I could focus on other aspects of the event knowing everything was in expert hands.",
     image: "/professional-woman.png",
     verified: true,
   },
@@ -72,7 +72,7 @@ const reviews = [
     role: "Founder",
     company: "Entertainment Plus",
     rating: 5,
-    text: "CelBookings has revolutionized how we book talent. The platform is secure, reliable, and the celebrity network is truly impressive. Best investment we've made for our business.",
+    text: "premiertalentagency has revolutionized how we book talent. The platform is secure, reliable, and the celebrity network is truly impressive. Best investment we've made for our business.",
     image: "/smiling-man.png",
     verified: true,
   },
@@ -110,7 +110,7 @@ const milestones = [
     year: "2020",
     title: "Founded",
     description:
-      "CelBookings launches with vision to democratize celebrity access",
+      "premiertalentagency launches with vision to democratize celebrity access",
   },
   {
     year: "2021",
@@ -215,7 +215,7 @@ export default function AboutPage() {
           id="about-hero"
         >
           <h1 className="text-4xl sm:text-5xl md:text-5xl font-black text-emerald-900 mb-6">
-            About <span className="text-amber-600">CelBookings</span>
+            About <span className="text-amber-600">premiertalentagency</span>
           </h1>
           <p className="text-lg sm:text-xl text-zinc-600 mb-8 leading-relaxed">
             We're on a mission to democratize access to celebrity talent and
@@ -238,7 +238,7 @@ export default function AboutPage() {
               </h2>
               <div className="space-y-4 text-zinc-600 mb-8">
                 <p className="text-base sm:text-lg leading-relaxed">
-                  CelBookings was founded in 2020 with a simple yet ambitious
+                  premiertalentagency was founded in 2020 with a simple yet ambitious
                   vision: to make celebrity bookings accessible, transparent,
                   and hassle-free for everyone. Our founder, Alexandra Sterling,
                   spent 15 years in the entertainment industry and witnessed
@@ -249,7 +249,7 @@ export default function AboutPage() {
                   She realized there had to be a better way. A platform where
                   event planners, corporations, and individuals could browse
                   verified celebrities, see transparent pricing, and book talent
-                  with confidence. That's how CelBookings was born.
+                  with confidence. That's how premiertalentagency was born.
                 </p>
                 <p className="text-base sm:text-lg leading-relaxed">
                   Today, we've facilitated over 10,000 successful bookings
@@ -278,7 +278,7 @@ export default function AboutPage() {
               <div className="rounded-3xl overflow-hidden shadow-2xl">
                 <img
                   src="/modern-office-collaboration.png"
-                  alt="CelBookings team"
+                  alt="premiertalentagency team"
                   className="w-full h-96 sm:h-[500px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
@@ -472,7 +472,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-lg text-zinc-600">
               Don't just take our word for it. Hear from thousands of satisfied
-              clients who've used CelBookings.
+              clients who've used premiertalentagency.
             </p>
           </div>
 

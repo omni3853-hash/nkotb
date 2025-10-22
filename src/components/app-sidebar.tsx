@@ -65,7 +65,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
   // Optional: swap/extend teams to match your org/tenant design
   const teams = [
-    { name: "CelBookings", logo: UserIcon, plan: "Member" },
+    { name: "premiertalentagency", logo: UserIcon, plan: "Member" },
   ];
 
   // Route-aware main nav

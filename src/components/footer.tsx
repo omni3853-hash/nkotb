@@ -9,7 +9,7 @@ export function Footer() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <img
-                alt="CelBookings"
+                alt="premiertalentagency"
                 src="/logo-white.png"
                 className="h-12 w-auto"
               />
@@ -133,7 +133,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-zinc-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-zinc-400 text-sm">
-            © 2025 CelBookings. All rights reserved.
+            © 2025 premiertalentagency. All rights reserved.
           </p>
           <div className="flex items-center gap-6 mt-4 md:mt-0">
             <div className="flex items-center gap-2 text-zinc-400 text-sm">

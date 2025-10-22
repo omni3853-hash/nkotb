@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EventModal } from "@/components/event-modal";
+import type { Event } from "@/components/event-modal";
 import { HeroSection } from "@/components/events/hero-section";
 import { LiveStatsDashboard } from "@/components/events/live-stats-dashboard";
 import { RecommendationsSection } from "@/components/events/recommendations-section";
@@ -253,9 +254,7 @@ export default function EventsPage() {
   const [sortBy, setSortBy] = useState("popularity");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [selectedEvent, setSelectedEvent] = useState<
-    (typeof allEvents)[0] | null
-  >(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [userBalance, setUserBalance] = useState(500);
@@ -263,7 +262,7 @@ export default function EventsPage() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [bookingData, setBookingData] = useState<{
-    event: (typeof allEvents)[0] | null;
+    event: Event | null;
     ticketQuantity: number;
     selectedTicketType: string;
     totalPrice: number;
@@ -322,7 +321,7 @@ export default function EventsPage() {
     setCurrentPage(page);
   };
 
-  const handleEventClick = (event: (typeof allEvents)[0]) => {
+  const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
@@ -333,7 +332,7 @@ export default function EventsPage() {
   };
 
   const handleBookingRequest = (
-    event: (typeof allEvents)[0],
+    event: Event,
     ticketQuantity: number,
     selectedTicketType: string,
     totalPrice: number

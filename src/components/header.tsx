@@ -7,9 +7,9 @@ import { FaLock } from "react-icons/fa";
 
 const navigation = [
   { name: "Home", href: "/" },
-  { name: "About Us", href: "#" },
+  { name: "About Us", href: "/about" },
   { name: "Events", href: "/events-home" },
-  { name: "Bookings", href: "#" },
+  { name: "Bookings", href: "/bookings" },
   { name: "Contact Us", href: "/contact" },
 ];
 
@@ -56,7 +56,7 @@ export function Header() {
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
           <a
-            href="#"
+            href="/auth"
             className="text-sm/6 font-semibold flex items-center space-x-2 px-4 py-2 rounded-lg bg-amber-200/5 text-zinc-100 hover:bg-amber-200/10 hover:text-amber-200 transition-all duration-300"
           >
             <FaLock className="size-4" />

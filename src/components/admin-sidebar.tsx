@@ -73,11 +73,11 @@ export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
     [pathname]
   );
 
-  const teams = [{ name: "CelBookings Admin", logo: Shield, plan: "Enterprise" }];
+  const teams = [{ name: "premiertalentagency Admin", logo: Shield, plan: "Enterprise" }];
 
   const adminUser = {
     name: `${user?.firstName ?? "Admin"} ${user?.lastName ?? "User"}`.trim(),
-    email: user?.email ?? "admin@celbookings.com",
+    email: user?.email ?? "admin@premiertalentagency.com",
     avatar: (user as any)?.profileImage ?? "/avatars/admin.jpg",
     balance: 0,
     role: user?.role ?? "Administrator",
