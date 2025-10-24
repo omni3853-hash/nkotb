@@ -99,13 +99,11 @@ export class RequestResetDto {
 }
 
 export class ResetPasswordDto {
-    email!: string;
-    otp!: string;
+    token!: string;
     newPassword!: string;
 
     static validationSchema = Joi.object({
-        email: Joi.string().email().required(),
-        otp: Joi.string().length(6).required(),
+        token: Joi.string().min(40).max(256).required(),
         newPassword: Joi.string().min(6).required(),
     });
 

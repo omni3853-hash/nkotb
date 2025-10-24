@@ -116,7 +116,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {/* Normal content; optionally hidden to preserve width while spinner overlays */}
-        <span className={cn(isLoading && preserveWidth && "invisible")}>
+        <span
+          className={cn(
+            "inline-flex items-center",
+            size === "sm" ? "gap-1.5" : "gap-2",
+            isLoading && preserveWidth && "invisible"
+          )}
+        >
           {children}
         </span>
 

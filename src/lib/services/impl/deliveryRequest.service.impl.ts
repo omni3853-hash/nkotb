@@ -3,7 +3,11 @@ import { DeliveryRequestService } from "../deliveryRequest.service";
 import { DeliveryRequest, IDeliveryRequest } from "@/lib/models/deliveryRequest.model";
 import { DeliveryOption } from "@/lib/models/deliveryOption.model";
 import { User } from "@/lib/models/user.model";
-import { CreateDeliveryRequestDto, DeliveryRequestQueryDto, AdminUpdateDeliveryRequestStatusDto } from "@/lib/dto/deliveryRequest.dto";
+import {
+    CreateDeliveryRequestDto,
+    DeliveryRequestQueryDto,
+    AdminUpdateDeliveryRequestStatusDto,
+} from "@/lib/dto/deliveryRequest.dto";
 import { DeliveryRequestStatus } from "@/lib/enums/delivery.enums";
 import { CustomError } from "@/lib/utils/customError.utils";
 import { logAudit } from "@/lib/utils/auditLogger";
@@ -15,57 +19,104 @@ export default class DeliveryRequestServiceImpl implements DeliveryRequestServic
     private notif = new NotificationServiceImpl();
     private email = new EmailServiceImpl();
 
-    /* ---------------------- USER: CREATE ---------------------- */
+    /* ---------------------- USER: CREATE (with payment) -------- */
     async create(userId: string, dto: CreateDeliveryRequestDto): Promise<IDeliveryRequest> {
         const session = await mongoose.startSession();
         try {
-            return await session.withTransaction(async () => {
-                const user = await User.findById(userId).session(session);
-                if (!user) throw new CustomError(404, "User not found");
+            return await session.withTransaction(
+                async () => {
+                    // 1) Load user + option under session
+                    const [user, option] = await Promise.all([
+                        User.findById(userId).session(session),
+                        DeliveryOption.findById(dto.deliveryOption).session(session),
+                    ]);
 
-                const option = await DeliveryOption.findById(dto.deliveryOption).session(session);
-                if (!option || !option.isActive) throw new CustomError(400, "Delivery option not available");
+                    if (!user) throw new CustomError(404, "User not found");
+                    if (!option || !option.isActive) {
+                        throw new CustomError(400, "Delivery option not available");
+                    }
 
-                const req = new DeliveryRequest({
-                    user: user._id,
-                    status: DeliveryRequestStatus.PENDING,
-                    deliveryOption: option._id,
-                    deliveryAddress: dto.deliveryAddress,
-                    specialInstruction: dto.specialInstruction || "",
-                });
+                    const amount = Number(option.price) || 0;
+                    if (amount <= 0) throw new CustomError(400, "Invalid delivery price");
 
-                await req.save({ session });
+                    // 2) Atomic debit: ensure sufficient balance & update totalSpent
+                    //    This prevents race-conditions and double-spend in concurrent requests.
+                    const debit = await User.updateOne(
+                        { _id: user._id, balance: { $gte: amount } },
+                        { $inc: { balance: -amount, totalSpent: amount } },
+                        { session }
+                    );
 
-                if (!user.hasDeliveryRequest) {
-                    user.hasDeliveryRequest = true;
-                    await user.save({ session });
+                    if (debit.modifiedCount === 0) {
+                        throw new CustomError(400, "Insufficient balance to pay for delivery");
+                    }
+
+                    // Re-read user to get new balance for notifications/emails
+                    const updatedUser = await User.findById(user._id).session(session);
+
+                    // 3) Create delivery request
+                    const req = new DeliveryRequest({
+                        user: user._id,
+                        status: DeliveryRequestStatus.PENDING,
+                        deliveryOption: option._id,
+                        deliveryAddress: dto.deliveryAddress,
+                        specialInstruction: dto.specialInstruction || "",
+                    });
+                    await req.save({ session });
+
+                    // 4) Flag user.hasDeliveryRequest (first-time convenience)
+                    if (updatedUser && !updatedUser.hasDeliveryRequest) {
+                        updatedUser.hasDeliveryRequest = true;
+                        await updatedUser.save({ session });
+                    }
+
+                    // 5) Audits
+                    await logAudit({
+                        user: userId,
+                        action: "DEBIT",
+                        resource: "WALLET",
+                        resourceId: userId,
+                        description: `Debited ₦${amount.toFixed(2)} for delivery request (option: ${option.name}).`,
+                    });
+
+                    await logAudit({
+                        user: userId,
+                        action: "CREATE",
+                        resource: "DELIVERY_REQUEST",
+                        resourceId: req._id.toString(),
+                        description: `Created delivery request for option ${option.name}`,
+                    });
+
+                    // 6) Notify user
+                    const remaining = updatedUser?.balance ?? 0;
+                    await this.notif.create(
+                        new CreateNotificationDto({
+                            user: userId,
+                            type: "DELIVERY",
+                            title: "Delivery request submitted & paid",
+                            message: `₦${amount.toFixed(2)} deducted for "${option.name}". Remaining balance: ₦${remaining.toFixed(
+                                2
+                            )}.`,
+                        })
+                    );
+
+                    // 7) Email user
+                    await this.email.sendDeliveryRequestSubmitted?.(
+                        user.email,
+                        `${user.firstName} ${user.lastName}`,
+                        option.name,
+                        dto.deliveryAddress,
+                        dto.specialInstruction
+                    );
+
+                    return req;
+                },
+                {
+                    // your preferred transaction semantics
+                    readConcern: { level: "snapshot" },
+                    writeConcern: { w: "majority" },
                 }
-
-                await logAudit({
-                    user: userId,
-                    action: "CREATE",
-                    resource: "DELIVERY_REQUEST",
-                    resourceId: req._id.toString(),
-                    description: `Created delivery request for option ${option.name}`,
-                });
-
-                await this.notif.create(new CreateNotificationDto({
-                    user: userId,
-                    type: "DELIVERY",
-                    title: "Delivery request submitted",
-                    message: `Your delivery request is now pending. Option: ${option.name}`,
-                }));
-
-                await this.email.sendDeliveryRequestSubmitted?.(
-                    user.email,
-                    `${user.firstName} ${user.lastName}`,
-                    option.name,
-                    dto.deliveryAddress,
-                    dto.specialInstruction
-                );
-
-                return req;
-            });
+            );
         } finally {
             await session.endSession();
         }
@@ -92,7 +143,10 @@ export default class DeliveryRequestServiceImpl implements DeliveryRequestServic
     }
 
     async myGetById(userId: string, id: string): Promise<IDeliveryRequest> {
-        const doc = await DeliveryRequest.findById(id).populate("deliveryOption", "name price deliveryTime");
+        const doc = await DeliveryRequest.findById(id).populate(
+            "deliveryOption",
+            "name price deliveryTime"
+        );
         if (!doc || String(doc.user) !== String(userId)) throw new CustomError(404, "Delivery request not found");
         return doc;
     }
@@ -128,7 +182,11 @@ export default class DeliveryRequestServiceImpl implements DeliveryRequestServic
     }
 
     /* ---------------------- ADMIN: UPDATE STATUS -------------- */
-    async adminUpdateStatus(adminId: string, id: string, dto: AdminUpdateDeliveryRequestStatusDto): Promise<IDeliveryRequest> {
+    async adminUpdateStatus(
+        adminId: string,
+        id: string,
+        dto: AdminUpdateDeliveryRequestStatusDto
+    ): Promise<IDeliveryRequest> {
         const doc = await DeliveryRequest.findById(id).populate("user", "firstName lastName email");
         if (!doc) throw new CustomError(404, "Delivery request not found");
 
@@ -144,16 +202,17 @@ export default class DeliveryRequestServiceImpl implements DeliveryRequestServic
             description: `Status ${prev} -> ${dto.status}${dto.reason ? " (" + dto.reason + ")" : ""}`,
         });
 
-        // user notification
-        await this.notif.create(new CreateNotificationDto({
-            user: (doc.user as any)._id.toString(),
-            type: "DELIVERY",
-            title: "Delivery request status updated",
-            message: `Your delivery request is now ${doc.status}.`,
-        }));
+        await this.notif.create(
+            new CreateNotificationDto({
+                user: (doc.user as any)._id.toString(),
+                type: "DELIVERY",
+                title: "Delivery request status updated",
+                message: `Your delivery request is now ${doc.status}.`,
+            })
+        );
 
         const u = doc.user as any;
-        const option = await (await doc.populate("deliveryOption", "name")).deliveryOption as any;
+        const option = (await doc.populate("deliveryOption", "name")).deliveryOption as any;
 
         await this.email.sendDeliveryRequestStatusChanged?.(
             u.email,

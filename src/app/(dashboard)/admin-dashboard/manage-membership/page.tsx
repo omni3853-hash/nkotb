@@ -517,7 +517,7 @@ export default function ManageMembershipPage() {
                                       </>
                                     )}
                                     {r.status === "APPROVED" && (
-                                      <Button size="sm" variant="outline" onClick={() => openConfirm({ kind: "request", action: "status", id: r.id, payload: { status: "COMPLETED" } })} className="text-blue-600 hover:bg-blue-50"><Package className="h-3 w-3" /></Button>
+                                      <Button size="sm" title="Completed" variant="outline" onClick={() => openConfirm({ kind: "request", action: "status", id: r.id, payload: { status: "COMPLETED" } })} className="text-blue-600 hover:bg-blue-50"><Package className="h-3 w-3" /></Button>
                                     )}
                                   </div>
                                 </TableCell>
@@ -574,7 +574,7 @@ export default function ManageMembershipPage() {
                                   <TableCell>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button size="sm" variant="outline"><MoreVertical className="w-4 h-4 mr-1" /> Actions</Button>
+                                        <Button size="sm" variant="outline"><MoreVertical className="w-4 h-4 mr-1" /></Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end" className="w-48">
                                         <DropdownMenuItem onClick={() => openMembershipDetails(m)}><Eye className="w-4 h-4 mr-2" /> View details</DropdownMenuItem>

@@ -2,7 +2,7 @@
 
 import { IUser } from "@/lib/models/user.model";
 import { api } from "./axios";
-import { LoginFormData, LoginSchema, RequestOtpFormData, RequestOtpSchema, RequestResetFormData, RequestResetSchema, ResetPasswordFormData, ResetPasswordSchema, SignupFormData, SignupSchema, VerifyOtpFormData, VerifyOtpSchema } from "@/utils/schemas/schemas";
+import { LoginFormData, LoginSchema, RequestOtpFormData, RequestOtpSchema, RequestResetFormData, RequestResetSchema, ResetPasswordFormData, ResetPasswordSchema, SignupFormData, SignupSchema, VerifyOtpFormData, VerifyOtpSchema, VerifyPasswordFormData, VerifyPasswordSchema } from "@/utils/schemas/schemas";
 
 type LoginResponse = {
     user: IUser;
@@ -51,5 +51,10 @@ export const AuthApi = {
         const parsed = ResetPasswordSchema.parse(dto);
         const res = await api.post("/auth/password/reset", parsed);
         return dataOf<void>(res);
+    },
+    async verifyCurrentPassword(dto: VerifyPasswordFormData): Promise<{ ok: boolean }> {
+        const parsed = VerifyPasswordSchema.parse(dto);
+        const res = await api.post("/auth/password/verify-current", parsed);
+        return dataOf<{ ok: boolean }>(res);
     },
 };

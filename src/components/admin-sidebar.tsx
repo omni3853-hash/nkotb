@@ -66,7 +66,7 @@ export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
       { title: "User Management", url: "/admin-dashboard/manage-users", icon: Users },
       { title: "Manage Memberships", url: "/admin-dashboard/manage-membership", icon: Crown },
       { title: "Event Management", url: "/admin-dashboard/manage-events", icon: Calendar },
-      { title: "Transaction History", url: "/admin-dashboard/transactions", icon: CreditCard },
+      { title: "Deposit Management", url: "/admin-dashboard/manage-deposits", icon: CreditCard },
       { title: "Activity Log", url: "/admin-dashboard/activity-log", icon: Activity },
       { title: "System Settings", url: "/admin-dashboard/settings", icon: SettingsIcon },
     ],
@@ -89,16 +89,13 @@ export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarContent>
           {/* Logo Header */}
           <div className="p-4 border-b border-emerald-700/30">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               <img
-                alt="Premier Talent Agency Logo"
+                alt="Premier Talent Agency"
                 src="/logo-white.png"
                 className="h-8 w-auto"
               />
               <div className="min-w-0">
-                <h3 className="text-white font-semibold text-sm">
-                  Premier Talent Agency
-                </h3>
                 <p className="text-[11px] text-zinc-400">
                   Admin Dashboard
                 </p>

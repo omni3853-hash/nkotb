@@ -29,34 +29,36 @@ export function DynamicPageHeader({
 }: DynamicPageHeaderProps) {
   return (
     <div className={`flex px-6 justify-between ${className}`}>
-      <div className="">
+      <div>
         <h2 className="text-4xl font-bold tracking-tight text-emerald-9">
           {title}
         </h2>
         {subtitle && <p className="text-zinc-500">{subtitle}</p>}
       </div>
+
       {(actionButton || secondaryButton) && (
         <div className="flex items-center gap-x-2">
           {secondaryButton && (
             <Button
               variant="outline"
-              className="border-zinc-300 text-zinc-700 hover:bg-zinc-50 p-5 rounded-full"
+              className="inline-flex flex-row items-center gap-2 border-zinc-300 text-zinc-700 hover:bg-zinc-50 px-4 py-2 rounded-full"
               size="sm"
               onClick={secondaryButton.onClick}
             >
               {secondaryButton.icon}
-              <span className="">{secondaryButton.text}</span>
+              <span className="whitespace-nowrap">{secondaryButton.text}</span>
             </Button>
           )}
+
           {actionButton && (
             <Button
               variant="outline"
-              className="bg-emerald-900 p-5 rounded-full text-white"
+              className="inline-flex flex-row items-center gap-2 bg-emerald-900 px-4 py-2 rounded-full text-white"
               size="sm"
               onClick={actionButton.onClick}
             >
-              {actionButton.icon || <PlusIcon className="size-4" />}
-              <span className="">{actionButton.text}</span>
+              {actionButton.icon || <PlusIcon className="w-4 h-4" aria-hidden="true" />}
+              <span className="whitespace-nowrap">{actionButton.text}</span>
             </Button>
           )}
         </div>

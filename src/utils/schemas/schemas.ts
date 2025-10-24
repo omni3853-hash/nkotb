@@ -424,3 +424,213 @@ export const UpdateNotificationSchema = z.object({
 });
 
 export type UpdateNotificationFormData = z.infer<typeof UpdateNotificationSchema>;
+
+export const CreateBookingSchema = z.object({
+    celebrity: z.string().trim().min(1),
+    bookingTypeId: z.string().trim().min(1),
+    quantity: z.number().int().min(1),
+    notes: z.string().optional(),
+});
+export type CreateBookingFormData = z.infer<typeof CreateBookingSchema>;
+
+export const BookingQuerySchema = z.object({
+    status: z.string().optional(),      // keep flexible to match server enum
+    celebrityId: z.string().optional(),
+    page: z.number().min(1).default(1).optional(),
+    limit: z.number().min(1).max(100).default(10).optional(),
+});
+export type BookingQuery = z.infer<typeof BookingQuerySchema>;
+
+export const AdminBookingQuerySchema = BookingQuerySchema.extend({
+    userId: z.string().optional(),
+});
+export type AdminBookingQuery = z.infer<typeof AdminBookingQuerySchema>;
+
+export const AdminUpdateBookingStatusSchema = z.object({
+    status: z.string().trim().min(1),
+    reason: z.string().optional(),
+});
+export type AdminUpdateBookingStatusFormData = z.infer<
+    typeof AdminUpdateBookingStatusSchema
+>;
+
+// ---- Celebrity sub-schemas (map to your model; slug auto on server) ----
+export const BookingTypeInputSchema = z.object({
+    _id: z.string().optional(), // for edits
+    name: z.string().trim().min(1),
+    duration: z.string().trim().min(1),
+    price: z.number().min(0),
+    description: z.string().optional().default(""),
+    features: z.array(z.string()).optional().default([]),
+    availability: z.number().optional().default(0),
+    popular: z.boolean().optional().default(false),
+});
+
+export const CreateCelebritySchema = z.object({
+    name: z.string().trim().min(1),
+    category: z.string().trim().min(1),
+    basePrice: z.number().min(0),
+    description: z.string().optional().default(""),
+    responseTime: z.string().optional().default(""),
+    availability: z.string().optional(), // server validates via enum
+    tags: z.array(z.string()).optional().default([]),
+    image: z.string().nullable().optional(),
+    coverImage: z.string().nullable().optional(),
+    achievements: z.array(z.string()).optional().default([]),
+    bookingTypes: z.array(BookingTypeInputSchema).optional().default([]),
+    trending: z.boolean().optional().default(false),
+    hot: z.boolean().optional().default(false),
+    verified: z.boolean().optional().default(false),
+    isActive: z.boolean().optional().default(true),
+});
+export type CreateCelebrityFormData = z.infer<typeof CreateCelebritySchema>;
+
+export const UpdateCelebritySchema = CreateCelebritySchema.partial();
+export type UpdateCelebrityFormData = z.infer<typeof UpdateCelebritySchema>;
+
+export const CelebrityQuerySchema = z.object({
+    search: z.string().optional(),
+    category: z.string().optional(),
+    isActive: z.coerce.boolean().optional(),
+    trending: z.coerce.boolean().optional(),
+    hot: z.coerce.boolean().optional(),
+    verified: z.coerce.boolean().optional(),
+    page: z.number().min(1).default(1).optional(),
+    limit: z.number().min(1).max(100).default(10).optional(),
+});
+export type CelebrityQuery = z.infer<typeof CelebrityQuerySchema>;
+
+/* ----------------------------- Shared Pagination ---------------------------- */
+export const PaginationQuerySchema = z.object({
+    page: z.number().int().min(1).default(1),
+    limit: z.number().int().min(1).max(100).default(10),
+});
+
+/* --------------------------------- Events ---------------------------------- */
+
+export const EventAvailabilityEnum = z.enum([
+    "Available", "Selling Fast", "Almost Full", "Hot", "Sold Out"
+]);
+
+export const TicketTypeInputSchema = z.object({
+    _id: z.string().optional(),
+    name: z.string().trim().min(1),
+    price: z.number().min(0),
+    description: z.string().optional().default(""),
+    features: z.array(z.string().optional().default("")).optional().default([]),
+    total: z.number().int().min(0),
+    sold: z.number().int().min(0).optional().default(0),
+    popular: z.boolean().optional().default(false),
+});
+
+export const CreateEventSchema = z.object({
+    title: z.string().trim().min(1),
+    category: z.string().trim().min(1),
+    tags: z.array(z.string().trim()).optional().default([]),
+    image: z.string().url().nullable().optional(),
+    coverImage: z.string().url().nullable().optional(),
+    basePrice: z.number().min(0),
+    description: z.string().optional().default(""),
+    location: z.string().optional().default(""),
+    date: z.string().optional().default(""),
+    time: z.string().optional().default(""),
+    attendees: z.number().int().min(0).optional().default(0),
+    ticketTypes: z.array(TicketTypeInputSchema).optional().default([]),
+    availability: EventAvailabilityEnum.optional(),
+    featured: z.boolean().optional().default(false),
+    trending: z.boolean().optional().default(false),
+    verified: z.boolean().optional().default(false),
+    isActive: z.boolean().optional().default(true),
+});
+export type CreateEventFormData = z.infer<typeof CreateEventSchema>;
+
+export const UpdateEventSchema = CreateEventSchema.partial();
+export type UpdateEventFormData = z.infer<typeof UpdateEventSchema>;
+
+export const EventQuerySchema = z.object({
+    search: z.string().optional().or(z.literal("").optional()),
+    category: z.string().optional().or(z.literal("").optional()),
+    onlyActive: z.boolean().optional().default(true),
+    page: z.number().int().min(1).optional().default(1),
+    limit: z.number().int().min(1).max(100).optional().default(10),
+});
+export type EventQuery = z.infer<typeof EventQuerySchema>;
+
+/* --------------------------------- Tickets --------------------------------- */
+
+export const TicketStatusEnum = z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELED"]);
+
+export const CreateTicketSchema = z.object({
+    event: z.string().min(1),
+    ticketTypeId: z.string().min(1),
+    quantity: z.number().int().min(1),
+    notes: z.string().optional().default(""),
+});
+export type CreateTicketFormData = z.infer<typeof CreateTicketSchema>;
+
+export const TicketQuerySchema = z.object({
+    status: TicketStatusEnum.optional(),
+    eventId: z.string().optional(),
+    page: z.number().int().min(1).optional().default(1),
+    limit: z.number().int().min(1).max(100).optional().default(10),
+});
+export type TicketQuery = z.infer<typeof TicketQuerySchema>;
+
+export const AdminTicketQuerySchema = TicketQuerySchema.extend({
+    userId: z.string().optional(),
+});
+export type AdminTicketQuery = z.infer<typeof AdminTicketQuerySchema>;
+
+export const AdminUpdateTicketStatusSchema = z.object({
+    status: TicketStatusEnum,
+    reason: z.string().optional().default(""),
+});
+export type AdminUpdateTicketStatusFormData = z.infer<typeof AdminUpdateTicketStatusSchema>;
+
+/* --------------------------------- Reviews --------------------------------- */
+export const CreateReviewSchema = z.object({
+    rating: z.number().int().min(1).max(5),
+    comment: z.string().max(1000).optional().default(""),
+});
+export type CreateReviewFormData = z.infer<typeof CreateReviewSchema>;
+
+/* =============================== DEPOSITS ================================ */
+export const CreateDepositSchema = z.object({
+    amount: z.number().positive(),
+    paymentMethodId: z.string().optional(),
+    proofOfPayment: z.string().optional(),
+    notes: z.string().max(1000).optional().default(""),
+});
+export type CreateDepositFormData = z.infer<typeof CreateDepositSchema>;
+
+export const AdminCreateDepositSchema = z.object({
+    userId: z.string(),
+    amount: z.number().positive(),
+    paymentMethodId: z.string().optional(),
+    proofOfPayment: z.string().optional(),
+    status: z.enum(["PENDING", "COMPLETED", "FAILED"]).optional(),
+    notes: z.string().max(1000).optional().default(""),
+});
+export type AdminCreateDepositFormData = z.infer<typeof AdminCreateDepositSchema>;
+
+export const UpdateDepositStatusSchema = z.object({
+    status: z.enum(["COMPLETED", "FAILED"]),
+    reason: z.string().max(500).optional().default(""),
+});
+export type UpdateDepositStatusFormData = z.infer<typeof UpdateDepositStatusSchema>;
+
+export const DepositQuerySchema = z.object({
+    status: z.enum(["PENDING", "COMPLETED", "FAILED"]).optional(),
+    page: z.number().int().min(1).optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+});
+export type DepositQuery = z.infer<typeof DepositQuerySchema>;
+
+/* ============================= TRANSACTIONS ============================== */
+export const TransactionQuerySchema = z.object({
+    purpose: z.enum(["BOOKING_PAYMENT", "BOOKING_REFUND", "TICKET_PURCHASE", "TICKET_REFUND", "TOPUP", "ADJUSTMENT"]).optional(),
+    type: z.enum(["DEBIT", "CREDIT"]).optional(),
+    page: z.number().int().min(1).optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+});
+export type TransactionQuery = z.infer<typeof TransactionQuerySchema>;

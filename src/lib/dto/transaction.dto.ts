@@ -1,89 +1,30 @@
-import Joi from 'joi';
-import { TransactionType, PaymentMethod } from '../enums/enums';
+import Joi from "joi";
+import { TransactionPurpose, TransactionType } from "@/lib/enums/transaction.enum";
 
-export class CreateTransactionDto {
-    userId: string;
-    type: TransactionType;
-    amount: number;
-    method: PaymentMethod;
-    fee?: number;
-    notes?: string;
-    proofOfPayment?: string;
-    paymentMethod?: string;
-    password: string;
-    metadata?: any;
+export class TransactionQueryDto {
+    purpose?: TransactionPurpose;
+    type?: TransactionType;
+    page?: number;
+    limit?: number;
 
     static validationSchema = Joi.object({
-        userId: Joi.string().required(),
-        type: Joi.string().valid(...Object.values(TransactionType)).required(),
-        amount: Joi.number().positive().required(),
-        method: Joi.string().valid(...Object.values(PaymentMethod)).required(),
-        fee: Joi.number().min(0).default(0),
-        notes: Joi.string().optional(),
-        proofOfPayment: Joi.string().optional(),
-        paymentMethod: Joi.string().optional(),
-        password: Joi.string().required(),
-        metadata: Joi.object().optional()
+        purpose: Joi.string().valid(...Object.values(TransactionPurpose)),
+        type: Joi.string().valid(...Object.values(TransactionType)),
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(10),
     });
 
-    constructor(data: CreateTransactionDto) {
-        this.userId = data.userId;
-        this.type = data.type;
-        this.amount = data.amount;
-        this.method = data.method;
-        this.fee = data.fee;
-        this.notes = data.notes;
-        this.proofOfPayment = data.proofOfPayment;
-        this.paymentMethod = data.paymentMethod;
-        this.password = data.password;
-        this.metadata = data.metadata;
+    constructor(data: Partial<TransactionQueryDto> = {}) {
+        Object.assign(this, { page: 1, limit: 10, ...data });
     }
-}
 
-export class VerifyTransactionDto {
-    userId: string;
-    transactionId: string;
-    otp: string;
-
-    static validationSchema = Joi.object({
-        userId: Joi.string().required(),
-        transactionId: Joi.string().required(),
-        otp: Joi.string().required()
-    });
-
-    constructor(data: VerifyTransactionDto) {
-        this.userId = data.userId;
-        this.transactionId = data.transactionId;
-        this.otp = data.otp;
-    }
-}
-
-export class AdminCreateTransactionDto {
-    userId: string;
-    type: TransactionType;
-    amount: number;
-    method: PaymentMethod;
-    fee?: number;
-    notes?: string;
-    metadata?: any;
-
-    static validationSchema = Joi.object({
-        userId: Joi.string().required(),
-        type: Joi.string().valid(...Object.values(TransactionType)).required(),
-        amount: Joi.number().required(),
-        method: Joi.string().valid(...Object.values(PaymentMethod)).required(),
-        fee: Joi.number().min(0).default(0),
-        notes: Joi.string().optional(),
-        metadata: Joi.object().optional()
-    });
-
-    constructor(data: AdminCreateTransactionDto) {
-        this.userId = data.userId;
-        this.type = data.type;
-        this.amount = data.amount;
-        this.method = data.method;
-        this.fee = data.fee;
-        this.notes = data.notes;
-        this.metadata = data.metadata;
+    static fromURL(url: string): TransactionQueryDto {
+        const { searchParams } = new URL(url);
+        return new TransactionQueryDto({
+            purpose: (searchParams.get("purpose") as TransactionPurpose) || undefined,
+            type: (searchParams.get("type") as TransactionType) || undefined,
+            page: searchParams.get("page") ? Number(searchParams.get("page")) : undefined,
+            limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined,
+        });
     }
 }

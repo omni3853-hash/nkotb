@@ -11,6 +11,8 @@ import { CreateNotificationDto } from "@/lib/dto/notification.dto";
 import EmailServiceImpl from "@/lib/services/impl/email.service.impl";
 import { User } from "@/lib/models/user.model";
 import { PaymentMethod } from "@/lib/models/payment-method.model";
+import TransactionServiceImpl from "@/lib/services/impl/transaction.service.impl";
+import { TransactionPurpose } from "@/lib/enums/transaction.enum";
 
 function computeExpiry(start: Date, period: BillingPeriod, durationDays?: number) {
     const d = new Date(start);
@@ -23,6 +25,7 @@ function computeExpiry(start: Date, period: BillingPeriod, durationDays?: number
 class MembershipServiceImpl implements MembershipService {
     private notif = new NotificationServiceImpl();
     private email = new EmailServiceImpl();
+    private trx = new TransactionServiceImpl();
 
     /** Centralized helper: set user.membership (with audit), inside same session */
     private async setUserMembership(
@@ -57,13 +60,28 @@ class MembershipServiceImpl implements MembershipService {
                 const plan = await MembershipPlan.findById(dto.planId).session(session);
                 if (!plan || !plan.isActive) throw new CustomError(400, "Plan not available");
 
-                // Optional: validate payment method existence
                 let pm = null;
                 if (dto.paymentMethodId) {
                     pm = await PaymentMethod.findById(dto.paymentMethodId).session(session);
                     if (!pm) throw new CustomError(404, "Payment method not found");
                     if (!pm.status) throw new CustomError(400, "Payment method is inactive");
                 }
+
+                const amount = Number(dto.amount ?? plan.price);
+                if (!Number.isFinite(amount) || amount <= 0) {
+                    throw new CustomError(400, "Invalid membership amount");
+                }
+
+                // 0) Charge wallet atomically
+                await this.trx.debit(
+                    user._id.toString(),
+                    amount,
+                    TransactionPurpose.MEMBERSHIP_PAYMENT,
+                    `Membership purchase: ${plan.name}`,
+                    null,
+                    { planId: plan._id.toString(), period: plan.period, durationDays: plan.durationDays },
+                    session
+                );
 
                 const startedAt = new Date();
                 const expiresAt = computeExpiry(startedAt, plan.period, plan.durationDays);
@@ -73,7 +91,7 @@ class MembershipServiceImpl implements MembershipService {
                     planId: plan._id,
                     planSnapshot: {
                         name: plan.name,
-                        price: dto.amount ?? plan.price,
+                        price: amount,
                         period: plan.period,
                         durationDays: plan.durationDays,
                         features: plan.features,
@@ -82,7 +100,7 @@ class MembershipServiceImpl implements MembershipService {
                     payment: {
                         paymentMethod: pm?._id,
                         proofOfPayment: dto.proofOfPayment,
-                        amount: dto.amount ?? plan.price,
+                        amount,
                     },
                     autoRenew: !!dto.autoRenew,
                     status: MembershipStatus.PENDING, // pending verification
@@ -92,28 +110,36 @@ class MembershipServiceImpl implements MembershipService {
 
                 await membership.save({ session });
 
-                // Immediately reflect latest purchase on user profile (points to newest record)
-                await this.setUserMembership(user._id.toString(), membership._id.toString(), session, "create() -> newest purchase (PENDING)");
+                await this.setUserMembership(
+                    user._id.toString(),
+                    membership._id.toString(),
+                    session,
+                    "create() -> newest purchase (PENDING)"
+                );
 
                 await logAudit({
                     user: userId,
                     action: "CREATE",
                     resource: "MEMBERSHIP",
                     resourceId: membership._id.toString(),
-                    description: `Created membership for plan ${plan.name}, status PENDING`,
+                    description: `Created membership for plan ${plan.name}, status PENDING (₦${amount.toFixed(2)} debited)`,
                 });
 
                 await this.notif.create(new CreateNotificationDto({
                     user: user._id.toString(),
                     type: "MEMBERSHIP",
                     title: "Membership purchase submitted",
-                    message: `Your membership for ${plan.name} is pending verification.`,
+                    message: `₦${amount.toFixed(2)} deducted. Your membership for ${plan.name} is pending verification.`,
                 }));
 
-                await this.email.sendMembershipPurchaseReceived?.(user.email, `${user.firstName} ${user.lastName}`, plan.name);
+                await this.email.sendMembershipPurchaseReceived?.(
+                    user.email,
+                    `${user.firstName} ${user.lastName}`,
+                    plan.name
+                );
 
                 return membership;
-            });
+            }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
         } finally {
             await session.endSession();
         }
@@ -142,7 +168,23 @@ class MembershipServiceImpl implements MembershipService {
                     if (!pm.status) throw new CustomError(400, "Payment method is inactive");
                 }
 
-                // Close current and open a new PENDING one for verification
+                const amount = Number(dto.amount ?? newPlan.price);
+                if (!Number.isFinite(amount) || amount <= 0) {
+                    throw new CustomError(400, "Invalid upgrade amount");
+                }
+
+                // 0) Charge wallet atomically for upgrade
+                await this.trx.debit(
+                    user._id.toString(),
+                    amount,
+                    TransactionPurpose.MEMBERSHIP_UPGRADE,
+                    `Membership upgrade -> ${newPlan.name}`,
+                    null,
+                    { from: current.planSnapshot.name, to: newPlan.name, newPlanId: newPlan._id.toString() },
+                    session
+                );
+
+                // Close current and open a new PENDING one
                 current.status = MembershipStatus.CANCELED;
                 current.canceledAt = new Date();
                 await current.save({ session });
@@ -155,7 +197,7 @@ class MembershipServiceImpl implements MembershipService {
                     planId: newPlan._id,
                     planSnapshot: {
                         name: newPlan.name,
-                        price: dto.amount ?? newPlan.price,
+                        price: amount,
                         period: newPlan.period,
                         durationDays: newPlan.durationDays,
                         features: newPlan.features,
@@ -164,7 +206,7 @@ class MembershipServiceImpl implements MembershipService {
                     payment: {
                         paymentMethod: pm?._id,
                         proofOfPayment: dto.proofOfPayment,
-                        amount: dto.amount ?? newPlan.price,
+                        amount,
                     },
                     autoRenew: current.autoRenew,
                     status: MembershipStatus.PENDING,
@@ -173,28 +215,37 @@ class MembershipServiceImpl implements MembershipService {
                 });
                 await upgraded.save({ session });
 
-                // Point the user to the newest/upgrade immediately
-                await this.setUserMembership(user._id.toString(), upgraded._id.toString(), session, "upgrade() -> pending upgraded membership");
+                await this.setUserMembership(
+                    user._id.toString(),
+                    upgraded._id.toString(),
+                    session,
+                    "upgrade() -> pending upgraded membership"
+                );
 
                 await logAudit({
                     user: userId,
                     action: "UPDATE",
                     resource: "MEMBERSHIP",
                     resourceId: upgraded._id.toString(),
-                    description: `Upgraded membership to ${newPlan.name}, pending verification`,
+                    description: `Upgraded membership to ${newPlan.name}, pending verification (₦${amount.toFixed(2)} debited)`,
                 });
 
                 await this.notif.create(new CreateNotificationDto({
                     user: user._id.toString(),
                     type: "MEMBERSHIP",
                     title: "Membership upgrade submitted",
-                    message: `Your upgrade to ${newPlan.name} is pending verification.`,
+                    message: `₦${amount.toFixed(2)} deducted. Your upgrade to ${newPlan.name} is pending verification.`,
                 }));
 
-                await this.email.sendMembershipUpgraded?.(user.email, `${user.firstName} ${user.lastName}`, current.planSnapshot.name, newPlan.name);
+                await this.email.sendMembershipUpgraded?.(
+                    user.email,
+                    `${user.firstName} ${user.lastName}`,
+                    current.planSnapshot.name,
+                    newPlan.name
+                );
 
                 return upgraded;
-            });
+            }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
         } finally {
             await session.endSession();
         }
@@ -282,18 +333,15 @@ class MembershipServiceImpl implements MembershipService {
 
                 await m.save({ session });
 
-                // Keep user.membership aligned with status transitions
                 const userId = (m.user as any)._id.toString();
 
                 if (m.status === MembershipStatus.ACTIVE) {
-                    // Promote this record to user's active pointer
                     await this.setUserMembership(userId, m._id.toString(), session, "adminUpdateStatus() -> activated");
                 } else if (
                     m.status === MembershipStatus.CANCELED ||
                     m.status === MembershipStatus.SUSPENDED ||
                     m.status === MembershipStatus.EXPIRED
                 ) {
-                    // If user currently points to this membership, try fallback to another ACTIVE; else null
                     const userDoc = await User.findById(userId).session(session);
                     if (userDoc?.membership && String(userDoc.membership) === String(m._id)) {
                         const fallback = await Membership.findOne({ user: userId, status: MembershipStatus.ACTIVE })
@@ -316,7 +364,6 @@ class MembershipServiceImpl implements MembershipService {
                     description: `Status ${oldStatus} -> ${dto.status}${dto.reason ? " (" + dto.reason + ")" : ""}`,
                 });
 
-                // Notify + email user
                 await this.notif.create(new CreateNotificationDto({
                     user: userId,
                     type: "MEMBERSHIP",
@@ -328,7 +375,7 @@ class MembershipServiceImpl implements MembershipService {
                 await this.email.sendMembershipStatusChanged?.(u.email, `${u.firstName} ${u.lastName}`, m.planSnapshot.name, oldStatus, m.status);
 
                 return m;
-            });
+            }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
         } finally {
             await session.endSession();
         }

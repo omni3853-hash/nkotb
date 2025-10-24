@@ -84,6 +84,12 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         isActive: pathname?.startsWith("/user-dashboard/profile"),
       },
       {
+        title: "Deposit",
+        url: "/user-dashboard/deposit",
+        icon: CreditCard,
+        isActive: pathname?.startsWith("/user-dashboard/deposit"),
+      },
+      {
         title: "Transactions",
         url: "/user-dashboard/transactions",
         icon: CreditCard,
@@ -118,20 +124,12 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarContent>
           {/* Logo Header */}
           <div className="p-4 border-b border-emerald-700/30">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               <img
                 alt="Premier Talent Agency Logo"
                 src="/logo-white.png"
                 className="h-8 w-auto"
               />
-              <div className="min-w-0">
-                <h3 className="text-white font-semibold text-sm">
-                  Premier Talent Agency
-                </h3>
-                <p className="text-[11px] text-zinc-400">
-                  Celebrity Booking Platform
-                </p>
-              </div>
             </div>
           </div>
 

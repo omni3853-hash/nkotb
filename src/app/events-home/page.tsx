@@ -13,10 +13,6 @@ import {
 } from "@/components/ui/select";
 import { EventModal, type Event } from "@/components/event-modal";
 import { HeroSection } from "@/components/events/hero-section";
-import { LiveStatsDashboard } from "@/components/events/live-stats-dashboard";
-import { RecommendationsSection } from "@/components/events/recommendations-section";
-import { CategoryGrid } from "@/components/events/category-grid";
-import { CountdownSection } from "@/components/events/countdown-section";
 import { NewsletterSignup } from "@/components/events/newsletter-signup";
 import { EventCardSocial } from "@/components/events/event-card-social";
 import {
