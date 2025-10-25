@@ -5,8 +5,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { DynamicPageHeader } from "@/components/dynamic-page-header";
-import { FeaturedEventsCarousel } from "@/components/featured-events-carousel";
-import { RecentTransactionsTable } from "@/components/recent-transactions-table";
+// import { FeaturedEventsCarousel } from "@/components/featured-events-carousel";
+// import { RecentTransactionsTable } from "@/components/recent-transactions-table";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import {
   type MembershipPlanDto,
 } from "@/api/admin-membership.client";
 import type { IUser } from "@/lib/models/user.model";
+import { useRouter } from "next/navigation";
 
 /* ----------------------------- helpers ----------------------------- */
 export function fmtCurrency(
@@ -77,7 +78,7 @@ function currencySymbol(code: string): string {
     case "CNY": return "¥";
     case "CAD": return "CA$";
     case "AUD": return "A$";
-    default: return ""; 
+    default: return "";
   }
 }
 
@@ -206,6 +207,7 @@ export default function Page() {
   const [plans, setPlans] = useState<MembershipPlanDto[]>([]);
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null); // null = deciding
   const [bootstrapping, setBootstrapping] = useState(true);
+  const router = useRouter()
 
   // derive plan name seamlessly from either planSnapshot or planId
   const planNameOf = (m?: MembershipDto | null) => {
@@ -368,6 +370,7 @@ export default function Page() {
                 actionButton={{
                   text: "Add Balance",
                   icon: <PlusIcon className="size-4" />,
+                  onClick: () => router.push("/user-dashboard/deposit")
                 }}
               />
 
@@ -448,6 +451,7 @@ export default function Page() {
                         <Button
                           size="sm"
                           className="bg-gradient-to-r from-zinc-700/50 to-zinc-800/70 py-3 sm:py-5 px-6 sm:px-8 rounded-full text-zinc-100 text-[13px] flex items-center gap-2 w-full sm:w-auto"
+                          onClick={() => router.push("/user-dashboard/deposit")}
                         >
                           <PlusIcon className="size-4" />
                           <span>Add Balance</span>
@@ -485,7 +489,7 @@ export default function Page() {
                   </div>
 
                   {/* Celebrity highlight (unchanged visuals) */}
-                  <div className="px-2 sm:px-4 lg:px-6">
+                  {/* <div className="px-2 sm:px-4 lg:px-6">
                     <div className="w-full rounded-2xl bg-white p-3 sm:p-4 lg:p-6 hover:border-emerald-900 transition-colors">
                       <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6">
                         <div className="relative w-full max-w-xs sm:w-40 lg:w-48 h-32 sm:h-40 lg:h-48 rounded-xl overflow-hidden border-2 border-zinc-200 shrink-0 mx-auto lg:mx-0">
@@ -539,13 +543,13 @@ export default function Page() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Keep these exactly as-is */}
-                  <div className="px-2 sm:px-4 lg:px-6 flex flex-col lg:flex-row gap-4 lg:gap-7">
+                  {/* <div className="px-2 sm:px-4 lg:px-6 flex flex-col lg:flex-row gap-4 lg:gap-7">
                     <FeaturedEventsCarousel />
                     <RecentTransactionsTable />
-                  </div>
+                  </div> */}
                 </>
               )}
 

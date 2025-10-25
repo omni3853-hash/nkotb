@@ -1,16 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useForm,
+  useFieldArray,
+  type SubmitHandler,
+  type Resolver,
+} from "react-hook-form";
+
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { DynamicPageHeader } from "@/components/dynamic-page-header";
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -31,175 +43,57 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+
 import {
   Calendar,
-  Clock,
-  MapPin,
   Users,
-  Star,
-  Eye,
-  TrendingUp,
-  Flame,
-  Zap,
   PlusIcon,
   Edit,
   Trash2,
   Search,
-  Filter,
-  MoreHorizontal,
-  Image,
+  MapPin,
   DollarSign,
-  Calendar as CalendarIcon,
-  Settings,
-  CheckCircle2,
-  AlertTriangle,
-  X,
-  Save,
+  Eye,
+  Share2,
+  ToggleLeft,
+  ToggleRight,
   Upload,
+  X,
+  Tag as TagIcon,
+  Star,
+  Flame,
+  ShieldCheck,
+  CheckCircle2,
+  TrendingUp,
 } from "lucide-react";
+import { toast } from "sonner";
 
-// Event interface
-interface Event {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  price: number;
-  category: string;
-  image: string;
-  description: string;
-  attendees: number;
-  featured: boolean;
-  trending: boolean;
-  ticketsLeft: number;
-  totalTickets: number;
-  rating: number;
-  reviews: number;
-  viewsToday: number;
-  bookingsToday: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  // Dynamic metrics with ranges
-  metrics: {
-    ratingRange: { min: number; max: number };
-    reviewsRange: { min: number; max: number };
-    viewsTodayRange: { min: number; max: number };
-    bookingsTodayRange: { min: number; max: number };
-    ticketsLeftRange: { min: number; max: number };
-  };
-}
+import {
+  AdminEventsApi,
+  type Event,
+} from "@/api/events.api";
+import { AdminTicketsApi, type Ticket } from "@/api/tickets.api";
+import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
 
-// Sample events data
-const initialEvents: Event[] = [
-  {
-    id: 1,
-    title: "Summer Music Festival",
-    date: "July 15, 2024",
-    time: "6:00 PM",
-    location: "Central Park, NYC",
-    price: 150,
-    category: "Music",
-    image: "/summer-music-festival-concert-stage.jpg",
-    description:
-      "Join us for an unforgettable summer music experience featuring top artists from around the world.",
-    attendees: 5000,
-    featured: true,
-    trending: true,
-    ticketsLeft: 45,
-    totalTickets: 5000,
-    rating: 4.8,
-    reviews: 342,
-    viewsToday: 1247,
-    bookingsToday: 23,
-    status: "selling-fast",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-15",
-    metrics: {
-      ratingRange: { min: 4.5, max: 5.0 },
-      reviewsRange: { min: 300, max: 500 },
-      viewsTodayRange: { min: 1000, max: 2000 },
-      bookingsTodayRange: { min: 15, max: 35 },
-      ticketsLeftRange: { min: 30, max: 60 },
-    },
-  },
-  {
-    id: 2,
-    title: "Tech Conference 2024",
-    date: "August 22, 2024",
-    time: "9:00 AM",
-    location: "Convention Center",
-    price: 299,
-    category: "Technology",
-    image: "/tech-conference-modern-stage-presentation.jpg",
-    description:
-      "The biggest tech conference of the year with industry leaders and innovative startups.",
-    attendees: 2500,
-    featured: true,
-    trending: true,
-    ticketsLeft: 234,
-    totalTickets: 2500,
-    rating: 4.9,
-    reviews: 189,
-    viewsToday: 892,
-    bookingsToday: 15,
-    status: "hot",
-    createdAt: "2024-01-02",
-    updatedAt: "2024-01-16",
-    metrics: {
-      ratingRange: { min: 4.7, max: 5.0 },
-      reviewsRange: { min: 150, max: 250 },
-      viewsTodayRange: { min: 800, max: 1200 },
-      bookingsTodayRange: { min: 10, max: 25 },
-      ticketsLeftRange: { min: 200, max: 300 },
-    },
-  },
-  {
-    id: 3,
-    title: "Art Gallery Opening",
-    date: "September 5, 2024",
-    time: "7:00 PM",
-    location: "Modern Art Museum",
-    price: 75,
-    category: "Art",
-    image: "/contemporary-art-gallery.png",
-    description:
-      "Exclusive opening of contemporary art exhibition featuring emerging artists.",
-    attendees: 200,
-    featured: false,
-    trending: false,
-    ticketsLeft: 89,
-    totalTickets: 200,
-    rating: 4.6,
-    reviews: 67,
-    viewsToday: 234,
-    bookingsToday: 8,
-    status: "available",
-    createdAt: "2024-01-03",
-    updatedAt: "2024-01-17",
-    metrics: {
-      ratingRange: { min: 4.0, max: 4.8 },
-      reviewsRange: { min: 50, max: 100 },
-      viewsTodayRange: { min: 200, max: 400 },
-      bookingsTodayRange: { min: 5, max: 15 },
-      ticketsLeftRange: { min: 70, max: 120 },
-    },
-  },
-];
+import {
+  CreateEventSchema,
+  UpdateEventSchema,
+  type CreateEventFormData,
+  type UpdateEventFormData,
+  EventAvailabilityEnum,
+  TicketTypeUpdateSchema,
+  TicketStatusEnum,
+  AdminUpdateTicketStatusSchema,
+  type AdminUpdateTicketStatusFormData,
+} from "@/utils/schemas/schemas";
+
+/* ----------------------------------------------------------------------------
+ * Local helpers & types
+ * --------------------------------------------------------------------------*/
+
+type Paginated<T> = { items: T[]; total: number; page: number; limit: number };
 
 const categories = [
   "Music",
@@ -212,841 +106,1167 @@ const categories = [
   "Education",
 ];
 
-const statusOptions = [
-  {
-    value: "available",
-    label: "Available",
-    color: "bg-emerald-50 text-emerald-900 border-emerald-900",
-  },
-  {
-    value: "selling-fast",
-    label: "Selling Fast",
-    color: "bg-orange-50 text-orange-900 border-orange-900",
-  },
-  {
-    value: "almost-full",
-    label: "Almost Full",
-    color: "bg-red-50 text-red-900 border-red-900",
-  },
-  {
-    value: "hot",
-    label: "Hot",
-    color: "bg-red-50 text-red-900 border-red-900",
-  },
-  {
-    value: "sold-out",
-    label: "Sold Out",
-    color: "bg-gray-50 text-gray-900 border-gray-900",
-  },
-];
+const availabilityOptions = EventAvailabilityEnum.options;
 
-// Utility function to generate random values within ranges
-const generateRandomValue = (min: number, max: number): number => {
-  return Math.random() * (max - min) + min;
-};
+// Use z.output to match what zodResolver returns after defaults/coercions.
+type CreateValues = z.output<typeof CreateEventSchema>;
+type UpdateValues = z.output<typeof UpdateEventSchema>;
 
-// Utility function to update event metrics with random values
-const updateEventMetrics = (event: Event): Event => {
-  const { metrics } = event;
-  return {
-    ...event,
-    rating: Number(
-      generateRandomValue(
-        metrics.ratingRange.min,
-        metrics.ratingRange.max
-      ).toFixed(1)
-    ),
-    reviews: Math.floor(
-      generateRandomValue(metrics.reviewsRange.min, metrics.reviewsRange.max)
-    ),
-    viewsToday: Math.floor(
-      generateRandomValue(
-        metrics.viewsTodayRange.min,
-        metrics.viewsTodayRange.max
-      )
-    ),
-    bookingsToday: Math.floor(
-      generateRandomValue(
-        metrics.bookingsTodayRange.min,
-        metrics.bookingsTodayRange.max
-      )
-    ),
-    ticketsLeft: Math.floor(
-      generateRandomValue(
-        metrics.ticketsLeftRange.min,
-        metrics.ticketsLeftRange.max
-      )
-    ),
-  };
-};
+// Narrow resolvers to the exact shapes to avoid RHF "Resolver mismatch" errors.
+const createResolver = zodResolver(CreateEventSchema) as Resolver<CreateValues>;
+const updateResolver = zodResolver(UpdateEventSchema) as Resolver<UpdateValues>;
 
-export default function ManageEventsPage() {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedStatus, setSelectedStatus] = useState("All");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [deleteEventId, setDeleteEventId] = useState<number | null>(null);
+/* ----------------------------------------------------------------------------
+ * Chips input for string[] (tags, features)
+ * --------------------------------------------------------------------------*/
+function ChipsInput({
+  label,
+  values,
+  onChange,
+  placeholder,
+  icon,
+}: {
+  label: string;
+  values: string[];
+  onChange: (next: string[]) => void;
+  placeholder?: string;
+  icon?: React.ReactNode;
+}) {
+  const [draft, setDraft] = useState("");
 
-  // Refresh metrics for all events
-  const refreshEventMetrics = () => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) => updateEventMetrics(event))
-    );
+  const add = () => {
+    const v = draft.trim();
+    if (!v) return;
+    if (values.includes(v)) return;
+    onChange([...values, v]);
+    setDraft("");
   };
 
-  // Form state for create/edit
-  const [formData, setFormData] = useState({
-    title: "",
-    date: "",
-    time: "",
-    location: "",
-    price: "",
-    category: "",
-    image: "",
-    description: "",
-    attendees: "",
-    totalTickets: "",
-    featured: false,
-    trending: false,
-    status: "available",
-    // Dynamic metrics ranges
-    ratingMin: "4.0",
-    ratingMax: "5.0",
-    reviewsMin: "0",
-    reviewsMax: "100",
-    viewsTodayMin: "0",
-    viewsTodayMax: "1000",
-    bookingsTodayMin: "0",
-    bookingsTodayMax: "50",
-    ticketsLeftMin: "0",
-    ticketsLeftMax: "100",
-  });
+  return (
+    <div className="space-y-2">
+      <Label className="flex items-center gap-2">
+        {icon} {label}
+      </Label>
+      <div className="flex gap-2">
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder={placeholder}
+        />
+        <Button type="button" variant="outline" onClick={add}>
+          Add
+        </Button>
+      </div>
+      {!!values.length && (
+        <div className="flex flex-wrap gap-2">
+          {values.map((t) => (
+            <Badge key={t} variant="secondary" className="flex items-center gap-1">
+              {t}
+              <button
+                type="button"
+                className="ml-1 hover:text-red-600"
+                onClick={() => onChange(values.filter((x) => x !== t))}
+                aria-label={`Remove ${t}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-  // Filter events
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch =
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || event.category === selectedCategory;
-    const matchesStatus =
-      selectedStatus === "All" || event.status === selectedStatus;
+/* ----------------------------------------------------------------------------
+ * Admin: Event Details modal + ticket history
+ * --------------------------------------------------------------------------*/
+function AdminEventDetailsModal({
+  open,
+  onOpenChange,
+  event,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  event: Event | null;
+}) {
+  const [tickets, setTickets] = useState<Paginated<Ticket> | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const loadTickets = async () => {
+    if (!event?._id) return;
+    try {
+      setLoading(true);
+      const res = await AdminTicketsApi.list({ page, limit, eventId: event._id });
+      setTickets(res);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to load tickets");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Reset form
-  const resetForm = () => {
-    setFormData({
+  useEffect(() => {
+    if (open) loadTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, page, limit, event?._id]);
+
+  const handleUpdateStatus = async (id: string, status: z.infer<typeof TicketStatusEnum>) => {
+    try {
+      setUpdatingId(id);
+      const payload: AdminUpdateTicketStatusFormData = AdminUpdateTicketStatusSchema.parse({
+        status,
+      });
+      await AdminTicketsApi.updateStatus(id, payload);
+      toast.success("Ticket status updated");
+      await loadTickets();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Update failed");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const totalPages = tickets ? Math.max(1, Math.ceil(tickets.total / tickets.limit)) : 1;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Eye className="size-5" />
+            Event Details
+          </DialogTitle>
+        </DialogHeader>
+
+        {!event ? null : (
+          <div className="space-y-6">
+            {/* Snapshot */}
+            <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
+              <div className="flex items-start gap-4">
+                <div className="size-20 rounded-lg overflow-hidden border-2 border-zinc-200 shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={event.image || "/placeholder.svg"}
+                    alt={event.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h3 className="text-xl font-bold">{event.title}</h3>
+                    {event.featured ? <Badge className="text-xs">Featured</Badge> : null}
+                    {event.trending ? <Badge className="text-xs">Trending</Badge> : null}
+                    {event.verified ? (
+                      <Badge variant="outline" className="text-xs">
+                        Verified
+                      </Badge>
+                    ) : null}
+                    {event.isActive ? (
+                      <Badge variant="outline" className="text-xs border-emerald-700 text-emerald-800">
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs border-zinc-400 text-zinc-700">
+                        Inactive
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>{event.date} · {event.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>{event.attendees?.toLocaleString?.() || 0} attendees</span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground mt-3">{event.description}</p>
+
+                  {/* Read-only metrics */}
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      Views: {event.views?.toLocaleString?.() ?? 0}
+                    </span>
+                    <span>Tickets Sold: {event.ticketsSold?.toLocaleString?.() ?? 0}</span>
+                    <span>Rating: {typeof event.rating === "number" ? event.rating.toFixed(1) : "—"} ⭐</span>
+                    <span>Reviews: {event.totalReviews?.toLocaleString?.() ?? 0}</span>
+                  </div>
+                </div>
+
+                <div className="text-right font-mono">
+                  <div className="flex items-center justify-end gap-1">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-lg font-semibold">${event.basePrice}</span>
+                  </div>
+                  <div className="mt-2">
+                    <Badge variant="outline" className="text-xs">
+                      {event.availability || "—"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Ticket history */}
+            <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-emerald-900" />
+                  <h4 className="font-semibold">Ticket Purchase History</h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={String(limit)}
+                    onValueChange={(v) => { setPage(1); setLimit(Number(v)); }}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="border rounded-xl overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-zinc-50">
+                    <TableRow>
+                      <TableHead className="font-mono text-xs">USER</TableHead>
+                      <TableHead className="font-mono text-xs">TYPE</TableHead>
+                      <TableHead className="font-mono text-xs">QTY</TableHead>
+                      <TableHead className="font-mono text-xs">AMOUNT</TableHead>
+                      <TableHead className="font-mono text-xs">STATUS</TableHead>
+                      <TableHead className="font-mono text-xs">DATE</TableHead>
+                      <TableHead className="font-mono text-xs">ACTION</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(tickets?.items ?? []).map((t) => (
+                      <TableRow key={t._id}>
+                        <TableCell>
+                          <div className="text-sm">
+                            <p className="font-medium">{t?.user?.name || "—"}</p>
+                            <p className="text-muted-foreground text-xs">{t?.user?.email || "—"}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{t.ticketTypeName}</TableCell>
+                        <TableCell className="font-mono text-sm">{t.quantity}</TableCell>
+                        <TableCell className="font-mono text-sm">${t.totalAmount}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">{t.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {new Date(t.createdAt).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={t.status}
+                            onValueChange={(v) => handleUpdateStatus(t._id, v as any)}
+                            disabled={updatingId === t._id}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TicketStatusEnum.options.map((s) => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!loading && (tickets?.items.length ?? 0) === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-sm text-muted-foreground">
+                          No ticket purchases yet.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-xs text-muted-foreground">
+                  {tickets?.total ?? 0} total · page {tickets?.page ?? page} / {totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={loading || page <= 1}
+                  >
+                    Prev
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => (tickets ? Math.min(Math.ceil(tickets.total / tickets.limit), p + 1) : p + 1))}
+                    disabled={loading || (tickets ? page >= Math.ceil(tickets.total / tickets.limit) : false)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Create Event Form — strictly typed to CreateValues
+ * --------------------------------------------------------------------------*/
+function CreateEventForm({
+  onSubmit,
+  submitting,
+  onCancel,
+}: {
+  onSubmit: (data: CreateEventFormData) => void;
+  submitting: boolean;
+  onCancel: () => void;
+}) {
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CreateValues>({
+    resolver: createResolver,
+    defaultValues: {
       title: "",
+      category: "",
+      tags: [],
+      image: null,
+      coverImage: null,
+      basePrice: 0,
+      description: "",
+      location: "",
       date: "",
       time: "",
-      location: "",
-      price: "",
-      category: "",
-      image: "",
-      description: "",
-      attendees: "",
-      totalTickets: "",
+      attendees: 0,
+      ticketTypes: [],
+      availability: undefined,
       featured: false,
       trending: false,
-      status: "available",
-      ratingMin: "4.0",
-      ratingMax: "5.0",
-      reviewsMin: "0",
-      reviewsMax: "100",
-      viewsTodayMin: "0",
-      viewsTodayMax: "1000",
-      bookingsTodayMin: "0",
-      bookingsTodayMax: "50",
-      ticketsLeftMin: "0",
-      ticketsLeftMax: "100",
-    });
+      verified: false,
+      isActive: true,
+    },
+    mode: "onChange",
+  });
+
+  const { fields, append, remove } = useFieldArray<CreateValues, "ticketTypes", "id">({
+    control,
+    name: "ticketTypes",
+  });
+
+  const imageUrl = watch("image");
+  const coverUrl = watch("coverImage");
+  const tagValues = watch("tags");
+  const availability = watch("availability");
+  const categoryValue = watch("category");
+  const featured = watch("featured");
+  const trending = watch("trending");
+  const verified = watch("verified");
+  const isActive = watch("isActive");
+
+  const [imgProgress, setImgProgress] = useState(0);
+  const [coverProgress, setCoverProgress] = useState(0);
+
+  const doUpload = async (file: File, target: "image" | "coverImage") => {
+    try {
+      const setPct = target === "image" ? setImgProgress : setCoverProgress;
+      setPct(0);
+      const res = await uploadToCloudinary(file, { onProgress: (p) => setPct(p) });
+      setValue(target, res.url as any, { shouldValidate: true, shouldTouch: true });
+      toast.success("Image uploaded");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Upload failed");
+    } finally {
+      setImgProgress(0);
+      setCoverProgress(0);
+    }
   };
 
-  // Handle create event
-  const handleCreateEvent = () => {
-    const newEvent: Event = {
-      id: Math.max(...events.map((e) => e.id)) + 1,
-      title: formData.title,
-      date: formData.date,
-      time: formData.time,
-      location: formData.location,
-      price: Number(formData.price),
-      category: formData.category,
-      image: formData.image || "/placeholder.svg",
-      description: formData.description,
-      attendees: Number(formData.attendees),
-      featured: formData.featured,
-      trending: formData.trending,
-      ticketsLeft: Number(formData.totalTickets),
-      totalTickets: Number(formData.totalTickets),
-      rating: 0,
-      reviews: 0,
-      viewsToday: 0,
-      bookingsToday: 0,
-      status: formData.status,
-      createdAt: new Date().toISOString().split("T")[0],
-      updatedAt: new Date().toISOString().split("T")[0],
-      metrics: {
-        ratingRange: {
-          min: Number(formData.ratingMin),
-          max: Number(formData.ratingMax),
-        },
-        reviewsRange: {
-          min: Number(formData.reviewsMin),
-          max: Number(formData.reviewsMax),
-        },
-        viewsTodayRange: {
-          min: Number(formData.viewsTodayMin),
-          max: Number(formData.viewsTodayMax),
-        },
-        bookingsTodayRange: {
-          min: Number(formData.bookingsTodayMin),
-          max: Number(formData.bookingsTodayMax),
-        },
-        ticketsLeftRange: {
-          min: Number(formData.ticketsLeftMin),
-          max: Number(formData.ticketsLeftMax),
-        },
-      },
-    };
+  const submit: SubmitHandler<CreateValues> = (data) => onSubmit(data as CreateEventFormData);
 
-    setEvents([...events, newEvent]);
-    resetForm();
-    setIsCreateModalOpen(false);
-  };
-
-  // Handle edit event
-  const handleEditEvent = () => {
-    if (!editingEvent) return;
-
-    const updatedEvent: Event = {
-      ...editingEvent,
-      title: formData.title,
-      date: formData.date,
-      time: formData.time,
-      location: formData.location,
-      price: Number(formData.price),
-      category: formData.category,
-      image: formData.image || "/placeholder.svg",
-      description: formData.description,
-      attendees: Number(formData.attendees),
-      featured: formData.featured,
-      trending: formData.trending,
-      ticketsLeft: Number(formData.totalTickets),
-      totalTickets: Number(formData.totalTickets),
-      status: formData.status,
-      updatedAt: new Date().toISOString().split("T")[0],
-      metrics: {
-        ratingRange: {
-          min: Number(formData.ratingMin),
-          max: Number(formData.ratingMax),
-        },
-        reviewsRange: {
-          min: Number(formData.reviewsMin),
-          max: Number(formData.reviewsMax),
-        },
-        viewsTodayRange: {
-          min: Number(formData.viewsTodayMin),
-          max: Number(formData.viewsTodayMax),
-        },
-        bookingsTodayRange: {
-          min: Number(formData.bookingsTodayMin),
-          max: Number(formData.bookingsTodayMax),
-        },
-        ticketsLeftRange: {
-          min: Number(formData.ticketsLeftMin),
-          max: Number(formData.ticketsLeftMax),
-        },
-      },
-    };
-
-    setEvents(
-      events.map((event) =>
-        event.id === editingEvent.id ? updatedEvent : event
-      )
-    );
-    resetForm();
-    setIsEditModalOpen(false);
-    setEditingEvent(null);
-  };
-
-  // Handle delete event
-  const handleDeleteEvent = (id: number) => {
-    setEvents(events.filter((event) => event.id !== id));
-    setDeleteEventId(null);
-  };
-
-  // Open edit modal
-  const openEditModal = (event: Event) => {
-    setEditingEvent(event);
-    setFormData({
-      title: event.title,
-      date: event.date,
-      time: event.time,
-      location: event.location,
-      price: event.price.toString(),
-      category: event.category,
-      image: event.image,
-      description: event.description,
-      attendees: event.attendees.toString(),
-      totalTickets: event.totalTickets.toString(),
-      featured: event.featured,
-      trending: event.trending,
-      status: event.status,
-      ratingMin: event.metrics.ratingRange.min.toString(),
-      ratingMax: event.metrics.ratingRange.max.toString(),
-      reviewsMin: event.metrics.reviewsRange.min.toString(),
-      reviewsMax: event.metrics.reviewsRange.max.toString(),
-      viewsTodayMin: event.metrics.viewsTodayRange.min.toString(),
-      viewsTodayMax: event.metrics.viewsTodayRange.max.toString(),
-      bookingsTodayMin: event.metrics.bookingsTodayRange.min.toString(),
-      bookingsTodayMax: event.metrics.bookingsTodayRange.max.toString(),
-      ticketsLeftMin: event.metrics.ticketsLeftRange.min.toString(),
-      ticketsLeftMax: event.metrics.ticketsLeftRange.max.toString(),
-    });
-    setIsEditModalOpen(true);
-  };
-
-  // Get status badge
-  const getStatusBadge = (status: string) => {
-    const statusOption = statusOptions.find((s) => s.value === status);
-    return (
-      <Badge
-        className={`font-mono text-xs border-2 ${
-          statusOption?.color || "bg-gray-50 text-gray-900 border-gray-900"
-        }`}
-      >
-        {statusOption?.label || status}
-      </Badge>
-    );
-  };
-
-  // Event form component
-  const EventForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-8">
+  return (
+    <form onSubmit={handleSubmit(submit)} className="space-y-8">
       {/* Basic Information */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
           <div className="p-2 bg-emerald-50 rounded-lg">
             <Calendar className="h-5 w-5 text-emerald-900" />
           </div>
-          <h3 className="text-lg font-semibold text-zinc-900">
-            Basic Information
-          </h3>
+          <h3 className="text-lg font-semibold text-zinc-900">Basic Information</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <Label
-              htmlFor="title"
-              className="text-sm font-medium text-zinc-700"
-            >
-              Event Title *
-            </Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              placeholder="Enter event title"
-              className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="title">Event Title *</Label>
+            <Input id="title" {...register("title")} placeholder="Enter event title" />
+            {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
           </div>
-          <div className="space-y-3">
-            <Label
-              htmlFor="category"
-              className="text-sm font-medium text-zinc-700"
-            >
-              Category *
-            </Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Category *</Label>
             <Select
-              value={formData.category}
-              onValueChange={(value) =>
-                setFormData({ ...formData, category: value })
-              }
+              value={categoryValue || ""}
+              onValueChange={(v) => setValue("category", v, { shouldValidate: true })}
             >
-              <SelectTrigger className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20">
+              <SelectTrigger id="category">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {errors.category && <p className="text-xs text-red-600">{errors.category.message}</p>}
           </div>
         </div>
 
+        {/* Date/Time/Price */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-3">
-            <Label htmlFor="date" className="text-sm font-medium text-zinc-700">
-              Date *
-            </Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) =>
-                setFormData({ ...formData, date: e.target.value })
-              }
-              className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
+            <Input id="date" type="date" {...register("date")} />
+            {errors.date && <p className="text-xs text-red-600">{errors.date.message}</p>}
           </div>
-          <div className="space-y-3">
-            <Label htmlFor="time" className="text-sm font-medium text-zinc-700">
-              Time *
-            </Label>
-            <Input
-              id="time"
-              type="time"
-              value={formData.time}
-              onChange={(e) =>
-                setFormData({ ...formData, time: e.target.value })
-              }
-              className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="time">Time</Label>
+            <Input id="time" type="time" {...register("time")} />
+            {errors.time && <p className="text-xs text-red-600">{errors.time.message}</p>}
           </div>
-          <div className="space-y-3">
-            <Label
-              htmlFor="price"
-              className="text-sm font-medium text-zinc-700"
-            >
-              Price ($) *
-            </Label>
-            <Input
-              id="price"
-              type="number"
-              value={formData.price}
-              onChange={(e) =>
-                setFormData({ ...formData, price: e.target.value })
-              }
-              placeholder="0"
-              className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="basePrice">Base Price ($) *</Label>
+            <Input id="basePrice" type="number" step="0.01" {...register("basePrice", { valueAsNumber: true })} />
+            {errors.basePrice && <p className="text-xs text-red-600">{errors.basePrice.message}</p>}
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label
-            htmlFor="location"
-            className="text-sm font-medium text-zinc-700"
-          >
-            Location *
-          </Label>
-          <Input
-            id="location"
-            value={formData.location}
-            onChange={(e) =>
-              setFormData({ ...formData, location: e.target.value })
-            }
-            placeholder="Enter event location"
-            className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-          />
+        <div className="space-y-2">
+          <Label htmlFor="location">Location</Label>
+          <Input id="location" {...register("location")} placeholder="Enter event location" />
+          {errors.location && <p className="text-xs text-red-600">{errors.location.message}</p>}
         </div>
 
-        <div className="space-y-3">
-          <Label htmlFor="image" className="text-sm font-medium text-zinc-700">
-            Image URL
-          </Label>
-          <Input
-            id="image"
-            value={formData.image}
-            onChange={(e) =>
-              setFormData({ ...formData, image: e.target.value })
-            }
-            placeholder="Enter image URL"
-            className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-          />
+        {/* Images */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label>Image</Label>
+            <div className="flex items-center gap-3">
+              <Input type="file" accept="image/*" onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) doUpload(f, "image");
+              }} />
+              <Button type="button" variant="outline" disabled>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+            </div>
+            {!!imageUrl && (
+              <div className="mt-2 size-24 rounded-md overflow-hidden border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrl ?? undefined} alt="image" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {imgProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {imgProgress}%</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Cover Image</Label>
+            <div className="flex items-center gap-3">
+              <Input type="file" accept="image/*" onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) doUpload(f, "coverImage");
+              }} />
+              <Button type="button" variant="outline" disabled>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+            </div>
+            {!!coverUrl && (
+              <div className="mt-2 size-24 rounded-md overflow-hidden border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={coverUrl ?? undefined} alt="cover" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {coverProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {coverProgress}%</p>}
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <Label
-            htmlFor="description"
-            className="text-sm font-medium text-zinc-700"
-          >
-            Description *
-          </Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-            placeholder="Enter event description"
-            className="rounded-xl min-h-[120px] border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-          />
+        {/* Description */}
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea id="description" {...register("description")} className="min-h-[120px]" />
+          {errors.description && <p className="text-xs text-red-600">{errors.description as any}</p>}
+        </div>
+
+        {/* Tags */}
+        <ChipsInput
+          label="Tags"
+          values={tagValues}
+          onChange={(next) => setValue("tags", next, { shouldValidate: true })}
+          placeholder="Type a tag and press Enter"
+          icon={<TagIcon className="h-4 w-4 text-muted-foreground" />}
+        />
+
+        {/* Flags */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+          <div className="flex items-center gap-2">
+            <Checkbox checked={featured} onCheckedChange={(v) => setValue("featured", !!v, { shouldValidate: true })} id="featured" />
+            <Label htmlFor="featured" className="flex items-center gap-1"><Star className="h-4 w-4" /> Featured</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox checked={trending} onCheckedChange={(v) => setValue("trending", !!v, { shouldValidate: true })} id="trending" />
+            <Label htmlFor="trending" className="flex items-center gap-1"><Flame className="h-4 w-4" /> Trending</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox checked={verified} onCheckedChange={(v) => setValue("verified", !!v, { shouldValidate: true })} id="verified" />
+            <Label htmlFor="verified" className="flex items-center gap-1"><ShieldCheck className="h-4 w-4" /> Verified</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox checked={isActive} onCheckedChange={(v) => setValue("isActive", !!v, { shouldValidate: true })} id="isActive" />
+            <Label htmlFor="isActive" className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Active</Label>
+          </div>
+        </div>
+
+        {/* Availability */}
+        <div className="space-y-2">
+          <Label>Availability</Label>
+          <Select value={availability || ""} onValueChange={(v) => setValue("availability", v as any, { shouldValidate: true })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select availability" />
+            </SelectTrigger>
+            <SelectContent>
+              {availabilityOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {errors.availability && <p className="text-xs text-red-600">{errors.availability as any}</p>}
         </div>
       </div>
 
       {/* Event Details */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
-          <div className="p-2 bg-blue-50 rounded-lg">
-            <Users className="h-5 w-5 text-blue-900" />
-          </div>
+          <div className="p-2 bg-blue-50 rounded-lg"><Users className="h-5 w-5 text-blue-900" /></div>
           <h3 className="text-lg font-semibold text-zinc-900">Event Details</h3>
         </div>
 
+        {/* Ticket Types (Create — no 'sold') */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Ticket Types</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => append({ name: "", price: 0, description: "", features: [], total: 0, popular: false })}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add Ticket Type
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            {fields.map((f, idx) => {
+              const features = (watch(`ticketTypes.${idx}.features`) ?? []) as string[];
+              const popular = watch(`ticketTypes.${idx}.popular`) ?? false;
+
+              return (
+                <Card key={f.id} className="p-4 border rounded-xl">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Name *</Label>
+                      <Input {...register(`ticketTypes.${idx}.name`)} />
+                      {(errors.ticketTypes?.[idx] as any)?.name && (
+                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.name?.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Price *</Label>
+                      <Input type="number" step="0.01" {...register(`ticketTypes.${idx}.price`, { valueAsNumber: true })} />
+                      {(errors.ticketTypes?.[idx] as any)?.price && (
+                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.price?.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Total *</Label>
+                      <Input type="number" {...register(`ticketTypes.${idx}.total`, { valueAsNumber: true })} />
+                      {(errors.ticketTypes?.[idx] as any)?.total && (
+                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.total?.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Popular</Label>
+                      <div className="flex items-center h-10 px-3 border rounded-md">
+                        <Checkbox checked={!!popular} onCheckedChange={(v) => setValue(`ticketTypes.${idx}.popular`, !!v, { shouldValidate: true })} />
+                        <span className="ml-2 text-sm text-muted-foreground">Mark as popular</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-3">
+                    <Label>Description</Label>
+                    <Textarea {...register(`ticketTypes.${idx}.description`)} />
+                  </div>
+
+                  <div className="mt-3">
+                    <ChipsInput
+                      label="Features"
+                      values={features}
+                      onChange={(next) => setValue(`ticketTypes.${idx}.features`, next, { shouldValidate: true })}
+                      placeholder="Type a feature and press Enter"
+                    />
+                  </div>
+
+                  <div className="flex justify-end mt-3">
+                    <Button type="button" variant="outline" size="sm" onClick={() => remove(idx)}>
+                      Remove
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" isLoading={submitting}>Create Event</Button>
+      </div>
+    </form>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Edit Event Form — strictly typed to UpdateValues (supports sold & _id)
+ * --------------------------------------------------------------------------*/
+function EditEventForm({
+  defaultValues,
+  onSubmit,
+  submitting,
+  onCancel,
+}: {
+  defaultValues: Partial<UpdateEventFormData>;
+  onSubmit: (data: UpdateEventFormData) => void;
+  submitting: boolean;
+  onCancel: () => void;
+}) {
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<UpdateValues>({
+    resolver: updateResolver,
+    defaultValues: {
+      ...defaultValues,
+    } as UpdateValues,
+    mode: "onChange",
+  });
+
+  const { fields, append, remove } = useFieldArray<UpdateValues, "ticketTypes", "id">({
+    control,
+    name: "ticketTypes" as any,
+  });
+
+  const imageUrl = watch("image") as string | null | undefined;
+  const coverUrl = watch("coverImage") as string | null | undefined;
+  const tagValues = (watch("tags") as string[] | undefined) ?? [];
+  const availability = watch("availability") as string | undefined;
+  const categoryValue = watch("category") as string | undefined;
+  const featured = !!watch("featured");
+  const trending = !!watch("trending");
+  const verified = !!watch("verified");
+  const isActive = !!watch("isActive");
+
+  const [imgProgress, setImgProgress] = useState(0);
+  const [coverProgress, setCoverProgress] = useState(0);
+
+  const doUpload = async (file: File, target: "image" | "coverImage") => {
+    try {
+      const setPct = target === "image" ? setImgProgress : setCoverProgress;
+      setPct(0);
+      const res = await uploadToCloudinary(file, { onProgress: (p) => setPct(p) });
+      setValue(target, res.url as any, { shouldValidate: true, shouldTouch: true });
+      toast.success("Image uploaded");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Upload failed");
+    } finally {
+      setImgProgress(0);
+      setCoverProgress(0);
+    }
+  };
+
+  const submit: SubmitHandler<UpdateValues> = (data) => onSubmit(data as UpdateEventFormData);
+
+  return (
+    <form onSubmit={handleSubmit(submit)} className="space-y-8">
+      {/* Basic Information */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
+          <div className="p-2 bg-emerald-50 rounded-lg">
+            <Calendar className="h-5 w-5 text-emerald-900" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900">Basic Information</h3>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <Label
-              htmlFor="attendees"
-              className="text-sm font-medium text-zinc-700"
-            >
-              Expected Attendees *
-            </Label>
-            <Input
-              id="attendees"
-              type="number"
-              value={formData.attendees}
-              onChange={(e) =>
-                setFormData({ ...formData, attendees: e.target.value })
-              }
-              placeholder="0"
-              className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="title">Event Title</Label>
+            <Input id="title" {...register("title")} placeholder="Enter event title" />
+            {errors.title && <p className="text-xs text-red-600">{errors.title as any}</p>}
           </div>
-          <div className="space-y-3">
-            <Label
-              htmlFor="totalTickets"
-              className="text-sm font-medium text-zinc-700"
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={categoryValue || ""}
+              onValueChange={(v) => setValue("category", v, { shouldValidate: true })}
             >
-              Total Tickets *
-            </Label>
-            <Input
-              id="totalTickets"
-              type="number"
-              value={formData.totalTickets}
-              onChange={(e) =>
-                setFormData({ ...formData, totalTickets: e.target.value })
-              }
-              placeholder="0"
-              className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-            />
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {errors.category && <p className="text-xs text-red-600">{errors.category as any}</p>}
           </div>
+        </div>
+
+        {/* Date/Time/Price */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
+            <Input id="date" type="date" {...register("date")} />
+            {errors.date && <p className="text-xs text-red-600">{errors.date as any}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="time">Time</Label>
+            <Input id="time" type="time" {...register("time")} />
+            {errors.time && <p className="text-xs text-red-600">{errors.time as any}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="basePrice">Base Price ($)</Label>
+            <Input id="basePrice" type="number" step="0.01" {...register("basePrice", { valueAsNumber: true })} />
+            {errors.basePrice && <p className="text-xs text-red-600">{errors.basePrice as any}</p>}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Location</Label>
+          <Input id="location" {...register("location")} placeholder="Enter event location" />
+          {errors.location && <p className="text-xs text-red-600">{errors.location as any}</p>}
+        </div>
+
+        {/* Images */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label>Image</Label>
+            <div className="flex items-center gap-3">
+              <Input type="file" accept="image/*" onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) doUpload(f, "image");
+              }} />
+              <Button type="button" variant="outline" disabled>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+            </div>
+            {!!imageUrl && (
+              <div className="mt-2 size-24 rounded-md overflow-hidden border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrl ?? undefined} alt="image" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {imgProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {imgProgress}%</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Cover Image</Label>
+            <div className="flex items-center gap-3">
+              <Input type="file" accept="image/*" onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) doUpload(f, "coverImage");
+              }} />
+              <Button type="button" variant="outline" disabled>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+            </div>
+            {!!coverUrl && (
+              <div className="mt-2 size-24 rounded-md overflow-hidden border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={coverUrl ?? undefined} alt="cover" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {coverProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {coverProgress}%</p>}
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea id="description" {...register("description")} className="min-h-[120px]" />
+          {errors.description && <p className="text-xs text-red-600">{errors.description as any}</p>}
+        </div>
+
+        {/* Tags */}
+        <ChipsInput
+          label="Tags"
+          values={tagValues}
+          onChange={(next) => setValue("tags", next, { shouldValidate: true })}
+          placeholder="Type a tag and press Enter"
+          icon={<TagIcon className="h-4 w-4 text-muted-foreground" />}
+        />
+
+        {/* Flags */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+          <div className="flex items-center gap-2">
+            <Checkbox checked={featured} onCheckedChange={(v) => setValue("featured", !!v, { shouldValidate: true })} id="featured_e" />
+            <Label htmlFor="featured_e" className="flex items-center gap-1"><Star className="h-4 w-4" /> Featured</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox checked={trending} onCheckedChange={(v) => setValue("trending", !!v, { shouldValidate: true })} id="trending_e" />
+            <Label htmlFor="trending_e" className="flex items-center gap-1"><Flame className="h-4 w-4" /> Trending</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox checked={verified} onCheckedChange={(v) => setValue("verified", !!v, { shouldValidate: true })} id="verified_e" />
+            <Label htmlFor="verified_e" className="flex items-center gap-1"><ShieldCheck className="h-4 w-4" /> Verified</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox checked={isActive} onCheckedChange={(v) => setValue("isActive", !!v, { shouldValidate: true })} id="active_e" />
+            <Label htmlFor="active_e" className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Active</Label>
+          </div>
+        </div>
+
+        {/* Availability */}
+        <div className="space-y-2">
+          <Label>Availability</Label>
+          <Select value={availability || ""} onValueChange={(v) => setValue("availability", v as any, { shouldValidate: true })}>
+            <SelectTrigger><SelectValue placeholder="Select availability" /></SelectTrigger>
+            <SelectContent>
+              {availabilityOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {errors.availability && <p className="text-xs text-red-600">{errors.availability as any}</p>}
+        </div>
+      </div>
+
+      {/* Ticket Types (Update — supports sold & _id) */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
+          <div className="p-2 bg-blue-50 rounded-lg"><Users className="h-5 w-5 text-blue-900" /></div>
+          <h3 className="text-lg font-semibold text-zinc-900">Ticket Types</h3>
         </div>
 
         <div className="space-y-3">
-          <Label htmlFor="status" className="text-sm font-medium text-zinc-700">
-            Status *
-          </Label>
-          <Select
-            value={formData.status}
-            onValueChange={(value) =>
-              setFormData({ ...formData, status: value })
-            }
-          >
-            <SelectTrigger className="rounded-xl border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((status) => (
-                <SelectItem key={status.value} value={status.value}>
-                  {status.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="featured"
-              checked={formData.featured}
-              onChange={(e) =>
-                setFormData({ ...formData, featured: e.target.checked })
+          <div className="flex items-center justify-between">
+            <Label>Manage ticket tiers</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                append({
+                  name: "",
+                  price: 0,
+                  description: "",
+                  features: [],
+                  total: 0,
+                  sold: 0,
+                  popular: false,
+                } as z.infer<typeof TicketTypeUpdateSchema>)
               }
-              className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-            />
-            <Label
-              htmlFor="featured"
-              className="text-sm font-medium text-zinc-700"
             >
-              Featured Event
-            </Label>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add Ticket Type
+            </Button>
           </div>
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="trending"
-              checked={formData.trending}
-              onChange={(e) =>
-                setFormData({ ...formData, trending: e.target.checked })
-              }
-              className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-            />
-            <Label
-              htmlFor="trending"
-              className="text-sm font-medium text-zinc-700"
-            >
-              Trending Event
-            </Label>
+
+          <div className="space-y-4">
+            {fields.map((f, idx) => {
+              const features = (watch(`ticketTypes.${idx}.features`) ?? []) as string[];
+              const popular = watch(`ticketTypes.${idx}.popular`) ?? false;
+
+              return (
+                <Card key={f.id} className="p-4 border rounded-xl">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="space-y-2">
+                      <Label>Name</Label>
+                      <Input {...register(`ticketTypes.${idx}.name`)} />
+                      {(errors.ticketTypes?.[idx] as any)?.name && (
+                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.name?.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Price</Label>
+                      <Input type="number" step="0.01" {...register(`ticketTypes.${idx}.price`, { valueAsNumber: true })} />
+                      {(errors.ticketTypes?.[idx] as any)?.price && (
+                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.price?.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Total</Label>
+                      <Input type="number" {...register(`ticketTypes.${idx}.total`, { valueAsNumber: true })} />
+                      {(errors.ticketTypes?.[idx] as any)?.total && (
+                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.total?.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Sold</Label>
+                      <Input type="number" {...register(`ticketTypes.${idx}.sold`, { valueAsNumber: true })} />
+                      {(errors.ticketTypes?.[idx] as any)?.sold && (
+                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.sold?.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Popular</Label>
+                      <div className="flex items-center h-10 px-3 border rounded-md">
+                        <Checkbox
+                          checked={!!popular}
+                          onCheckedChange={(v) => setValue(`ticketTypes.${idx}.popular`, !!v, { shouldValidate: true })}
+                        />
+                        <span className="ml-2 text-sm text-muted-foreground">Mark as popular</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-3">
+                    <Label>Description</Label>
+                    <Textarea {...register(`ticketTypes.${idx}.description`)} />
+                  </div>
+
+                  <div className="mt-3">
+                    <ChipsInput
+                      label="Features"
+                      values={features}
+                      onChange={(next) => setValue(`ticketTypes.${idx}.features`, next, { shouldValidate: true })}
+                      placeholder="Type a feature and press Enter"
+                    />
+                  </div>
+
+                  <div className="flex justify-end mt-3">
+                    <Button type="button" variant="outline" size="sm" onClick={() => remove(idx)}>
+                      Remove
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Dynamic Metrics */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
-          <div className="p-2 bg-purple-50 rounded-lg">
-            <TrendingUp className="h-5 w-5 text-purple-900" />
-          </div>
-          <h3 className="text-lg font-semibold text-zinc-900">
-            Dynamic Metrics Ranges
-          </h3>
-          <Badge
-            variant="outline"
-            className="text-xs text-purple-600 border-purple-200"
-          >
-            For Real-time Display
-          </Badge>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Rating Range */}
-          <div className="space-y-4 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-yellow-600" />
-              <Label className="text-sm font-medium text-zinc-700">
-                Rating Range
-              </Label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="ratingMin" className="text-xs text-zinc-600">
-                  Min Rating
-                </Label>
-                <Input
-                  id="ratingMin"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="5"
-                  value={formData.ratingMin}
-                  onChange={(e) =>
-                    setFormData({ ...formData, ratingMin: e.target.value })
-                  }
-                  className="rounded-lg border-yellow-200 focus:border-yellow-500 focus:ring-yellow-500/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ratingMax" className="text-xs text-zinc-600">
-                  Max Rating
-                </Label>
-                <Input
-                  id="ratingMax"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="5"
-                  value={formData.ratingMax}
-                  onChange={(e) =>
-                    setFormData({ ...formData, ratingMax: e.target.value })
-                  }
-                  className="rounded-lg border-yellow-200 focus:border-yellow-500 focus:ring-yellow-500/20"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Reviews Range */}
-          <div className="space-y-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-600" />
-              <Label className="text-sm font-medium text-zinc-700">
-                Reviews Range
-              </Label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="reviewsMin" className="text-xs text-zinc-600">
-                  Min Reviews
-                </Label>
-                <Input
-                  id="reviewsMin"
-                  type="number"
-                  value={formData.reviewsMin}
-                  onChange={(e) =>
-                    setFormData({ ...formData, reviewsMin: e.target.value })
-                  }
-                  className="rounded-lg border-blue-200 focus:border-blue-500 focus:ring-blue-500/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reviewsMax" className="text-xs text-zinc-600">
-                  Max Reviews
-                </Label>
-                <Input
-                  id="reviewsMax"
-                  type="number"
-                  value={formData.reviewsMax}
-                  onChange={(e) =>
-                    setFormData({ ...formData, reviewsMax: e.target.value })
-                  }
-                  className="rounded-lg border-blue-200 focus:border-blue-500 focus:ring-blue-500/20"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Views Today Range */}
-          <div className="space-y-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-green-600" />
-              <Label className="text-sm font-medium text-zinc-700">
-                Views Today Range
-              </Label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="viewsTodayMin"
-                  className="text-xs text-zinc-600"
-                >
-                  Min Views
-                </Label>
-                <Input
-                  id="viewsTodayMin"
-                  type="number"
-                  value={formData.viewsTodayMin}
-                  onChange={(e) =>
-                    setFormData({ ...formData, viewsTodayMin: e.target.value })
-                  }
-                  className="rounded-lg border-green-200 focus:border-green-500 focus:ring-green-500/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="viewsTodayMax"
-                  className="text-xs text-zinc-600"
-                >
-                  Max Views
-                </Label>
-                <Input
-                  id="viewsTodayMax"
-                  type="number"
-                  value={formData.viewsTodayMax}
-                  onChange={(e) =>
-                    setFormData({ ...formData, viewsTodayMax: e.target.value })
-                  }
-                  className="rounded-lg border-green-200 focus:border-green-500 focus:ring-green-500/20"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Bookings Today Range */}
-          <div className="space-y-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-purple-600" />
-              <Label className="text-sm font-medium text-zinc-700">
-                Bookings Today Range
-              </Label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="bookingsTodayMin"
-                  className="text-xs text-zinc-600"
-                >
-                  Min Bookings
-                </Label>
-                <Input
-                  id="bookingsTodayMin"
-                  type="number"
-                  value={formData.bookingsTodayMin}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      bookingsTodayMin: e.target.value,
-                    })
-                  }
-                  className="rounded-lg border-purple-200 focus:border-purple-500 focus:ring-purple-500/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="bookingsTodayMax"
-                  className="text-xs text-zinc-600"
-                >
-                  Max Bookings
-                </Label>
-                <Input
-                  id="bookingsTodayMax"
-                  type="number"
-                  value={formData.bookingsTodayMax}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      bookingsTodayMax: e.target.value,
-                    })
-                  }
-                  className="rounded-lg border-purple-200 focus:border-purple-500 focus:ring-purple-500/20"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Tickets Left Range */}
-          <div className="space-y-4 p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200 md:col-span-2">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-red-600" />
-              <Label className="text-sm font-medium text-zinc-700">
-                Tickets Left Range
-              </Label>
-            </div>
-            <div className="grid grid-cols-2 gap-3 max-w-md">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="ticketsLeftMin"
-                  className="text-xs text-zinc-600"
-                >
-                  Min Tickets Left
-                </Label>
-                <Input
-                  id="ticketsLeftMin"
-                  type="number"
-                  value={formData.ticketsLeftMin}
-                  onChange={(e) =>
-                    setFormData({ ...formData, ticketsLeftMin: e.target.value })
-                  }
-                  className="rounded-lg border-red-200 focus:border-red-500 focus:ring-red-500/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="ticketsLeftMax"
-                  className="text-xs text-zinc-600"
-                >
-                  Max Tickets Left
-                </Label>
-                <Input
-                  id="ticketsLeftMax"
-                  type="number"
-                  value={formData.ticketsLeftMax}
-                  onChange={(e) =>
-                    setFormData({ ...formData, ticketsLeftMax: e.target.value })
-                  }
-                  className="rounded-lg border-red-200 focus:border-red-500 focus:ring-red-500/20"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex justify-end gap-3 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" isLoading={submitting}>Save Changes</Button>
       </div>
-    </div>
+    </form>
   );
+}
+
+/* ----------------------------------------------------------------------------
+ * Page: ManageEventsPage
+ * --------------------------------------------------------------------------*/
+type ConfirmState = {
+  open: boolean;
+  tone?: "danger" | "default";
+  title: React.ReactNode;
+  onYes?: () => Promise<void> | void;
+  confirming?: boolean;
+};
+
+export default function ManageEventsPage() {
+  const [items, setItems] = useState<Event[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [category, setCategory] = useState<string | undefined>(undefined);
+  const [onlyActive, setOnlyActive] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selected, setSelected] = useState<Event | null>(null);
+
+  const [confirm, setConfirm] = useState<ConfirmState>({
+    open: false,
+    title: <></>,
+    tone: "default",
+    confirming: false,
+  });
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await AdminEventsApi.list({
+        page,
+        limit,
+        search: searchTerm || undefined,
+        category: category || undefined,
+        onlyActive,
+      } as any);
+      setItems(res.items);
+      setTotal(res.total);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to load events");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit, searchTerm, category, onlyActive]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  // Create
+  const [submittingCreate, setSubmittingCreate] = useState(false);
+  const handleCreate = (data: CreateEventFormData) => {
+    setConfirm({
+      open: true,
+      title: <>Create this event?</>,
+      onYes: async () => {
+        try {
+          setSubmittingCreate(true);
+          const created = await AdminEventsApi.create(data);
+          toast.success("Event created");
+          setCreateOpen(false);
+          setPage(1);
+          await load();
+          setSelected(created);
+          setDetailsOpen(true);
+        } catch (err: any) {
+          toast.error(err?.response?.data?.message || err?.message || "Create failed");
+        } finally {
+          setSubmittingCreate(false);
+          setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
+        }
+      },
+      confirming: false,
+    });
+  };
+
+  // Edit
+  const [submittingEdit, setSubmittingEdit] = useState(false);
+  const startEdit = (ev: Event) => {
+    setSelected(ev);
+    setEditOpen(true);
+  };
+
+  const handleEdit = (data: UpdateEventFormData) => {
+    if (!selected?._id) return;
+    setConfirm({
+      open: true,
+      title: <>Save changes to “{selected.title}”?</>,
+      onYes: async () => {
+        try {
+          setSubmittingEdit(true);
+          const updated = await AdminEventsApi.update(selected._id, data);
+          toast.success("Event updated");
+          setEditOpen(false);
+          setItems((prev) => prev.map((it) => (it._id === updated._id ? updated : it)));
+          setSelected(updated);
+          setDetailsOpen(true);
+        } catch (err: any) {
+          toast.error(err?.response?.data?.message || err?.message || "Update failed");
+        } finally {
+          setSubmittingEdit(false);
+          setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
+        }
+      },
+    });
+  };
+
+  // Delete
+  const removeEvent = (ev: Event) => {
+    setConfirm({
+      open: true,
+      tone: "danger",
+      title: <>Delete “{ev.title}”? This cannot be undone.</>,
+      onYes: async () => {
+        try {
+          await AdminEventsApi.remove(ev._id);
+          toast.success("Event deleted");
+          await load();
+        } catch (err: any) {
+          toast.error(err?.response?.data?.message || err?.message || "Delete failed");
+        } finally {
+          setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
+        }
+      },
+    });
+  };
+
+  // Toggle active
+  const toggleActive = async (ev: Event) => {
+    try {
+      const next = !ev.isActive;
+      const updated = await AdminEventsApi.toggleActive(ev._id, next);
+      setItems((prev) => prev.map((x) => (x._id === ev._id ? updated : x)));
+      toast.success(next ? "Event activated" : "Event deactivated");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Toggle failed");
+    }
+  };
+
+  const shareEvent = async (ev: Event) => {
+    const url = typeof window !== "undefined" ? `${location.origin}/events/${ev.slug}` : ev.slug;
+    const shareData = { title: ev.title, text: ev.description || ev.title, url };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Event link copied");
+      }
+    } catch {
+      // no-op
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -1057,366 +1277,206 @@ export default function ManageEventsPage() {
           <div className="@container/main flex flex-1 flex-col gap-2 px-2 sm:px-3">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <DynamicPageHeader
-                title={
-                  <>
-                    <span className="text-zinc-500">Manage</span> Events
-                  </>
-                }
+                title={<><span className="text-zinc-500">Manage</span> Events</>}
                 subtitle="Create, edit, and manage all platform events"
                 actionButton={{
                   text: "Create Event",
                   icon: <PlusIcon className="size-4" />,
-                  onClick: () => {
-                    resetForm();
-                    setIsCreateModalOpen(true);
-                  },
+                  onClick: () => setCreateOpen(true),
                 }}
               />
 
-              {/* Stats Cards */}
-              <div className="px-2 sm:px-4 lg:px-6">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="size-10 rounded-xl bg-emerald-50 border-2 border-emerald-900 flex items-center justify-center">
-                        <Calendar className="size-5 text-emerald-900" />
-                      </div>
-                      <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
-                        +12.5%
-                      </Badge>
-                    </div>
-                    <p className="text-xs font-mono text-zinc-600 mb-1">
-                      TOTAL EVENTS
-                    </p>
-                    <p className="text-2xl font-bold text-emerald-900">
-                      {events.length}
-                    </p>
-                  </Card>
-
-                  <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="size-10 rounded-xl bg-orange-50 border-2 border-orange-900 flex items-center justify-center">
-                        <Flame className="size-5 text-orange-900" />
-                      </div>
-                      <Badge className="bg-orange-50 text-orange-900 border-2 border-orange-900 font-mono text-xs">
-                        +8.3%
-                      </Badge>
-                    </div>
-                    <p className="text-xs font-mono text-zinc-600 mb-1">
-                      FEATURED EVENTS
-                    </p>
-                    <p className="text-2xl font-bold text-orange-900">
-                      {events.filter((e) => e.featured).length}
-                    </p>
-                  </Card>
-
-                  <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="size-10 rounded-xl bg-purple-50 border-2 border-purple-900 flex items-center justify-center">
-                        <TrendingUp className="size-5 text-purple-900" />
-                      </div>
-                      <Badge className="bg-purple-50 text-purple-900 border-2 border-purple-900 font-mono text-xs">
-                        +15.2%
-                      </Badge>
-                    </div>
-                    <p className="text-xs font-mono text-zinc-600 mb-1">
-                      TRENDING EVENTS
-                    </p>
-                    <p className="text-2xl font-bold text-purple-900">
-                      {events.filter((e) => e.trending).length}
-                    </p>
-                  </Card>
-
-                  <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="size-10 rounded-xl bg-blue-50 border-2 border-blue-900 flex items-center justify-center">
-                        <Users className="size-5 text-blue-900" />
-                      </div>
-                      <Badge className="bg-blue-50 text-blue-900 border-2 border-blue-900 font-mono text-xs">
-                        +23.1%
-                      </Badge>
-                    </div>
-                    <p className="text-xs font-mono text-zinc-600 mb-1">
-                      TOTAL ATTENDEES
-                    </p>
-                    <p className="text-2xl font-bold text-blue-900">
-                      {events
-                        .reduce((sum, e) => sum + e.attendees, 0)
-                        .toLocaleString()}
-                    </p>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Filters and Search */}
+              {/* Filters */}
               <div className="px-2 sm:px-4 lg:px-6">
                 <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
                   <div className="flex flex-col gap-4">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                       <Input
                         placeholder="Search events..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => { setPage(1); setSearchTerm(e.target.value); }}
                         className="pl-10 rounded-xl"
                       />
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Select
-                        value={selectedCategory}
-                        onValueChange={setSelectedCategory}
+                        value={category || "All"}
+                        onValueChange={(v) => { setPage(1); setCategory(v === "All" ? undefined : v); }}
                       >
                         <SelectTrigger className="w-full sm:w-40 rounded-xl">
                           <SelectValue placeholder="Category" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="All">All Categories</SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
+                          {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                         </SelectContent>
                       </Select>
 
                       <Select
-                        value={selectedStatus}
-                        onValueChange={setSelectedStatus}
+                        value={onlyActive ? "active" : "all"}
+                        onValueChange={(v) => { setPage(1); setOnlyActive(v === "active"); }}
                       >
                         <SelectTrigger className="w-full sm:w-40 rounded-xl">
                           <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="All">All Status</SelectItem>
-                          {statusOptions.map((status) => (
-                            <SelectItem key={status.value} value={status.value}>
-                              {status.label}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="active">Only Active</SelectItem>
+                          <SelectItem value="all">All</SelectItem>
                         </SelectContent>
                       </Select>
 
-                      <Button
-                        variant="outline"
-                        onClick={refreshEventMetrics}
-                        className="rounded-xl border-purple-200 text-purple-700 hover:bg-purple-50"
+                      <Select
+                        value={String(limit)}
+                        onValueChange={(v) => { setPage(1); setLimit(Number(v)); }}
                       >
-                        <TrendingUp className="h-4 w-4 mr-2" />
-                        Refresh Metrics
-                      </Button>
-
-                      {(searchTerm ||
-                        selectedCategory !== "All" ||
-                        selectedStatus !== "All") && (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setSearchTerm("");
-                            setSelectedCategory("All");
-                            setSelectedStatus("All");
-                          }}
-                          className="rounded-xl"
-                        >
-                          Clear Filters
-                        </Button>
-                      )}
+                        <SelectTrigger className="w-full sm:w-40 rounded-xl">
+                          <SelectValue placeholder="Per page" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-muted-foreground">
-                        {filteredEvents.length} events found
+                        {loading ? "Loading…" : `${items.length} of ${total} events`}
                       </p>
                     </div>
                   </div>
                 </Card>
               </div>
 
-              {/* Events Table */}
+              {/* Table */}
               <div className="px-2 sm:px-4 lg:px-6">
                 <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
                   <div className="border-2 border-zinc-200 rounded-2xl overflow-hidden">
                     <Table>
                       <TableHeader className="bg-zinc-50">
                         <TableRow>
-                          <TableHead className="font-mono text-xs">
-                            EVENT
-                          </TableHead>
-                          <TableHead className="font-mono text-xs">
-                            CATEGORY
-                          </TableHead>
-                          <TableHead className="font-mono text-xs">
-                            DATE & TIME
-                          </TableHead>
-                          <TableHead className="font-mono text-xs">
-                            LOCATION
-                          </TableHead>
-                          <TableHead className="font-mono text-xs">
-                            PRICE
-                          </TableHead>
-                          <TableHead className="font-mono text-xs">
-                            STATUS
-                          </TableHead>
-                          <TableHead className="font-mono text-xs">
-                            ATTENDEES
-                          </TableHead>
-                          <TableHead className="font-mono text-xs">
-                            ACTIONS
-                          </TableHead>
+                          <TableHead className="font-mono text-xs">EVENT</TableHead>
+                          <TableHead className="font-mono text-xs">CATEGORY</TableHead>
+                          <TableHead className="font-mono text-xs">DATE & TIME</TableHead>
+                          <TableHead className="font-mono text-xs">LOCATION</TableHead>
+                          <TableHead className="font-mono text-xs">PRICE</TableHead>
+                          <TableHead className="font-mono text-xs">AVAILABILITY</TableHead>
+                          <TableHead className="font-mono text-xs">ACTIONS</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredEvents.map((event) => (
-                          <TableRow
-                            key={event.id}
-                            className="hover:bg-zinc-50 transition-colors"
-                          >
+                        {items.map((ev) => (
+                          <TableRow key={ev._id} className="hover:bg-zinc-50">
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <div className="size-12 rounded-lg overflow-hidden border-2 border-zinc-200">
-                                  <img
-                                    src={event.image || "/placeholder.svg"}
-                                    alt={event.title}
-                                    className="w-full h-full object-cover"
-                                  />
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={ev.image || "/placeholder.svg"} alt={ev.title} className="w-full h-full object-cover" />
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-foreground">
-                                    {event.title}
-                                  </p>
+                                  <p className="font-semibold">{ev.title}</p>
                                   <div className="flex items-center gap-2 mt-1">
-                                    {event.featured && (
-                                      <Badge className="bg-emerald-50 text-emerald-900 border-emerald-900 text-xs">
-                                        Featured
-                                      </Badge>
+                                    {ev.featured && <Badge className="text-xs">Featured</Badge>}
+                                    {ev.trending && <Badge className="text-xs">Trending</Badge>}
+                                    {ev.verified && <Badge variant="outline" className="text-xs">Verified</Badge>}
+                                    {ev.isActive ? (
+                                      <Badge variant="outline" className="text-xs border-emerald-700 text-emerald-800">Active</Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-xs border-zinc-400 text-zinc-700">Inactive</Badge>
                                     )}
-                                    {event.trending && (
-                                      <Badge className="bg-orange-50 text-orange-900 border-orange-900 text-xs">
-                                        <TrendingUp className="h-3 w-3 mr-1" />
-                                        Trending
-                                      </Badge>
-                                    )}
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                                    <span>⭐ {typeof ev.rating === "number" ? ev.rating.toFixed(1) : "—"}</span>
+                                    <span>Reviews: {ev.totalReviews ?? 0}</span>
+                                    <span>Sold: {ev.ticketsSold ?? 0}</span>
+                                    <span>Views: {ev.views ?? 0}</span>
                                   </div>
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-xs">
-                                {event.category}
-                              </Badge>
-                            </TableCell>
+                            <TableCell><Badge variant="outline" className="text-xs">{ev.category}</Badge></TableCell>
                             <TableCell>
                               <div>
-                                <p className="font-medium text-foreground">
-                                  {event.date}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {event.time}
-                                </p>
+                                <p className="font-medium">{ev.date}</p>
+                                <p className="text-sm text-muted-foreground">{ev.time}</p>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-sm">
-                                  {event.location}
-                                </span>
+                                <span className="text-sm truncate">{ev.location}</span>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-3 w-3 text-muted-foreground" />
-                                <span className="font-mono font-semibold">
-                                  ${event.price}
-                                </span>
+                                <span className="font-mono font-semibold">${ev.basePrice}</span>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              {getStatusBadge(event.status)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Users className="h-3 w-3 text-muted-foreground" />
-                                <span className="font-mono text-sm">
-                                  {event.attendees.toLocaleString()}
-                                </span>
-                              </div>
-                            </TableCell>
+                            <TableCell><Badge variant="outline" className="text-xs">{ev.availability || "—"}</Badge></TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg" onClick={() => { setSelected(ev); setDetailsOpen(true); }}>
+                                  <Eye className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg" onClick={() => startEdit(ev)}>
+                                  <Edit className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg" onClick={() => shareEvent(ev)}>
+                                  <Share2 className="h-3.5 w-3.5" />
+                                </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => openEditModal(event)}
-                                  className="h-8 w-8 p-0 rounded-lg"
+                                  className={`h-8 w-8 p-0 rounded-lg ${ev.isActive ? "text-emerald-700" : "text-zinc-700"}`}
+                                  onClick={() => toggleActive(ev)}
+                                  title={ev.isActive ? "Deactivate" : "Activate"}
                                 >
-                                  <Edit className="h-3 w-3" />
+                                  {ev.isActive ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
                                 </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-8 w-8 p-0 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Delete Event
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to delete "
-                                        {event.title}"? This action cannot be
-                                        undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Cancel
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() =>
-                                          handleDeleteEvent(event.id)
-                                        }
-                                        className="bg-red-600 hover:bg-red-700"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 w-8 p-0 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => removeEvent(ev)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))}
+                        {!loading && items.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-12">
+                              <div className="flex flex-col items-center">
+                                <Calendar className="h-10 w-10 text-muted-foreground mb-2" />
+                                <div className="text-sm text-muted-foreground">No events found</div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </TableBody>
                     </Table>
                   </div>
 
-                  {filteredEvents.length === 0 && (
-                    <div className="text-center py-12 border border-border rounded-xl">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-bold text-zinc-800 mb-2">
-                        No events found
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Try adjusting your search criteria or create a new event
-                      </p>
-                      <Button
-                        onClick={() => {
-                          resetForm();
-                          setIsCreateModalOpen(true);
-                        }}
-                        className="bg-emerald-900 hover:bg-emerald-900/90 text-zinc-100"
-                      >
-                        <PlusIcon className="h-4 w-4 mr-2" />
-                        Create Event
+                  {/* Pagination */}
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      {total} total · page {page} / {totalPages}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={loading || page <= 1}>
+                        Prev
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={loading || page >= totalPages}>
+                        Next
                       </Button>
                     </div>
-                  )}
+                  </div>
                 </Card>
               </div>
             </div>
@@ -1424,66 +1484,54 @@ export default function ManageEventsPage() {
         </div>
       </SidebarInset>
 
-      {/* Create Event Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      {/* Create Modal */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              Create New Event
-            </DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Create New Event</DialogTitle>
           </DialogHeader>
-          <EventForm />
-          <div className="flex justify-end gap-3 pt-6">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetForm();
-                setIsCreateModalOpen(false);
-              }}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateEvent}
-              className="bg-emerald-900 hover:bg-emerald-900/90 text-zinc-100 rounded-xl"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Create Event
-            </Button>
-          </div>
+          <CreateEventForm
+            submitting={submittingCreate}
+            onSubmit={handleCreate}
+            onCancel={() => setCreateOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 
-      {/* Edit Event Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      {/* Edit Modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Edit Event</DialogTitle>
           </DialogHeader>
-          <EventForm isEdit={true} />
-          <div className="flex justify-end gap-3 pt-6">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetForm();
-                setIsEditModalOpen(false);
-                setEditingEvent(null);
-              }}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleEditEvent}
-              className="bg-emerald-900 hover:bg-emerald-900/90 text-zinc-100 rounded-xl"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
+          {selected && (
+            <EditEventForm
+              defaultValues={selected as any}
+              submitting={submittingEdit}
+              onSubmit={handleEdit}
+              onCancel={() => setEditOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
+
+      {/* Details Modal */}
+      <AdminEventDetailsModal open={detailsOpen} onOpenChange={setDetailsOpen} event={selected} />
+
+      {/* Global Confirm */}
+      <ConfirmDialog
+        open={confirm.open}
+        onOpenChange={(v) => setConfirm((c) => ({ ...c, open: v }))}
+        title={confirm.title || "Are you sure?"}
+        tone={confirm.tone || "default"}
+        confirming={confirm.confirming}
+        onConfirm={async () => {
+          if (!confirm.onYes) return;
+          setConfirm((c) => ({ ...c, confirming: true }));
+          await confirm.onYes();
+          setConfirm((c) => ({ ...c, confirming: false, open: false, onYes: undefined }));
+        }}
+      />
     </SidebarProvider>
   );
 }

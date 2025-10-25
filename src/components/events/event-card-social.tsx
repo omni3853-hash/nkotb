@@ -17,11 +17,9 @@ import {
   Share2,
   Bookmark,
   Zap,
-  ArrowRight,
-  MoreHorizontal,
 } from "lucide-react";
 
-interface Event {
+export interface EventCardModel {
   id: number;
   title: string;
   date: string;
@@ -40,35 +38,27 @@ interface Event {
   reviews: number;
   viewsToday: number;
   bookingsToday: number;
-  status: string;
-  startTime: Date;
+  status: "available" | "selling-fast" | "almost-full" | "hot" | "sold-out" | string;
+  startTime?: Date;
 }
 
 interface EventCardSocialProps {
-  event: Event;
+  event: EventCardModel;
   viewMode: "grid" | "list";
   onClick: () => void;
 }
 
-export function EventCardSocial({
-  event,
-  viewMode,
-  onClick,
-}: EventCardSocialProps) {
+export function EventCardSocial({ event, viewMode, onClick }: EventCardSocialProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(
-    Math.floor(Math.random() * 50) + 10
-  );
-  const [shareCount, setShareCount] = useState(
-    Math.floor(Math.random() * 20) + 5
-  );
-  const [liveViewers, setLiveViewers] = useState(
-    Math.floor(Math.random() * 15) + 3
-  );
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 50) + 10);
+  const [shareCount, setShareCount] = useState(Math.floor(Math.random() * 20) + 5);
+  const [liveViewers] = useState(Math.floor(Math.random() * 15) + 3);
 
   const ticketPercentage =
-    ((event.totalTickets - event.ticketsLeft) / event.totalTickets) * 100;
+    event.totalTickets > 0
+      ? ((event.totalTickets - event.ticketsLeft) / event.totalTickets) * 100
+      : 0;
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -81,11 +71,9 @@ export function EventCardSocial({
     setIsBookmarked(!isBookmarked);
   };
 
-  const handleShare = (e: React.MouseEvent) => {
+  const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setShareCount((prev) => prev + 1);
-    // In a real app, this would open share dialog
-    console.log(`Sharing event: ${event.title}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -96,8 +84,10 @@ export function EventCardSocial({
         return "bg-red-500 text-white";
       case "hot":
         return "bg-red-600 text-white";
+      case "sold-out":
+        return "bg-zinc-500 text-white";
       default:
-        return "bg-emerald-500 text-white";
+        return "bg-emerald-600 text-white";
     }
   };
 
@@ -109,6 +99,8 @@ export function EventCardSocial({
         return "Almost Full";
       case "hot":
         return "Hot Event";
+      case "sold-out":
+        return "Sold Out";
       default:
         return "Available";
     }
@@ -117,7 +109,7 @@ export function EventCardSocial({
   if (viewMode === "list") {
     return (
       <Card className="border border-zinc-200 bg-white hover:border-emerald-300 hover:shadow-lg transition-all duration-300 cursor-pointer group">
-        <div className="flex flex-col md:flex-row">
+        <div className="flex flex-col md:flex-row" onClick={onClick}>
           {/* Image Section */}
           <div className="relative w-full md:w-80 h-48 md:h-auto overflow-hidden">
             <img
@@ -129,12 +121,8 @@ export function EventCardSocial({
 
             {/* Status Badge */}
             <div className="absolute top-3 left-3">
-              <Badge
-                className={`${getStatusColor(event.status)} border-0 text-xs`}
-              >
-                {event.status === "selling-fast" && (
-                  <Zap className="size-3 mr-1" />
-                )}
+              <Badge className={`${getStatusColor(event.status)} border-0 text-xs`}>
+                {event.status === "selling-fast" && <Zap className="size-3 mr-1" />}
                 {event.status === "hot" && <Flame className="size-3 mr-1" />}
                 {getStatusText(event.status)}
               </Badge>
@@ -152,37 +140,8 @@ export function EventCardSocial({
 
             {/* Social Actions */}
             <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-8 w-8 bg-white/90 hover:bg-white"
-                onClick={handleLike}
-              >
-                <Heart
-                  className={`size-4 ${
-                    isLiked ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-              </Button>
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-8 w-8 bg-white/90 hover:bg-white"
-                onClick={handleShare}
-              >
+              <Button size="icon" variant="secondary" className="h-8 w-8 bg-white/90 hover:bg-white" onClick={handleShare}>
                 <Share2 className="size-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-8 w-8 bg-white/90 hover:bg-white"
-                onClick={handleBookmark}
-              >
-                <Bookmark
-                  className={`size-4 ${
-                    isBookmarked ? "fill-emerald-500 text-emerald-500" : ""
-                  }`}
-                />
               </Button>
             </div>
           </div>
@@ -192,10 +151,7 @@ export function EventCardSocial({
             <div className="flex flex-col h-full">
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-3">
-                  <Badge
-                    variant="outline"
-                    className="bg-emerald-50 border-emerald-200 text-emerald-900"
-                  >
+                  <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-emerald-900">
                     {event.category}
                   </Badge>
                   <div className="flex items-center gap-2 text-sm text-zinc-500">
@@ -208,9 +164,7 @@ export function EventCardSocial({
                   {event.title}
                 </h3>
 
-                <p className="text-sm text-zinc-600 mb-4 line-clamp-2">
-                  {event.description}
-                </p>
+                <p className="text-sm text-zinc-600 mb-4 line-clamp-2">{event.description}</p>
 
                 {/* Event Details */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
@@ -234,29 +188,19 @@ export function EventCardSocial({
 
                 {/* Rating and Social Stats */}
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <Star className="size-4 text-amber-500 fill-current" />
+                    <span className="text-sm font-medium">{event.rating}</span>
+                    <span className="text-xs text-zinc-500">({event.reviews})</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-zinc-500">
                     <div className="flex items-center gap-1">
-                      <Star className="size-4 text-amber-500 fill-current" />
-                      <span className="text-sm font-medium">
-                        {event.rating}
-                      </span>
-                      <span className="text-xs text-zinc-500">
-                        ({event.reviews})
-                      </span>
+                      <Heart className={`size-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+                      <span>{likeCount}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-zinc-500">
-                      <div className="flex items-center gap-1">
-                        <Heart
-                          className={`size-4 ${
-                            isLiked ? "fill-red-500 text-red-500" : ""
-                          }`}
-                        />
-                        <span>{likeCount}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Share2 className="size-4" />
-                        <span>{shareCount}</span>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Share2 className="size-4" />
+                      <span>{shareCount}</span>
                     </div>
                   </div>
                 </div>
@@ -265,19 +209,12 @@ export function EventCardSocial({
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-zinc-500">Availability</span>
-                    <span className="text-xs font-medium">
-                      {event.ticketsLeft} left
-                    </span>
+                    <span className="text-xs font-medium">{event.ticketsLeft} left</span>
                   </div>
                   <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full transition-all duration-500 ${
-                        ticketPercentage > 90
-                          ? "bg-red-500"
-                          : ticketPercentage > 70
-                          ? "bg-orange-500"
-                          : "bg-emerald-500"
-                      }`}
+                      className={`h-full transition-all duration-500 ${ticketPercentage > 90 ? "bg-red-500" : ticketPercentage > 70 ? "bg-orange-500" : "bg-emerald-500"
+                        }`}
                       style={{ width: `${ticketPercentage}%` }}
                     />
                   </div>
@@ -287,10 +224,8 @@ export function EventCardSocial({
               {/* Bottom Section */}
               <div className="flex items-center justify-between pt-4 border-t border-zinc-200">
                 <div>
-                  <div className="text-2xl font-bold text-emerald-900">
-                    ${event.price}
-                  </div>
-                  <div className="text-sm text-zinc-500">per ticket</div>
+                  <div className="text-2xl font-bold text-emerald-900">${event.price}</div>
+                  <div className="text-sm text-zinc-500">starting from</div>
                 </div>
                 <Button
                   className="bg-emerald-900 hover:bg-emerald-800 text-white px-6 py-2"
@@ -299,8 +234,7 @@ export function EventCardSocial({
                     onClick();
                   }}
                 >
-                  Book Now
-                  <ArrowRight className="size-4 ml-2" />
+                  View Details
                 </Button>
               </div>
             </div>
@@ -312,7 +246,7 @@ export function EventCardSocial({
 
   // Grid view
   return (
-    <Card className="border border-zinc-200 bg-white hover:border-emerald-300 hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden">
+    <Card className="border border-zinc-200 bg-white hover:border-emerald-300 hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden" onClick={onClick}>
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         <img
@@ -344,41 +278,14 @@ export function EventCardSocial({
         {/* Price Badge */}
         <div className="absolute bottom-3 right-3">
           <Badge className="bg-white/90 text-emerald-900 border-0 text-sm font-semibold">
-            ${event.price}
+            from ${event.price}
           </Badge>
         </div>
 
         {/* Social Actions */}
         <div className="absolute bottom-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-8 w-8 bg-white/90 hover:bg-white"
-            onClick={handleLike}
-          >
-            <Heart
-              className={`size-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
-            />
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-8 w-8 bg-white/90 hover:bg-white"
-            onClick={handleShare}
-          >
+          <Button size="icon" variant="secondary" className="h-8 w-8 bg-white/90 hover:bg-white" onClick={handleShare}>
             <Share2 className="size-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-8 w-8 bg-white/90 hover:bg-white"
-            onClick={handleBookmark}
-          >
-            <Bookmark
-              className={`size-4 ${
-                isBookmarked ? "fill-emerald-500 text-emerald-500" : ""
-              }`}
-            />
           </Button>
         </div>
       </div>
@@ -386,15 +293,12 @@ export function EventCardSocial({
       {/* Content Section */}
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
-          <Badge
-            variant="outline"
-            className="bg-emerald-50 border-emerald-200 text-emerald-900 text-xs"
-          >
+          <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-emerald-900 text-xs">
             {event.category}
           </Badge>
           <div className="flex items-center gap-1 text-xs text-zinc-500">
             <Eye className="size-3" />
-            <span>{liveViewers}</span>
+            <span>{event.viewsToday}</span>
           </div>
         </div>
 
@@ -402,9 +306,7 @@ export function EventCardSocial({
           {event.title}
         </h3>
 
-        <p className="text-sm text-zinc-600 mb-4 line-clamp-2">
-          {event.description}
-        </p>
+        <p className="text-sm text-zinc-600 mb-4 line-clamp-2">{event.description}</p>
 
         {/* Event Details */}
         <div className="space-y-2 mb-4">
@@ -435,11 +337,7 @@ export function EventCardSocial({
           </div>
           <div className="flex items-center gap-3 text-sm text-zinc-500">
             <div className="flex items-center gap-1">
-              <Heart
-                className={`size-3 ${
-                  isLiked ? "fill-red-500 text-red-500" : ""
-                }`}
-              />
+              <Heart className={`size-3 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
               <span>{likeCount}</span>
             </div>
             <div className="flex items-center gap-1">
@@ -453,53 +351,28 @@ export function EventCardSocial({
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-zinc-500">Availability</span>
-            <span className="text-xs font-medium">
-              {event.ticketsLeft} left
-            </span>
+            <span className="text-xs font-medium">{event.ticketsLeft} left</span>
           </div>
           <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
             <div
-              className={`h-full transition-all duration-500 ${
-                ticketPercentage > 90
-                  ? "bg-red-500"
-                  : ticketPercentage > 70
-                  ? "bg-orange-500"
-                  : "bg-emerald-500"
-              }`}
+              className={`h-full transition-all duration-500 ${ticketPercentage > 90 ? "bg-red-500" : ticketPercentage > 70 ? "bg-orange-500" : "bg-emerald-500"
+                }`}
               style={{ width: `${ticketPercentage}%` }}
             />
           </div>
         </div>
 
-        {/* High Activity Indicator */}
-        {event.bookingsToday > 10 && (
-          <div className="mb-4 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-            <p className="text-xs">
-              <span className="text-emerald-900 font-medium">
-                {event.bookingsToday} people
-              </span>
-              <span className="text-emerald-700"> booked today</span>
-            </p>
-          </div>
-        )}
-
         {/* Bottom Section */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold text-emerald-900">
-              ${event.price}
-            </div>
-            <div className="text-xs text-zinc-500">per ticket</div>
+            <div className="text-lg font-bold text-emerald-900">${event.price}</div>
+            <div className="text-xs text-zinc-500">starting from</div>
           </div>
           <Button
             size="sm"
             className="bg-emerald-900 hover:bg-emerald-800 text-white px-4 py-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick();
-            }}
           >
-            Book Now
+            View Details
           </Button>
         </div>
       </CardContent>

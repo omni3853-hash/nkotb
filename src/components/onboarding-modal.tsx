@@ -35,10 +35,6 @@ import { AccountType } from "@/lib/enums/account.enum";
 import { toast } from "sonner";
 import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
 
-// Extended (non-breaking) fields we read from payment methods if available:
-// - fee?: number (percent)
-// - exchangeRateUsd?: number (USD per 1 crypto unit)
-
 type OnboardingStep = "welcome" | "terms" | "plan" | "payment" | "success";
 
 export interface OnboardingModalProps {
@@ -112,8 +108,8 @@ export function OnboardingModal({
   }
 
   async function ensureUploaded(): Promise<string> {
-    if (!uploadedFile) throw new Error("Please attach a proof of payment file.");
     if (uploadedUrl) return uploadedUrl; // already uploaded
+    if (!uploadedFile) throw new Error("Please attach a proof of payment file.");
 
     setUploading(true);
     setUploadPct(0);
@@ -166,16 +162,25 @@ export function OnboardingModal({
 
   async function completeCreate() {
     if (!selectedPlanId || !onCreate) return;
+
     if (!selectedMethodId) {
       toast.message("Select a payment method.");
       return;
     }
-    if (!paymentConfirmed) {
-      toast.message("Please confirm you’ve sent the payment and attached a proof.");
+
+    if (!uploadedUrl) {
+      toast.message("Upload your proof of payment before completing.");
       return;
     }
+
+    if (!paymentConfirmed) {
+      toast.message("Please confirm you’ve sent the payment and uploaded a valid proof.");
+      return;
+    }
+
     try {
       setCreating(true);
+      // safe no-op if already uploaded; keeps API contract unchanged
       const proofUrl = await ensureUploaded();
       await onCreate({
         planId: selectedPlanId,
@@ -207,6 +212,7 @@ export function OnboardingModal({
     }
   }
 
+  // >>> STRICT gate: require uploadedUrl (not just a file) <<<
   const canProceed = useMemo(() => {
     switch (currentStep) {
       case "welcome":
@@ -216,10 +222,18 @@ export function OnboardingModal({
       case "plan":
         return !!selectedPlanId;
       case "payment": {
-        const hasProof = uploadedFile || uploadedUrl;
+        const hasUploadedProof = !!uploadedUrl; // <-- ONLY the URL counts
         const hasMethod = !!selectedMethodId;
         const cryptoOk = !isCrypto || (!!effectiveRate && effectiveRate > 0);
-        return !!selectedPlanId && hasMethod && hasProof && paymentConfirmed && cryptoOk && !creating && !uploading;
+        return (
+          !!selectedPlanId &&
+          hasMethod &&
+          hasUploadedProof &&
+          paymentConfirmed &&
+          cryptoOk &&
+          !creating &&
+          !uploading
+        );
       }
       case "success":
         return true;
@@ -229,7 +243,6 @@ export function OnboardingModal({
     termsAccepted,
     selectedPlanId,
     selectedMethodId,
-    uploadedFile,
     uploadedUrl,
     paymentConfirmed,
     creating,
@@ -247,7 +260,9 @@ export function OnboardingModal({
       case "plan":
         return "Continue";
       case "payment":
-        return creating ? "Activating…" : uploading ? `Uploading… ${uploadPct}%` : "Complete Payment";
+        if (creating) return "Activating…";
+        if (uploading) return `Uploading… ${uploadPct}%`;
+        return "Complete Payment";
       case "success":
         return "Start Booking";
     }
@@ -319,7 +334,6 @@ export function OnboardingModal({
                     key={String(m._id)}
                     onClick={() => {
                       setSelectedMethodId(String(m._id));
-                      // preset rate field if present
                       const r = (m as any)?.exchangeRateUsd;
                       setRateUsd(typeof r === "number" ? r : "");
                     }}
@@ -385,7 +399,9 @@ export function OnboardingModal({
                     <div className="text-xs text-gray-600">Acct No: {(m as any).accountNumber ?? "—"}</div>
                     <div className="text-xs text-gray-600">Routing: {(m as any).routingNumber ?? "—"}</div>
                     {(m as any).swiftCode && <div className="text-xs text-gray-600">SWIFT: {(m as any).swiftCode}</div>}
-                    {(m as any).processingTime && <div className="text-xs text-gray-500 mt-1">Processing: {(m as any).processingTime}</div>}
+                    {(m as any).processingTime && (
+                      <div className="text-xs text-gray-500 mt-1">Processing: {(m as any).processingTime}</div>
+                    )}
                     {(m as any).fee ? <div className="text-xs text-gray-500">Fee: {(m as any).fee}%</div> : null}
                   </button>
                 );
@@ -414,7 +430,9 @@ export function OnboardingModal({
                   >
                     <div className="font-medium text-gray-900">{(m as any).provider}</div>
                     <div className="text-xs text-gray-600">Handle: {(m as any).handle ?? (m as any).email ?? "—"}</div>
-                    {(m as any).processingTime && <div className="text-xs text-gray-500 mt-1">Processing: {(m as any).processingTime}</div>}
+                    {(m as any).processingTime && (
+                      <div className="text-xs text-gray-500 mt-1">Processing: {(m as any).processingTime}</div>
+                    )}
                     {(m as any).fee ? <div className="text-xs text-gray-500">Fee: {(m as any).fee}%</div> : null}
                   </button>
                 );
@@ -455,7 +473,9 @@ export function OnboardingModal({
         {isCrypto ? (
           <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <label className="text-sm text-gray-700">Rate (USD per 1 {((selectedMethod as any)?.cryptocurrency) || "unit"})</label>
+              <label className="text-sm text-gray-700">
+                Rate (USD per 1 {((selectedMethod as any)?.cryptocurrency) || "unit"})
+              </label>
               <input
                 type="number"
                 step="0.00000001"
@@ -662,11 +682,15 @@ export function OnboardingModal({
                         setUploadedFile(file);
                         setUploadedUrl(null);
                         setUploadPct(0);
+                        setPaymentConfirmed(false); // reset confirmation if file changes
                       }}
                       className="hidden"
                       disabled={uploading || creating}
                     />
-                    <label htmlFor="payment-proof" className={cn("cursor-pointer", (uploading || creating) && "pointer-events-none opacity-60")}>
+                    <label
+                      htmlFor="payment-proof"
+                      className={cn("cursor-pointer", (uploading || creating) && "pointer-events-none opacity-60")}
+                    >
                       {uploadedUrl ? (
                         <div className="space-y-2">
                           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -701,7 +725,7 @@ export function OnboardingModal({
                             <div className="mt-2">
                               <Button
                                 size="sm"
-                                className="bg-emerald-900 hover:bg-emerald-800"
+                                className="bg-emerald-900 hover:bg-emerald-800 text-white"
                                 onClick={async (e) => {
                                   e.preventDefault();
                                   try {
@@ -738,12 +762,18 @@ export function OnboardingModal({
                     id="payment-confirm"
                     checked={paymentConfirmed}
                     onCheckedChange={(c) => setPaymentConfirmed(!!c)}
-                    disabled={creating || uploading}
+                    disabled={creating || uploading || !uploadedUrl} // disabled until uploaded
                   />
-                  <label htmlFor="payment-confirm" className="text-sm text-gray-600">
+                  <label htmlFor="payment-confirm" className={cn("text-sm", !uploadedUrl ? "text-gray-400" : "text-gray-600")}>
                     I have sent the payment and uploaded proof of payment
                   </label>
                 </div>
+
+                {!uploadedUrl && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 inline-block">
+                    Upload your proof to enable the final submission.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -848,7 +878,13 @@ export function OnboardingModal({
             <Button
               onClick={handleNext}
               disabled={!canProceed}
-              className="bg-emerald-900 hover:bg-emerald-800 text-zinc-100"
+              className="bg-emerald-900 hover:bg-emerald-800 text-zinc-100 disabled:opacity-60"
+              aria-disabled={!canProceed}
+              title={
+                currentStep === "payment" && !uploadedUrl
+                  ? "Upload your proof of payment to enable this action"
+                  : undefined
+              }
             >
               {getButtonText()}
               <ArrowRight className="w-4 h-4 ml-2" />

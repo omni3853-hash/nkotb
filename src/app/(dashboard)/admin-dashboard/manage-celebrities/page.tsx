@@ -23,8 +23,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   CreateCelebritySchema,
   UpdateCelebritySchema,
-  type CreateCelebrityFormData,
-  type UpdateCelebrityFormData,
   CelebrityQuerySchema,
   type CelebrityQuery,
   BookingTypeInputSchema
@@ -209,7 +207,7 @@ function BookingTypesEditor({
             </CardContent>
           </Card>
         ))}
-        {(!value || value.length === 0) && <div className="text-sm text-zinc-500 italic">No booking types yet. Click “Add Type”.</div>}
+        {(!value || value.length === 0) && <div className="text-sm italic text-zinc-500">No booking types yet. Click “Add Type”.</div>}
       </div>
     </div>
   )
@@ -339,15 +337,11 @@ export default function ManageCelebritiesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  // pick schema based on mode (create vs update)
   const schema = useMemo(() => editingId ? UpdateCelebritySchema : CreateCelebritySchema, [editingId])
 
-  // IMPORTANT FIX:
-  // Use a single permissive input type that works for both create & update
   type CelebrityFormValues = z.input<typeof CreateCelebritySchema>
 
   const form = useForm<CelebrityFormValues>({
-    // cast here to avoid Resolver<> union incompatibility when schema switches at runtime
     resolver: zodResolver(schema as any) as any,
     defaultValues: {
       name: "", category: "", basePrice: 0, description: "", responseTime: "", availability: "Available",
@@ -359,6 +353,11 @@ export default function ManageCelebritiesPage() {
   })
 
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false)
+
+  // Ensure confirm dialog always closes when form closes
+  useEffect(() => {
+    if (!formOpen && saveConfirmOpen) setSaveConfirmOpen(false)
+  }, [formOpen, saveConfirmOpen])
 
   const openCreate = () => {
     setEditingId(null)
@@ -390,6 +389,8 @@ export default function ManageCelebritiesPage() {
         await AdminCelebritiesApi.create(payload)
         toast.success("Celebrity created")
       }
+      // Close confirm dialog and form cleanly after success
+      setSaveConfirmOpen(false)
       setFormOpen(false)
       setEditingId(null)
       load()
@@ -399,8 +400,10 @@ export default function ManageCelebritiesPage() {
     }
   }
 
+  // DETAILS MODAL state (separate from bookings)
   const [viewRow, setViewRow] = useState<Celebrity | null>(null)
 
+  // ACTION CONFIRM modal
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const confirmMeta = useRef<{ kind: "delete" | "toggle"; id: string; next?: boolean } | null>(null)
@@ -428,17 +431,23 @@ export default function ManageCelebritiesPage() {
     } finally { setConfirming(false) }
   }
 
+  // BOOKINGS MODAL state — decoupled from Details modal
   const [bookingsOpen, setBookingsOpen] = useState(false)
   const [bookingsLoading, setBookingsLoading] = useState(false)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [bookingsPage, setBookingsPage] = useState(1)
   const [bookingsLimit, setBookingsLimit] = useState(10)
   const [bookingsTotal, setBookingsTotal] = useState(0)
+  const [bookingsRow, setBookingsRow] = useState<Celebrity | null>(null)
+
   const openBookingsFor = async (row: Celebrity) => {
-    setViewRow(row)
+    // Ensure details dialog won't open
+    setViewRow(null)
+    setBookingsRow(row)
     setBookingsOpen(true)
     await loadBookings(row._id, bookingsPage, bookingsLimit)
   }
+
   const loadBookings = async (celebrityId: string, p = bookingsPage, l = bookingsLimit) => {
     setBookingsLoading(true)
     try {
@@ -449,9 +458,10 @@ export default function ManageCelebritiesPage() {
       toast.error(e?.response?.data?.message || e?.message || "Failed to load bookings")
     } finally { setBookingsLoading(false) }
   }
+
   useEffect(() => {
-    if (bookingsOpen && viewRow?._id) loadBookings(viewRow._id, bookingsPage, bookingsLimit)
-  }, [bookingsOpen, viewRow?._id, bookingsPage, bookingsLimit])
+    if (bookingsOpen && bookingsRow?._id) loadBookings(bookingsRow._id, bookingsPage, bookingsLimit)
+  }, [bookingsOpen, bookingsRow?._id, bookingsPage, bookingsLimit])
 
   const clearFilters = () => setFilters({})
 
@@ -665,7 +675,17 @@ export default function ManageCelebritiesPage() {
         </div>
 
         {/* CREATE / EDIT */}
-        <Dialog open={formOpen} onOpenChange={(o) => { setFormOpen(o); if (!o) { setEditingId(null); form.reset(); setSaveConfirmOpen(false) } }}>
+        <Dialog
+          open={formOpen}
+          onOpenChange={(o) => {
+            setFormOpen(o)
+            if (!o) {
+              setEditingId(null)
+              form.reset()
+              setSaveConfirmOpen(false) // close confirm on form close
+            }
+          }}
+        >
           <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold">{editingId ? "Edit Celebrity" : "Create Celebrity"}</DialogTitle>
@@ -945,11 +965,22 @@ export default function ManageCelebritiesPage() {
           </DialogContent>
         </Dialog>
 
-        {/* BOOKINGS HISTORY */}
-        <Dialog open={bookingsOpen} onOpenChange={(o) => { setBookingsOpen(o); if (!o) { setBookings([]); setBookingsPage(1); setBookingsLimit(10) } }}>
+        {/* BOOKINGS HISTORY (decoupled from Details) */}
+        <Dialog
+          open={bookingsOpen}
+          onOpenChange={(o) => {
+            setBookingsOpen(o)
+            if (!o) {
+              setBookings([])
+              setBookingsPage(1)
+              setBookingsLimit(10)
+              setBookingsRow(null)
+            }
+          }}
+        >
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Bookings — {viewRow?.name}</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Bookings — {bookingsRow?.name}</DialogTitle>
               <DialogDescription>History for this celebrity</DialogDescription>
             </DialogHeader>
             <div className="rounded-md border overflow-x-auto">

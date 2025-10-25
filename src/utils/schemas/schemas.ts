@@ -508,43 +508,90 @@ export const PaginationQuerySchema = z.object({
 
 /* --------------------------------- Events ---------------------------------- */
 
+const UrlNullableEmpty = z.union([z.string().url(), z.literal(""), z.null()]);
+
 export const EventAvailabilityEnum = z.enum([
-    "Available", "Selling Fast", "Almost Full", "Hot", "Sold Out"
+    "Available",
+    "Selling Fast",
+    "Almost Full",
+    "Hot",
+    "Sold Out",
 ]);
 
-export const TicketTypeInputSchema = z.object({
-    _id: z.string().optional(),
+export const TicketTypeCreateSchema = z.object({
     name: z.string().trim().min(1),
-    price: z.number().min(0),
+    price: z.coerce.number().min(0),
     description: z.string().optional().default(""),
-    features: z.array(z.string().optional().default("")).optional().default([]),
-    total: z.number().int().min(0),
-    sold: z.number().int().min(0).optional().default(0),
+    features: z.array(z.string()).default([]),
+    total: z.coerce.number().int().min(0),
     popular: z.boolean().optional().default(false),
+});
+
+export const TicketTypeUpdateSchema = z.object({
+    _id: z.string().optional(),
+    name: z.string().trim().min(1).optional(),
+    price: z.coerce.number().min(0).optional(),
+    description: z.string().optional(),
+    features: z.array(z.string()).optional(),
+    total: z.coerce.number().int().min(0).optional(),
+    sold: z.coerce.number().int().min(0).optional(),
+    popular: z.boolean().optional(),
 });
 
 export const CreateEventSchema = z.object({
     title: z.string().trim().min(1),
     category: z.string().trim().min(1),
-    tags: z.array(z.string().trim()).optional().default([]),
-    image: z.string().url().nullable().optional(),
-    coverImage: z.string().url().nullable().optional(),
-    basePrice: z.number().min(0),
+    tags: z.array(z.string().trim()).default([]),
+
+    image: UrlNullableEmpty.optional(),
+    coverImage: UrlNullableEmpty.optional(),
+
+    basePrice: z.coerce.number().min(0),
+
     description: z.string().optional().default(""),
     location: z.string().optional().default(""),
     date: z.string().optional().default(""),
     time: z.string().optional().default(""),
-    attendees: z.number().int().min(0).optional().default(0),
-    ticketTypes: z.array(TicketTypeInputSchema).optional().default([]),
+
+    attendees: z.coerce.number().int().min(0).optional().default(0),
+
+    ticketTypes: z.array(TicketTypeCreateSchema).default([]),
+
     availability: EventAvailabilityEnum.optional(),
     featured: z.boolean().optional().default(false),
     trending: z.boolean().optional().default(false),
     verified: z.boolean().optional().default(false),
     isActive: z.boolean().optional().default(true),
 });
+
 export type CreateEventFormData = z.infer<typeof CreateEventSchema>;
 
-export const UpdateEventSchema = CreateEventSchema.partial();
+export const UpdateEventSchema = z.object({
+    title: z.string().trim().min(1).optional(),
+    category: z.string().trim().min(1).optional(),
+    tags: z.array(z.string().trim()).optional(),
+
+    image: UrlNullableEmpty.optional(),
+    coverImage: UrlNullableEmpty.optional(),
+
+    basePrice: z.coerce.number().min(0).optional(),
+
+    description: z.string().optional(),
+    location: z.string().optional(),
+    date: z.string().optional(),
+    time: z.string().optional(),
+
+    attendees: z.coerce.number().int().min(0).optional(),
+
+    ticketTypes: z.array(TicketTypeUpdateSchema).optional(),
+
+    availability: EventAvailabilityEnum.optional(),
+    featured: z.boolean().optional(),
+    trending: z.boolean().optional(),
+    verified: z.boolean().optional(),
+    isActive: z.boolean().optional(),
+});
+
 export type UpdateEventFormData = z.infer<typeof UpdateEventSchema>;
 
 export const EventQuerySchema = z.object({
@@ -599,7 +646,11 @@ export const CreateDepositSchema = z.object({
     amount: z.number().positive(),
     paymentMethodId: z.string().optional(),
     proofOfPayment: z.string().optional(),
-    notes: z.string().max(1000).optional().default(""),
+    notes: z
+        .string()
+        .trim()
+        .min(1, "Please add a short note (e.g., reference, payer name, memo).")
+        .max(1000, "Notes must be at most 1000 characters"),
 });
 export type CreateDepositFormData = z.infer<typeof CreateDepositSchema>;
 

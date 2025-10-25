@@ -1,4 +1,4 @@
-import { EventQuery, EventQuerySchema, CreateEventFormData, CreateEventSchema, UpdateEventFormData, UpdateEventSchema, TicketTypeInputSchema } from "@/utils/schemas/schemas";
+import { EventQuery, EventQuerySchema, CreateEventFormData, CreateEventSchema, UpdateEventFormData, UpdateEventSchema, TicketTypeCreateSchema } from "@/utils/schemas/schemas";
 import z from "zod";
 import { api } from "./axios";
 
@@ -24,7 +24,7 @@ export type Event = {
     date: string;
     time: string;
     attendees: number;
-    ticketTypes: Array<z.infer<typeof TicketTypeInputSchema>>;
+    ticketTypes: Array<z.infer<typeof TicketTypeCreateSchema>>;
     isActive: boolean;
     createdAt: string | Date;
     updatedAt: string | Date;
