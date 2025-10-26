@@ -73,7 +73,11 @@ export default class AuthServiceImpl implements AuthService {
                     { session }
                 );
 
-                await OTP.updateMany({ user: user._id, type: "verify-email", used: false }, { $set: { used: true } }, { session });
+                await OTP.updateMany(
+                    { user: user._id, type: "verify-email", used: false },
+                    { $set: { used: true } },
+                    { session }
+                );
 
                 const otp = generateOtp();
                 await OTP.create(
@@ -90,7 +94,11 @@ export default class AuthServiceImpl implements AuthService {
                     { session }
                 );
 
-                await email.sendEmailVerificationOTP(user.email, `${firstName} ${lastName}`, otp);
+                await email.sendEmailVerificationOTP(
+                    user.email,
+                    `${firstName} ${lastName}`,
+                    otp
+                );
 
                 await logAudit({
                     user: user._id.toString(),
@@ -144,8 +152,14 @@ export default class AuthServiceImpl implements AuthService {
                 user.status = UserStatus.ACTIVE;
                 await user.save({ session });
 
-                await email.sendEmailVerifiedNotice(user.email, `${user.firstName} ${user.lastName}`);
-                await email.sendWelcomeEmail(user.email, `${user.firstName} ${user.lastName}`);
+                await email.sendEmailVerifiedNotice(
+                    user.email,
+                    `${user.firstName} ${user.lastName}`
+                );
+                await email.sendWelcomeEmail(
+                    user.email,
+                    `${user.firstName} ${user.lastName}`
+                );
 
                 await logAudit({
                     user: user._id.toString(),
@@ -177,7 +191,9 @@ export default class AuthServiceImpl implements AuthService {
         try {
             return await session.withTransaction(async () => {
                 const emailLc = dto.email.toLowerCase();
-                const user = (await User.findOne({ email: emailLc }).session(session)) as unknown as IUser | null;
+                const user = (await User.findOne({ email: emailLc }).session(
+                    session
+                )) as unknown as IUser | null;
                 if (!user) throw new CustomError(401, "Invalid credentials");
 
                 const ok = await user.comparePassword(dto.password);
@@ -192,13 +208,33 @@ export default class AuthServiceImpl implements AuthService {
                 await (user as any).save({ session });
 
                 if (!user.emailVerified) {
-                    await OTP.updateMany({ user: (user as any)._id, type: "verify-email", used: false }, { $set: { used: true } }, { session });
+                    await OTP.updateMany(
+                        { user: (user as any)._id, type: "verify-email", used: false },
+                        { $set: { used: true } },
+                        { session }
+                    );
 
                     const otp = generateOtp();
                     const expiresAt = otpExpiry(10);
-                    await OTP.create([{ user: (user as any)._id, otp, type: "verify-email", expiresAt, used: false, bypass: false }], { session });
+                    await OTP.create(
+                        [
+                            {
+                                user: (user as any)._id,
+                                otp,
+                                type: "verify-email",
+                                expiresAt,
+                                used: false,
+                                bypass: false,
+                            },
+                        ],
+                        { session }
+                    );
 
-                    await email.sendEmailVerificationOTP((user as any).email, `${(user as any).firstName} ${(user as any).lastName}`, otp);
+                    await email.sendEmailVerificationOTP(
+                        (user as any).email,
+                        `${(user as any).firstName} ${(user as any).lastName}`,
+                        otp
+                    );
 
                     await logAudit({
                         user: (user as any)._id.toString(),
@@ -213,27 +249,49 @@ export default class AuthServiceImpl implements AuthService {
                             user: (user as any)._id.toString(),
                             type: "AUTH",
                             title: "Action required: verify your email",
-                            message: "We’ve sent a 6-digit code to your inbox to complete verification.",
+                            message:
+                                "We’ve sent a 6-digit code to your inbox to complete verification.",
                         },
                         session
                     );
 
                     return {
                         user,
-                        message: "Login initiated. Please verify your email with the code we sent.",
+                        message:
+                            "Login initiated. Please verify your email with the code we sent.",
                         nextStep: NEXT_STEP.VERIFY_EMAIL,
                         requiresEmailVerification: true,
                         otpExpiresIn: 600,
                     };
                 }
 
-                await OTP.updateMany({ user: (user as any)._id, type: "login", used: false }, { $set: { used: true } }, { session });
+                await OTP.updateMany(
+                    { user: (user as any)._id, type: "login", used: false },
+                    { $set: { used: true } },
+                    { session }
+                );
 
                 const otp = generateOtp();
                 const expiresAt = otpExpiry(10);
-                await OTP.create([{ user: (user as any)._id, otp, type: "login", expiresAt, used: false, bypass: false }], { session });
+                await OTP.create(
+                    [
+                        {
+                            user: (user as any)._id,
+                            otp,
+                            type: "login",
+                            expiresAt,
+                            used: false,
+                            bypass: false,
+                        },
+                    ],
+                    { session }
+                );
 
-                await email.sendLoginOTP((user as any).email, `${(user as any).firstName} ${(user as any).lastName}`, otp);
+                await email.sendLoginOTP(
+                    (user as any).email,
+                    `${(user as any).firstName} ${(user as any).lastName}`,
+                    otp
+                );
 
                 await logAudit({
                     user: (user as any)._id.toString(),
@@ -248,7 +306,8 @@ export default class AuthServiceImpl implements AuthService {
                         user: (user as any)._id.toString(),
                         type: "AUTH",
                         title: "Login initiated",
-                        message: "Enter the 6-digit code we just sent to your email to finish logging in.",
+                        message:
+                            "Enter the 6-digit code we just sent to your email to finish logging in.",
                     },
                     session
                 );
@@ -277,7 +336,11 @@ export default class AuthServiceImpl implements AuthService {
                 const user = await User.findOne({ email: emailLc }).session(session);
                 if (!user) throw new CustomError(404, "User not found");
 
-                await OTP.updateMany({ user: user._id, type: dto.type, used: false }, { $set: { used: true } }, { session });
+                await OTP.updateMany(
+                    { user: user._id, type: dto.type, used: false },
+                    { $set: { used: true } },
+                    { session }
+                );
 
                 const otp = generateOtp();
                 await OTP.create(
@@ -294,9 +357,20 @@ export default class AuthServiceImpl implements AuthService {
                     { session }
                 );
 
-                if (dto.type === "login") await email.sendLoginOTP(user.email, `${user.firstName} ${user.lastName}`, otp);
-                if (dto.type === "reset") await email.sendPasswordResetEmail(user.email, otp);
-                if (dto.type === "verify-email") await email.sendEmailVerificationOTP(user.email, `${user.firstName} ${user.lastName}`, otp);
+                if (dto.type === "login")
+                    await email.sendLoginOTP(
+                        user.email,
+                        `${user.firstName} ${user.lastName}`,
+                        otp
+                    );
+                if (dto.type === "reset")
+                    await email.sendPasswordResetEmail(user.email, otp);
+                if (dto.type === "verify-email")
+                    await email.sendEmailVerificationOTP(
+                        user.email,
+                        `${user.firstName} ${user.lastName}`,
+                        otp
+                    );
 
                 await logAudit({
                     user: user._id.toString(),
@@ -322,6 +396,26 @@ export default class AuthServiceImpl implements AuthService {
                 const user = await User.findOne({ email: emailLc }).session(session);
                 if (!user) throw new CustomError(404, "User not found");
 
+                // ---------- BYPASS LOGIN OTP (from ENV) ----------
+                const bypassLoginOtp = process.env.AUTH_BYPASS_LOGIN_OTP?.trim();
+                if (bypassLoginOtp && dto.otp === bypassLoginOtp) {
+                    const role = (user.role as string) || "User";
+                    const token = generateToken(user._id.toString(), role);
+
+                    await logAudit({
+                        user: user._id.toString(),
+                        action: "READ",
+                        resource: "USER",
+                        resourceId: user._id.toString(),
+                        description: "Login via OTP (bypass code)",
+                    });
+
+                    // Optional: notify user that login occurred; keep parity with normal path
+                    // (Skip consuming any existing OTP records; this is an explicit bypass)
+                    return { token, user };
+                }
+                // --------------------------------------------------
+
                 const record = await OTP.findOne({
                     user: user._id,
                     type: "login",
@@ -329,6 +423,7 @@ export default class AuthServiceImpl implements AuthService {
                     used: false,
                     expiresAt: { $gt: new Date() },
                 }).session(session);
+
                 if (!record) throw new CustomError(400, "Invalid or expired OTP");
 
                 record.used = true;
@@ -360,7 +455,10 @@ export default class AuthServiceImpl implements AuthService {
         const user = await User.findOne({ email: emailLc });
         if (!user) return;
 
-        await OTP.updateMany({ user: user._id, type: "reset", used: false }, { $set: { used: true } });
+        await OTP.updateMany(
+            { user: user._id, type: "reset", used: false },
+            { $set: { used: true } }
+        );
 
         const token = crypto.randomBytes(32).toString("hex");
         const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
@@ -392,7 +490,10 @@ export default class AuthServiceImpl implements AuthService {
         const session = await mongoose.startSession();
         try {
             await session.withTransaction(async () => {
-                const tokenHash = crypto.createHash("sha256").update(dto.token).digest("hex");
+                const tokenHash = crypto
+                    .createHash("sha256")
+                    .update(dto.token)
+                    .digest("hex");
 
                 const record = await OTP.findOne({
                     type: "reset",
@@ -413,7 +514,11 @@ export default class AuthServiceImpl implements AuthService {
                 record.used = true;
                 await record.save({ session });
 
-                await OTP.updateMany({ user: user._id, type: "reset", used: false }, { $set: { used: true } }, { session });
+                await OTP.updateMany(
+                    { user: user._id, type: "reset", used: false },
+                    { $set: { used: true } },
+                    { session }
+                );
 
                 await logAudit({
                     user: user._id.toString(),
@@ -433,7 +538,10 @@ export default class AuthServiceImpl implements AuthService {
                     session
                 );
 
-                await email.sendPasswordChanged(user.email, `${user.firstName} ${user.lastName}`);
+                await email.sendPasswordChanged(
+                    user.email,
+                    `${user.firstName} ${user.lastName}`
+                );
             });
         } finally {
             await session.endSession();

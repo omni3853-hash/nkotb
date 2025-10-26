@@ -15,8 +15,13 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { DynamicPageHeader } from "@/components/dynamic-page-header";
-
-import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +72,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   TrendingUp,
+  Clock,
+  Filter,
+  RefreshCw,
+  Download,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -116,9 +126,7 @@ type UpdateValues = z.output<typeof UpdateEventSchema>;
 const createResolver = zodResolver(CreateEventSchema) as Resolver<CreateValues>;
 const updateResolver = zodResolver(UpdateEventSchema) as Resolver<UpdateValues>;
 
-/* ----------------------------------------------------------------------------
- * Chips input for string[] (tags, features)
- * --------------------------------------------------------------------------*/
+// Chips Input Component (reused from original)
 function ChipsInput({
   label,
   values,
@@ -181,6 +189,185 @@ function ChipsInput({
         </div>
       )}
     </div>
+  );
+}
+
+// Stats Cards Component
+function EventStatsCards({ events }: { events: Event[] }) {
+  const totalEvents = events.length;
+  const activeEvents = events.filter(e => e.isActive).length;
+  const featuredEvents = events.filter(e => e.featured).length;
+  const totalRevenue = events.reduce((sum, event) => {
+    const ticketsSold = event.ticketsSold || 0;
+    const basePrice = event.basePrice || 0;
+    return sum + (ticketsSold * basePrice);
+  }, 0);
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="size-10 rounded-xl bg-emerald-50 border-2 border-emerald-900 flex items-center justify-center">
+            <Calendar className="size-5 text-emerald-900" />
+          </div>
+          <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
+            {totalEvents}
+          </Badge>
+        </div>
+        <p className="text-xs font-mono text-zinc-600 mb-1">
+          TOTAL EVENTS
+        </p>
+        <p className="text-2xl font-bold text-emerald-900">
+          {totalEvents}
+        </p>
+      </Card>
+
+      <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="size-10 rounded-xl bg-emerald-50 border-2 border-emerald-900 flex items-center justify-center">
+            <CheckCircle2 className="size-5 text-emerald-900" />
+          </div>
+          <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
+            {Math.round((activeEvents / totalEvents) * 100)}%
+          </Badge>
+        </div>
+        <p className="text-xs font-mono text-zinc-600 mb-1">
+          ACTIVE EVENTS
+        </p>
+        <p className="text-2xl font-bold text-emerald-900">
+          {activeEvents}
+        </p>
+      </Card>
+
+      <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="size-10 rounded-xl bg-emerald-50 border-2 border-emerald-900 flex items-center justify-center">
+            <Star className="size-5 text-emerald-900" />
+          </div>
+          <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
+            {featuredEvents}
+          </Badge>
+        </div>
+        <p className="text-xs font-mono text-zinc-600 mb-1">
+          FEATURED EVENTS
+        </p>
+        <p className="text-2xl font-bold text-emerald-900">
+          {featuredEvents}
+        </p>
+      </Card>
+
+      <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="size-10 rounded-xl bg-emerald-50 border-2 border-emerald-900 flex items-center justify-center">
+            <TrendingUp className="size-5 text-emerald-900" />
+          </div>
+          <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
+            ${(totalRevenue / 1000).toFixed(0)}K
+          </Badge>
+        </div>
+        <p className="text-xs font-mono text-zinc-600 mb-1">
+          TOTAL REVENUE
+        </p>
+        <p className="text-2xl font-bold text-emerald-900">
+          ${totalRevenue.toLocaleString()}
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+// Enhanced Filters Component
+function EventFilters({
+  searchTerm,
+  onSearchChange,
+  category,
+  onCategoryChange,
+  onlyActive,
+  onOnlyActiveChange,
+  limit,
+  onLimitChange,
+  onClearFilters,
+}: {
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  category: string | undefined;
+  onCategoryChange: (value: string) => void;
+  onlyActive: boolean;
+  onOnlyActiveChange: (value: boolean) => void;
+  limit: number;
+  onLimitChange: (value: number) => void;
+  onClearFilters: () => void;
+}) {
+  return (
+    <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
+      <CardHeader>
+        <CardTitle className="text-emerald-900">
+          Filters & Search
+        </CardTitle>
+        <CardDescription>
+          Filter events by category, status, and search terms
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+            <Input
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10 bg-zinc-50 focus:border-emerald-500"
+            />
+          </div>
+
+          <Select value={category || "all"} onValueChange={onCategoryChange}>
+            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={onlyActive ? "active" : "all"}
+            onValueChange={(v) => onOnlyActiveChange(v === "active")}
+          >
+            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Only Active</SelectItem>
+              <SelectItem value="all">All Events</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={limit.toString()}
+            onValueChange={(v) => onLimitChange(Number(v))}
+          >
+            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
+              <SelectValue placeholder="Per page" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10 per page</SelectItem>
+              <SelectItem value="20">20 per page</SelectItem>
+              <SelectItem value="50">50 per page</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="outline"
+            onClick={onClearFilters}
+            className="bg-zinc-50 focus:border-emerald-500"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Clear Filters
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1104,7 +1291,7 @@ function EditEventForm({
 }
 
 /* ----------------------------------------------------------------------------
- * Page: ManageEventsPage
+ * Page: ManageEventsPage (with new design matching ManageDepositsPage)
  * --------------------------------------------------------------------------*/
 type ConfirmState = {
   open: boolean;
@@ -1201,7 +1388,7 @@ export default function ManageEventsPage() {
     if (!selected?._id) return;
     setConfirm({
       open: true,
-      title: <>Save changes to “{selected.title}”?</>,
+      title: <>Save changes to "{selected.title}"?</>,
       onYes: async () => {
         try {
           setSubmittingEdit(true);
@@ -1221,12 +1408,12 @@ export default function ManageEventsPage() {
     });
   };
 
-  // Delete
+  // Delete (confirmation + danger tone)
   const removeEvent = (ev: Event) => {
     setConfirm({
       open: true,
       tone: "danger",
-      title: <>Delete “{ev.title}”? This cannot be undone.</>,
+      title: <>Delete "{ev.title}"? This cannot be undone.</>,
       onYes: async () => {
         try {
           await AdminEventsApi.remove(ev._id);
@@ -1241,16 +1428,27 @@ export default function ManageEventsPage() {
     });
   };
 
-  // Toggle active
-  const toggleActive = async (ev: Event) => {
-    try {
-      const next = !ev.isActive;
-      const updated = await AdminEventsApi.toggleActive(ev._id, next);
-      setItems((prev) => prev.map((x) => (x._id === ev._id ? updated : x)));
-      toast.success(next ? "Event activated" : "Event deactivated");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Toggle failed");
-    }
+  // Activate/Deactivate (now uses confirmation modal)
+  const requestToggleActive = (ev: Event) => {
+    const willActivate = !ev.isActive;
+    setConfirm({
+      open: true,
+      tone: willActivate ? "default" : "danger",
+      title: willActivate
+        ? <>Activate "{ev.title}"?</>
+        : <>Deactivate "{ev.title}"? Users will no longer see it in active listings.</>,
+      onYes: async () => {
+        try {
+          const updated = await AdminEventsApi.toggleActive(ev._id, willActivate);
+          setItems((prev) => prev.map((x) => (x._id === ev._id ? updated : x)));
+          toast.success(willActivate ? "Event activated" : "Event deactivated");
+        } catch (err: any) {
+          toast.error(err?.response?.data?.message || err?.message || "Toggle failed");
+        } finally {
+          setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
+        }
+      },
+    });
   };
 
   const shareEvent = async (ev: Event) => {
@@ -1268,218 +1466,250 @@ export default function ManageEventsPage() {
     }
   };
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setCategory(undefined);
+    setOnlyActive(true);
+    setPage(1);
+  };
+
   return (
     <SidebarProvider>
       <AdminSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        <div className="flex flex-1 flex-col bg-zinc-100">
-          <div className="@container/main flex flex-1 flex-col gap-2 px-2 sm:px-3">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <DynamicPageHeader
-                title={<><span className="text-zinc-500">Manage</span> Events</>}
-                subtitle="Create, edit, and manage all platform events"
-                actionButton={{
-                  text: "Create Event",
-                  icon: <PlusIcon className="size-4" />,
-                  onClick: () => setCreateOpen(true),
-                }}
-              />
+        <div className="flex flex-1 flex-col bg-zinc-100 px-2 sm:px-3">
+          <div className="@container/main flex flex-1 flex-col gap-4 sm:gap-6 px-3 sm:px-6 py-4 sm:py-6">
+            <DynamicPageHeader
+              title="Manage Events"
+              subtitle="Create, edit, and manage all platform events"
+              actionButton={{
+                text: "Create Event",
+                icon: <PlusIcon className="size-4" />,
+                onClick: () => setCreateOpen(true),
+              }}
+            />
 
-              {/* Filters */}
-              <div className="px-2 sm:px-4 lg:px-6">
-                <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
-                  <div className="flex flex-col gap-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        placeholder="Search events..."
-                        value={searchTerm}
-                        onChange={(e) => { setPage(1); setSearchTerm(e.target.value); }}
-                        className="pl-10 rounded-xl"
-                      />
-                    </div>
+            {/* Stats Cards */}
+            <EventStatsCards events={items} />
 
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Select
-                        value={category || "All"}
-                        onValueChange={(v) => { setPage(1); setCategory(v === "All" ? undefined : v); }}
-                      >
-                        <SelectTrigger className="w-full sm:w-40 rounded-xl">
-                          <SelectValue placeholder="Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="All">All Categories</SelectItem>
-                          {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+            {/* Enhanced Filters */}
+            <EventFilters
+              searchTerm={searchTerm}
+              onSearchChange={(value) => { setPage(1); setSearchTerm(value); }}
+              category={category}
+              onCategoryChange={(value) => { setPage(1); setCategory(value === "all" ? undefined : value); }}
+              onlyActive={onlyActive}
+              onOnlyActiveChange={(value) => { setPage(1); setOnlyActive(value); }}
+              limit={limit}
+              onLimitChange={(value) => { setPage(1); setLimit(value); }}
+              onClearFilters={clearFilters}
+            />
 
-                      <Select
-                        value={onlyActive ? "active" : "all"}
-                        onValueChange={(v) => { setPage(1); setOnlyActive(v === "active"); }}
-                      >
-                        <SelectTrigger className="w-full sm:w-40 rounded-xl">
-                          <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Only Active</SelectItem>
-                          <SelectItem value="all">All</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={String(limit)}
-                        onValueChange={(v) => { setPage(1); setLimit(Number(v)); }}
-                      >
-                        <SelectTrigger className="w-full sm:w-40 rounded-xl">
-                          <SelectValue placeholder="Per page" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="20">20</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
-                        {loading ? "Loading…" : `${items.length} of ${total} events`}
-                      </p>
-                    </div>
+            {/* Events Table */}
+            <Card className="bg-white">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-emerald-900">Events</CardTitle>
+                    <CardDescription>
+                      {items.length} events found
+                    </CardDescription>
                   </div>
-                </Card>
-              </div>
-
-              {/* Table */}
-              <div className="px-2 sm:px-4 lg:px-6">
-                <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
-                  <div className="border-2 border-zinc-200 rounded-2xl overflow-hidden">
-                    <Table>
-                      <TableHeader className="bg-zinc-50">
+                  <Button
+                    variant="outline"
+                    className="bg-emerald-800 border-emerald-800 text-white hover:bg-emerald-700"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-zinc-50">
+                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
+                          Event
+                        </TableHead>
+                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
+                          Category
+                        </TableHead>
+                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
+                          Date & Time
+                        </TableHead>
+                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
+                          Location
+                        </TableHead>
+                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
+                          Price
+                        </TableHead>
+                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
+                          Availability
+                        </TableHead>
+                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
+                          Actions
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
                         <TableRow>
-                          <TableHead className="font-mono text-xs">EVENT</TableHead>
-                          <TableHead className="font-mono text-xs">CATEGORY</TableHead>
-                          <TableHead className="font-mono text-xs">DATE & TIME</TableHead>
-                          <TableHead className="font-mono text-xs">LOCATION</TableHead>
-                          <TableHead className="font-mono text-xs">PRICE</TableHead>
-                          <TableHead className="font-mono text-xs">AVAILABILITY</TableHead>
-                          <TableHead className="font-mono text-xs">ACTIONS</TableHead>
+                          <TableCell colSpan={7} className="text-center py-8">
+                            <div className="flex items-center justify-center">
+                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                              Loading events...
+                            </div>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {items.map((ev) => (
-                          <TableRow key={ev._id} className="hover:bg-zinc-50">
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className="size-12 rounded-lg overflow-hidden border-2 border-zinc-200">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img src={ev.image || "/placeholder.svg"} alt={ev.title} className="w-full h-full object-cover" />
-                                </div>
-                                <div>
-                                  <p className="font-semibold">{ev.title}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    {ev.featured && <Badge className="text-xs">Featured</Badge>}
-                                    {ev.trending && <Badge className="text-xs">Trending</Badge>}
-                                    {ev.verified && <Badge variant="outline" className="text-xs">Verified</Badge>}
-                                    {ev.isActive ? (
-                                      <Badge variant="outline" className="text-xs border-emerald-700 text-emerald-800">Active</Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="text-xs border-zinc-400 text-zinc-700">Inactive</Badge>
-                                    )}
-                                  </div>
-                                  <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-                                    <span>⭐ {typeof ev.rating === "number" ? ev.rating.toFixed(1) : "—"}</span>
-                                    <span>Reviews: {ev.totalReviews ?? 0}</span>
-                                    <span>Sold: {ev.ticketsSold ?? 0}</span>
-                                    <span>Views: {ev.views ?? 0}</span>
-                                  </div>
-                                </div>
+                      ) : items.map((ev) => (
+                        <TableRow key={ev._id} className="hover:bg-zinc-50">
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="size-12 rounded-lg overflow-hidden border-2 border-zinc-200">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={ev.image || "/placeholder.svg"} alt={ev.title} className="w-full h-full object-cover" />
                               </div>
-                            </TableCell>
-                            <TableCell><Badge variant="outline" className="text-xs">{ev.category}</Badge></TableCell>
-                            <TableCell>
                               <div>
-                                <p className="font-medium">{ev.date}</p>
-                                <p className="text-sm text-muted-foreground">{ev.time}</p>
+                                <p className="font-semibold">{ev.title}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {ev.featured && <Badge className="text-xs">Featured</Badge>}
+                                  {ev.trending && <Badge className="text-xs">Trending</Badge>}
+                                  {ev.verified && <Badge variant="outline" className="text-xs">Verified</Badge>}
+                                  {ev.isActive ? (
+                                    <Badge variant="outline" className="text-xs border-emerald-700 text-emerald-800">Active</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs border-zinc-400 text-zinc-700">Inactive</Badge>
+                                  )}
+                                </div>
+                                <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                                  <span>⭐ {typeof ev.rating === "number" ? ev.rating.toFixed(1) : "—"}</span>
+                                  <span>Reviews: {ev.totalReviews ?? 0}</span>
+                                  <span>Sold: {ev.ticketsSold ?? 0}</span>
+                                  <span>Views: {ev.views ?? 0}</span>
+                                </div>
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-sm truncate">{ev.location}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <DollarSign className="h-3 w-3 text-muted-foreground" />
-                                <span className="font-mono font-semibold">${ev.basePrice}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell><Badge variant="outline" className="text-xs">{ev.availability || "—"}</Badge></TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg" onClick={() => { setSelected(ev); setDetailsOpen(true); }}>
-                                  <Eye className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg" onClick={() => startEdit(ev)}>
-                                  <Edit className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-lg" onClick={() => shareEvent(ev)}>
-                                  <Share2 className="h-3.5 w-3.5" />
-                                </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{ev.category}</Badge></TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{ev.date}</p>
+                              <p className="text-sm text-muted-foreground">{ev.time}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm truncate">{ev.location}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-3 w-3 text-muted-foreground" />
+                              <span className="font-mono font-semibold">${ev.basePrice}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{ev.availability || "—"}</Badge></TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
                                 <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className={`h-8 w-8 p-0 rounded-lg ${ev.isActive ? "text-emerald-700" : "text-zinc-700"}`}
-                                  onClick={() => toggleActive(ev)}
-                                  title={ev.isActive ? "Deactivate" : "Activate"}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
                                 >
-                                  {ev.isActive ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                                  <MoreVertical className="w-4 h-4" />
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 w-8 p-0 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50"
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => { setSelected(ev); setDetailsOpen(true); }}
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => startEdit(ev)}
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Event
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => shareEvent(ev)}
+                                >
+                                  <Share2 className="w-4 h-4 mr-2" />
+                                  Share
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => requestToggleActive(ev)}
+                                >
+                                  {ev.isActive ? (
+                                    <>
+                                      <ToggleLeft className="w-4 h-4 mr-2" />
+                                      Deactivate
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ToggleRight className="w-4 h-4 mr-2" />
+                                      Activate
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => removeEvent(ev)}
+                                  className="text-red-600"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {!loading && items.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center py-12">
-                              <div className="flex flex-col items-center">
-                                <Calendar className="h-10 w-10 text-muted-foreground mb-2" />
-                                <div className="text-sm text-muted-foreground">No events found</div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Event
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
 
-                  {/* Pagination */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      {total} total · page {page} / {totalPages}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={loading || page <= 1}>
-                        Prev
+                {!loading && items.length === 0 && (
+                  <div className="text-center py-8">
+                    <div className="text-zinc-500 mb-2">No events found</div>
+                    <div className="text-sm text-zinc-400">
+                      Try adjusting your filters or search terms
+                    </div>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-zinc-500">
+                      Page {page} of {totalPages} • {total} total events
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page - 1)}
+                        disabled={page <= 1}
+                      >
+                        Previous
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={loading || page >= totalPages}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page + 1)}
+                        disabled={page >= totalPages}
+                      >
                         Next
                       </Button>
                     </div>
                   </div>
-                </Card>
-              </div>
-            </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </SidebarInset>

@@ -1,4 +1,3 @@
-// src/lib/db.ts
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -42,7 +41,7 @@ async function seed() {
   console.log("[SEED] ▶️ Seeding started...");
 
   // 1) ADMIN USER
-  const adminEmail = "jkenosuh@gmail.com";
+  const adminEmail = "admin@premiertalentagency@gmail.com";
   const adminPlainPassword = "Admin@Celeb123";
 
   let admin = await User.findOne({ email: adminEmail });

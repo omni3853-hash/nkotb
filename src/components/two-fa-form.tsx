@@ -62,6 +62,7 @@ export function TwoFAForm() {
       setTimeLeft(60);
       setOtp(["", "", "", "", "", ""]);
     } catch (err: any) {
+      console.log(err)
       const msg = err?.response?.data?.message || err?.response?.message || "Failed to resend code";
       toast.error(msg);
     } finally {

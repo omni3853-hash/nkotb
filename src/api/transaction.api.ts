@@ -16,28 +16,35 @@ import {
 } from "@/utils/schemas/schemas";
 
 /* ------------------------ Shared Payment snapshot types ------------------ */
-type PaymentSummary = {
+export type PopulatedUserLite = {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+};
+
+export type PopulatedPaymentMethodLite = {
+    _id: string;
+    type?: "CARD" | "BANK_TRANSFER" | "MOBILE_PAYMENT" | string; // keep open for "crypto" etc.
+    last4?: string;
+    brand?: string;
+};
+
+export type PaymentSummary = {
     amount: number;
-    paymentMethod:
-    | string
-    | {
-        _id: string;
-        type?: "CARD" | "BANK_TRANSFER" | "MOBILE_PAYMENT" | string;
-        last4?: string;
-        brand?: string;
-    };
+    paymentMethod: string | PopulatedPaymentMethodLite; // id or populated object
     currency?: string;
 };
 
 /* ================================= DEPOSITS ============================== */
 export type DepositDto = {
     _id: string;
-    user: string | { _id: string; firstName?: string; lastName?: string; email?: string };
+    user: string | PopulatedUserLite;
     amount: number;
     payment?: PaymentSummary;
     status: "PENDING" | "COMPLETED" | "FAILED";
     creditedAt?: string;
-    processedBy?: string | { _id: string; firstName?: string; lastName?: string; email?: string };
+    processedBy?: string | PopulatedUserLite;
     processedAt?: string;
     notes?: string;
     createdAt: string;
@@ -83,6 +90,7 @@ export const AdminDepositsApi = {
     async list(q: Partial<DepositQuery> = {}): Promise<Paginated<DepositDto>> {
         const params = DepositQuerySchema.partial().parse(q);
         const res = await api.get(`/admin/deposits${qsOf(params)}`);
+        console.log(res)
         return res.data?.data ?? res.data ?? res;
     },
     async getById(id: string): Promise<DepositDto> {

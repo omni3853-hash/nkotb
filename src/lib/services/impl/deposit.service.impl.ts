@@ -1,5 +1,6 @@
+// src/lib/services/impl/deposit.service.impl.ts
 import mongoose from "mongoose";
-import { Deposit, IDeposit } from "@/lib/models/deposit.model";
+import { Deposit, IDeposit, IDepositPopulated } from "@/lib/models/deposit.model";
 import { User } from "@/lib/models/user.model";
 import { DepositStatus } from "@/lib/enums/deposit.enums";
 import { CreateDepositDto, AdminCreateDepositDto, DepositQueryDto, UpdateDepositStatusDto } from "@/lib/dto/deposit.dto";
@@ -8,30 +9,37 @@ import { logAudit } from "@/lib/utils/auditLogger";
 import { TransactionPurpose } from "@/lib/enums/transaction.enum";
 import TransactionServiceImpl from "@/lib/services/impl/transaction.service.impl";
 import EmailServiceImpl from "@/lib/services/impl/email.service.impl";
+import { depositPopulate } from "@/lib/services/helpers/deposit.populate";
+import { getPopulatedDepositById } from "../helpers/deposit.get-populated";
 
 export default class DepositServiceImpl {
     private tx = new TransactionServiceImpl();
     private email = new EmailServiceImpl();
 
     /* ----------------------------- USER CREATE ----------------------------- */
-    async create(userId: string, dto: CreateDepositDto): Promise<IDeposit> {
+    async create(userId: string, dto: CreateDepositDto): Promise<IDepositPopulated> {
         const session = await mongoose.startSession();
         try {
-            return await session.withTransaction(async () => {
+            const result = await session.withTransaction(async () => {
                 const user = await User.findById(userId).session(session);
                 if (!user) throw new CustomError(404, "User not found");
 
-                const created = await Deposit.create([{
-                    user: user._id,
-                    amount: dto.amount,
-                    payment: {
-                        paymentMethod: dto.paymentMethodId ? new mongoose.Types.ObjectId(dto.paymentMethodId) : undefined,
-                        proofOfPayment: dto.proofOfPayment,
-                        amount: dto.amount,
-                    },
-                    status: DepositStatus.PENDING,
-                    notes: dto.notes,
-                }], { session });
+                const created = await Deposit.create(
+                    [
+                        {
+                            user: user._id,
+                            amount: dto.amount,
+                            payment: {
+                                paymentMethod: dto.paymentMethodId ? new mongoose.Types.ObjectId(dto.paymentMethodId) : undefined,
+                                proofOfPayment: dto.proofOfPayment,
+                                amount: dto.amount,
+                            },
+                            status: DepositStatus.PENDING,
+                            notes: dto.notes,
+                        },
+                    ],
+                    { session }
+                );
 
                 const deposit = created[0];
 
@@ -50,8 +58,14 @@ export default class DepositServiceImpl {
                     deposit._id.toString()
                 );
 
-                return deposit;
+                // populate before returning
+                await deposit.populate(depositPopulate);
+                const populated = await getPopulatedDepositById(deposit._id, session);
+                if (!populated) throw new CustomError(500, "Failed to load populated deposit");
+                return populated;
             }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+
+            return result!;
         } finally {
             await session.endSession();
         }
@@ -63,41 +77,52 @@ export default class DepositServiceImpl {
         if (status) filter.status = status;
 
         const skip = (page - 1) * limit;
+
         const [items, total] = await Promise.all([
-            Deposit.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Deposit.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate(depositPopulate)
+                .lean<IDepositPopulated[]>(),
             Deposit.countDocuments(filter),
         ]);
 
         return { items, total, page, limit };
     }
 
-    async getMineById(userId: string, id: string): Promise<IDeposit> {
-        const dep = await Deposit.findOne({ _id: id, user: userId });
+    async getMineById(userId: string, id: string): Promise<IDepositPopulated> {
+        const dep = await Deposit.findOne({ _id: id, user: userId }).populate(depositPopulate).lean<IDepositPopulated>();
         if (!dep) throw new CustomError(404, "Deposit not found");
         return dep;
     }
 
     /* ----------------------------- ADMIN CREATE ---------------------------- */
-    async adminCreate(adminId: string, dto: AdminCreateDepositDto): Promise<IDeposit> {
+    async adminCreate(adminId: string, dto: AdminCreateDepositDto): Promise<IDepositPopulated> {
         const session = await mongoose.startSession();
         try {
-            return await session.withTransaction(async () => {
+            const result = await session.withTransaction(async () => {
                 const user = await User.findById(dto.userId).session(session);
                 if (!user) throw new CustomError(404, "User not found");
 
-                const created = await Deposit.create([{
-                    user: user._id,
-                    amount: dto.amount,
-                    payment: {
-                        paymentMethod: dto.paymentMethodId ? new mongoose.Types.ObjectId(dto.paymentMethodId) : undefined,
-                        proofOfPayment: dto.proofOfPayment,
-                        amount: dto.amount,
-                    },
-                    status: dto.status ?? DepositStatus.PENDING,
-                    notes: dto.notes,
-                    processedBy: new mongoose.Types.ObjectId(adminId),
-                    processedAt: new Date(),
-                }], { session });
+                const created = await Deposit.create(
+                    [
+                        {
+                            user: user._id,
+                            amount: dto.amount,
+                            payment: {
+                                paymentMethod: dto.paymentMethodId ? new mongoose.Types.ObjectId(dto.paymentMethodId) : undefined,
+                                proofOfPayment: dto.proofOfPayment,
+                                amount: dto.amount,
+                            },
+                            status: dto.status ?? DepositStatus.PENDING,
+                            notes: dto.notes,
+                            processedBy: new mongoose.Types.ObjectId(adminId),
+                            processedAt: new Date(),
+                        },
+                    ],
+                    { session }
+                );
 
                 const deposit = created[0];
 
@@ -149,8 +174,13 @@ export default class DepositServiceImpl {
                     );
                 }
 
-                return deposit;
+                await deposit.populate(depositPopulate);
+                const populated = await getPopulatedDepositById(deposit._id, session);
+                if (!populated) throw new CustomError(500, "Failed to load populated deposit");
+                return populated;
             }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+
+            return result!;
         } finally {
             await session.endSession();
         }
@@ -162,31 +192,40 @@ export default class DepositServiceImpl {
         if (status) filter.status = status;
 
         const skip = (page - 1) * limit;
+
         const [items, total] = await Promise.all([
-            Deposit.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Deposit.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate(depositPopulate)
+                .lean<IDepositPopulated[]>(),
             Deposit.countDocuments(filter),
         ]);
 
         return { items, total, page, limit };
     }
 
-    async adminGetById(id: string): Promise<IDeposit> {
-        const dep = await Deposit.findById(id);
+    async adminGetById(id: string): Promise<IDepositPopulated> {
+        const dep = await Deposit.findById(id).populate(depositPopulate).lean<IDepositPopulated>();
         if (!dep) throw new CustomError(404, "Deposit not found");
         return dep;
     }
 
     /* --------------------------- ADMIN UPDATE STATUS ----------------------- */
-    async adminUpdateStatus(adminId: string, id: string, dto: UpdateDepositStatusDto): Promise<IDeposit> {
+    async adminUpdateStatus(adminId: string, id: string, dto: UpdateDepositStatusDto): Promise<IDepositPopulated> {
         const session = await mongoose.startSession();
         try {
-            return await session.withTransaction(async () => {
+            const result = await session.withTransaction(async () => {
                 const deposit = await Deposit.findById(id).session(session);
                 if (!deposit) throw new CustomError(404, "Deposit not found");
 
-                // If already completed & credited, idempotent return
+                // If already completed & credited, idempotent: just return populated doc
                 if (deposit.status === DepositStatus.COMPLETED && dto.status === DepositStatus.COMPLETED) {
-                    return deposit;
+                    await deposit.populate(depositPopulate);
+                    const populated = await getPopulatedDepositById(deposit._id, session);
+                    if (!populated) throw new CustomError(500, "Failed to load populated deposit");
+                    return populated;
                 }
 
                 const user = await User.findById(deposit.user).session(session);
@@ -240,8 +279,13 @@ export default class DepositServiceImpl {
                     description: `Updated deposit status to ${deposit.status}`,
                 });
 
-                return deposit;
+                await deposit.populate(depositPopulate);
+                const populated = await getPopulatedDepositById(deposit._id, session);
+                if (!populated) throw new CustomError(500, "Failed to load populated deposit");
+                return populated;
             }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+
+            return result!;
         } finally {
             await session.endSession();
         }

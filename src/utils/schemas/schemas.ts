@@ -660,13 +660,13 @@ export const AdminCreateDepositSchema = z.object({
     paymentMethodId: z.string().optional(),
     proofOfPayment: z.string().optional(),
     status: z.enum(["PENDING", "COMPLETED", "FAILED"]).optional(),
-    notes: z.string().max(1000).optional().default(""),
+    notes: z.string().trim().min(1, "Notes are required").max(1000, "Max 1000 characters"),
 });
 export type AdminCreateDepositFormData = z.infer<typeof AdminCreateDepositSchema>;
 
 export const UpdateDepositStatusSchema = z.object({
     status: z.enum(["COMPLETED", "FAILED"]),
-    reason: z.string().max(500).optional().default(""),
+    reason: z.string().trim().min(1, "Reason is required").max(500, "Max 500 characters"),
 });
 export type UpdateDepositStatusFormData = z.infer<typeof UpdateDepositStatusSchema>;
 

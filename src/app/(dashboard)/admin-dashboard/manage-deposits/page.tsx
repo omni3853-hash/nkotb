@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -58,8 +58,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Plus,
   Search,
@@ -70,481 +70,163 @@ import {
   XCircle,
   Clock,
   DollarSign,
-  Calendar,
-  User,
-  Users,
   TrendingUp,
   Wallet,
-  CreditCard,
   Smartphone,
   MoreVertical,
-  Save,
-  X,
-  Check,
-  AlertTriangle,
-  Filter,
   RefreshCw,
   Download,
-  Mail,
-  Phone,
-  MapPin,
-  Activity,
-  Shield,
-  Zap,
-  Star,
-  Building,
-  Globe,
-  Settings,
-  UserPlus,
-  UserMinus,
-  History,
-  MessageSquare,
-  Bell,
-  Copy,
-  ExternalLink,
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus,
 } from "lucide-react";
+import { toast } from "sonner";
 
-// Interfaces
+// APIs & types
+import {
+  AdminDepositsApi,
+  PaymentSummary,
+  PopulatedPaymentMethodLite,
+  type DepositDto,
+} from "@/api/transaction.api";
+import { AdminCreateDepositFormData, AdminCreateDepositSchema, UpdateDepositStatusFormData, UpdateDepositStatusSchema } from "@/utils/schemas/schemas";
+
+// Local helper types if needed
 interface User {
-  id: number;
-  name: string;
+  _id: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string;
-  avatar: string | null;
-  location: string;
-  joinDate: string;
-  lastActive: string;
-  membership: "Basic" | "Premium" | "VIP";
-  status: "Active" | "Suspended" | "Banned" | "Pending";
-  balance: number;
-  totalSpent: number;
-  totalBookings: number;
-  totalEvents: number;
-  rating: number;
-  reviews: number;
-  bio: string;
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-    marketing: boolean;
-  };
-  isVerified: boolean;
-  isAdmin: boolean;
-  createdAt: string;
-  updatedAt: string;
+  avatar?: string;
+  phone?: string;
+  balance?: number;
 }
 
-interface Deposit {
-  id: string;
-  userId: number;
-  userName: string;
-  userEmail: string;
-  amount: number;
-  method: "crypto" | "mobile";
-  cryptoType?: "BTC" | "ETH" | "USDT" | "USDC";
-  mobileApp?: "Cash App" | "Zelle" | "Venmo" | "PayPal" | "Skrill";
-  transactionHash?: string;
-  paymentHandle?: string;
-  status: "pending" | "completed" | "failed";
-  depositType: "user_request" | "admin_created";
-  createdAt: string;
-  updatedAt: string;
-  processedBy?: string;
-  processedDate?: string;
-  notes?: string;
-  userBalance?: number;
+interface DepositQuery {
+  page?: number;
+  limit?: number;
+  status?: "PENDING" | "COMPLETED" | "FAILED";
 }
 
-// Sample users data (from manage-users)
-const initialUsers: User[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    avatar: "/placeholder-user.jpg",
-    location: "Los Angeles, CA",
-    joinDate: "2024-01-15",
-    lastActive: "2024-01-20",
-    membership: "Premium",
-    status: "Active",
-    balance: 10250.0,
-    totalSpent: 87500.0,
-    totalBookings: 24,
-    totalEvents: 8,
-    rating: 4.8,
-    reviews: 156,
-    bio: "Passionate about exclusive experiences and celebrity encounters.",
-    notifications: {
-      email: true,
-      push: true,
-      sms: false,
-      marketing: true,
-    },
-    isVerified: true,
-    isAdmin: false,
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-20T14:22:00Z",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah.johnson@example.com",
-    phone: "+1 (555) 234-5678",
-    avatar: null,
-    location: "New York, NY",
-    joinDate: "2024-01-10",
-    lastActive: "2024-01-19",
-    membership: "VIP",
-    status: "Active",
-    balance: 25000.0,
-    totalSpent: 150000.0,
-    totalBookings: 45,
-    totalEvents: 12,
-    rating: 4.9,
-    reviews: 89,
-    bio: "Event organizer and celebrity booking enthusiast.",
-    notifications: {
-      email: true,
-      push: true,
-      sms: true,
-      marketing: true,
-    },
-    isVerified: true,
-    isAdmin: false,
-    createdAt: "2024-01-10T08:15:00Z",
-    updatedAt: "2024-01-19T16:45:00Z",
-  },
-  {
-    id: 3,
-    name: "Mike Chen",
-    email: "mike.chen@example.com",
-    phone: "+1 (555) 345-6789",
-    avatar: null,
-    location: "San Francisco, CA",
-    joinDate: "2024-01-05",
-    lastActive: "2024-01-18",
-    membership: "Basic",
-    status: "Active",
-    balance: 1500.0,
-    totalSpent: 12000.0,
-    totalBookings: 8,
-    totalEvents: 3,
-    rating: 4.5,
-    reviews: 23,
-    bio: "New to the platform, exploring celebrity booking options.",
-    notifications: {
-      email: true,
-      push: false,
-      sms: false,
-      marketing: false,
-    },
-    isVerified: false,
-    isAdmin: false,
-    createdAt: "2024-01-05T14:20:00Z",
-    updatedAt: "2024-01-18T11:30:00Z",
-  },
-  {
-    id: 4,
-    name: "Emma Wilson",
-    email: "emma.wilson@example.com",
-    phone: "+1 (555) 456-7890",
-    avatar: null,
-    location: "Chicago, IL",
-    joinDate: "2024-01-12",
-    lastActive: "2024-01-17",
-    membership: "Premium",
-    status: "Suspended",
-    balance: 5000.0,
-    totalSpent: 35000.0,
-    totalBookings: 15,
-    totalEvents: 6,
-    rating: 4.2,
-    reviews: 67,
-    bio: "Corporate event planner with focus on celebrity appearances.",
-    notifications: {
-      email: true,
-      push: true,
-      sms: false,
-      marketing: true,
-    },
-    isVerified: true,
-    isAdmin: false,
-    createdAt: "2024-01-12T09:45:00Z",
-    updatedAt: "2024-01-17T13:15:00Z",
-  },
-  {
-    id: 5,
-    name: "David Brown",
-    email: "david.brown@example.com",
-    phone: "+1 (555) 567-8901",
-    avatar: null,
-    location: "Miami, FL",
-    joinDate: "2024-01-08",
-    lastActive: "2024-01-16",
-    membership: "Basic",
-    status: "Banned",
-    balance: 0.0,
-    totalSpent: 5000.0,
-    totalBookings: 3,
-    totalEvents: 1,
-    rating: 2.1,
-    reviews: 12,
-    bio: "Former user with account issues.",
-    notifications: {
-      email: false,
-      push: false,
-      sms: false,
-      marketing: false,
-    },
-    isVerified: false,
-    isAdmin: false,
-    createdAt: "2024-01-08T16:30:00Z",
-    updatedAt: "2024-01-16T10:20:00Z",
-  },
-];
+type MaybePM = PaymentSummary["paymentMethod"] | null | undefined;
 
-// Sample deposits data
-const initialDeposits: Deposit[] = [
-  {
-    id: "DEP-001",
-    userId: 1,
-    userName: "John Doe",
-    userEmail: "john.doe@example.com",
-    amount: 500,
-    method: "crypto",
-    cryptoType: "BTC",
-    transactionHash: "0x742d35...f0bEb",
-    status: "completed",
-    depositType: "user_request",
-    createdAt: "2024-01-20T10:30:00Z",
-    updatedAt: "2024-01-20T10:35:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-20T10:35:00Z",
-    notes: "Bitcoin deposit confirmed on blockchain",
-    userBalance: 10250.0,
-  },
-  {
-    id: "DEP-002",
-    userId: 2,
-    userName: "Sarah Johnson",
-    userEmail: "sarah.johnson@example.com",
-    amount: 1000,
-    method: "mobile",
-    mobileApp: "Cash App",
-    paymentHandle: "$EventBooker",
-    status: "pending",
-    depositType: "user_request",
-    createdAt: "2024-01-20T09:15:00Z",
-    updatedAt: "2024-01-20T09:15:00Z",
-    notes: "Awaiting confirmation from Cash App",
-    userBalance: 25000.0,
-  },
-  {
-    id: "DEP-003",
-    userId: 3,
-    userName: "Mike Chen",
-    userEmail: "mike.chen@example.com",
-    amount: 250,
-    method: "crypto",
-    cryptoType: "ETH",
-    transactionHash: "0x8e23ee...d052",
-    status: "completed",
-    depositType: "admin_created",
-    createdAt: "2024-01-19T14:20:00Z",
-    updatedAt: "2024-01-19T14:25:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-19T14:25:00Z",
-    notes: "Manual deposit for promotional bonus",
-    userBalance: 1500.0,
-  },
-  {
-    id: "DEP-004",
-    userId: 1,
-    userName: "John Doe",
-    userEmail: "john.doe@example.com",
-    amount: 750,
-    method: "mobile",
-    mobileApp: "Zelle",
-    paymentHandle: "payments@eventbooker.com",
-    status: "failed",
-    depositType: "user_request",
-    createdAt: "2024-01-19T11:45:00Z",
-    updatedAt: "2024-01-19T12:00:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-19T12:00:00Z",
-    notes: "Payment failed - insufficient funds",
-    userBalance: 10250.0,
-  },
-  {
-    id: "DEP-005",
-    userId: 4,
-    userName: "Emma Wilson",
-    userEmail: "emma.wilson@example.com",
-    amount: 2000,
-    method: "crypto",
-    cryptoType: "USDT",
-    transactionHash: "TYDzsY...MiAtW6",
-    status: "completed",
-    depositType: "user_request",
-    createdAt: "2024-01-18T16:30:00Z",
-    updatedAt: "2024-01-18T16:45:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-18T16:45:00Z",
-    notes: "USDT deposit on Tron network",
-    userBalance: 5000.0,
-  },
-  {
-    id: "DEP-006",
-    userId: 2,
-    userName: "Sarah Johnson",
-    userEmail: "sarah.johnson@example.com",
-    amount: 500,
-    method: "mobile",
-    mobileApp: "Venmo",
-    paymentHandle: "@EventBooker-Official",
-    status: "pending",
-    depositType: "user_request",
-    createdAt: "2024-01-18T13:20:00Z",
-    updatedAt: "2024-01-18T13:20:00Z",
-    notes: "Venmo payment pending verification",
-    userBalance: 25000.0,
-  },
-  {
-    id: "DEP-007",
-    userId: 3,
-    userName: "Mike Chen",
-    userEmail: "mike.chen@example.com",
-    amount: 100,
-    method: "crypto",
-    cryptoType: "USDC",
-    transactionHash: "0x8e23ee...d052",
-    status: "completed",
-    depositType: "user_request",
-    createdAt: "2024-01-17T10:15:00Z",
-    updatedAt: "2024-01-17T10:30:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-17T10:30:00Z",
-    notes: "USDC deposit on Ethereum network",
-    userBalance: 1500.0,
-  },
-  {
-    id: "DEP-008",
-    userId: 1,
-    userName: "John Doe",
-    userEmail: "john.doe@example.com",
-    amount: 1500,
-    method: "mobile",
-    mobileApp: "PayPal",
-    paymentHandle: "payments@eventbooker.com",
-    status: "completed",
-    depositType: "admin_created",
-    createdAt: "2024-01-16T15:45:00Z",
-    updatedAt: "2024-01-16T15:50:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-16T15:50:00Z",
-    notes: "Manual deposit for VIP upgrade bonus",
-    userBalance: 10250.0,
-  },
-  {
-    id: "DEP-009",
-    userId: 4,
-    userName: "Emma Wilson",
-    userEmail: "emma.wilson@example.com",
-    amount: 300,
-    method: "crypto",
-    cryptoType: "BTC",
-    transactionHash: "bc1qxy...0wlh",
-    status: "failed",
-    depositType: "user_request",
-    createdAt: "2024-01-15T12:30:00Z",
-    updatedAt: "2024-01-15T12:45:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-15T12:45:00Z",
-    notes: "Transaction timeout - insufficient network fees",
-    userBalance: 5000.0,
-  },
-  {
-    id: "DEP-010",
-    userId: 2,
-    userName: "Sarah Johnson",
-    userEmail: "sarah.johnson@example.com",
-    amount: 800,
-    method: "mobile",
-    mobileApp: "Skrill",
-    paymentHandle: "payments@eventbooker.com",
-    status: "completed",
-    depositType: "user_request",
-    createdAt: "2024-01-14T09:20:00Z",
-    updatedAt: "2024-01-14T09:35:00Z",
-    processedBy: "Admin User",
-    processedDate: "2024-01-14T09:35:00Z",
-    notes: "Skrill payment processed successfully",
-    userBalance: 25000.0,
-  },
-];
+export function isPopulatedPM(pm: MaybePM): pm is PopulatedPaymentMethodLite {
+  return !!pm && typeof pm !== "string";
+}
+
+export function getPaymentMethodType(pm?: MaybePM): string | undefined {
+  if (!pm) return undefined;
+  if (isPopulatedPM(pm)) return pm.type?.toUpperCase();
+  return undefined; // id string only
+}
+
+export function getPaymentMethodLabel(pm?: MaybePM): string {
+  if (!pm) return "Other";
+  if (!isPopulatedPM(pm)) return "Other"; // just an id
+
+  const rawType = (pm.type || "").toLowerCase();
+
+  if (rawType === "card") {
+    if (pm.brand && pm.last4) return `${pm.brand} •••• ${pm.last4}`;
+    if (pm.brand) return pm.brand;
+    if (pm.last4) return `Card •••• ${pm.last4}`;
+    return "Card";
+  }
+  if (rawType === "bank_transfer") return "Bank transfer";
+  if (rawType === "mobile_payment") return "Mobile payment";
+  if (rawType === "crypto") return "Crypto";
+
+  return pm.type || "Other";
+}
 
 export default function ManageDepositsPage() {
-  const [deposits, setDeposits] = useState<Deposit[]>(initialDeposits);
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [deposits, setDeposits] = useState<DepositDto[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [methodFilter, setMethodFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [editingDeposit, setEditingDeposit] = useState<Deposit | null>(null);
-  const [viewingDeposit, setViewingDeposit] = useState<Deposit | null>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [selectedDeposit, setSelectedDeposit] = useState<DepositDto | null>(null);
+  const [processing, setProcessing] = useState(false);
 
-  // Form states
-  const [depositForm, setDepositForm] = useState<Partial<Deposit>>({});
+  // Load deposits
+  const loadDeposits = async () => {
+    try {
+      setLoading(true);
+      const query: Partial<DepositQuery> = { page, limit };
+      if (statusFilter !== "all") {
+        query.status = statusFilter as "PENDING" | "COMPLETED" | "FAILED";
+      }
+      const response = await AdminDepositsApi.list(query);
+      setDeposits(response.items || []);
+      setTotal(response.total || 0);
+    } catch (error: any) {
+      toast.error("Failed to load deposits", {
+        description: error?.response?.data?.message || error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Filter deposits
+  // Load users for dropdown (stubbed)
+  const loadUsers = async () => {
+    try {
+      // If/when you have an AdminUsersApi, populate here:
+      // const response = await AdminUsersApi.list({ limit: 100 });
+      // setUsers(response.items);
+    } catch (error: any) {
+      console.error("Failed to load users:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadDeposits();
+  }, [page, limit, statusFilter]);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  // Filter deposits locally for search
   const filteredDeposits = deposits.filter((deposit) => {
-    const matchesSearch =
-      deposit.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deposit.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deposit.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (deposit.transactionHash &&
-        deposit.transactionHash
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()));
+    const userName =
+      typeof deposit.user === "object"
+        ? `${deposit.user.firstName} ${deposit.user.lastName}`.toLowerCase()
+        : String(deposit.user).toLowerCase();
 
-    const matchesStatus =
-      statusFilter === "all" || deposit.status === statusFilter;
-    const matchesType =
-      typeFilter === "all" || deposit.depositType === typeFilter;
-    const matchesMethod =
-      methodFilter === "all" || deposit.method === methodFilter;
+    const userEmail = typeof deposit.user === "object" ? deposit.user.email : "";
 
-    return matchesSearch && matchesStatus && matchesType && matchesMethod;
+    return (
+      userName.includes(searchTerm.toLowerCase()) ||
+      userEmail?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      deposit._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      deposit.amount.toString().includes(searchTerm)
+    );
   });
 
-  // Helper functions
-  const getStatusBadge = (status: Deposit["status"]) => {
+  // Helpers
+  const getStatusBadge = (status: DepositDto["status"]) => {
     switch (status) {
-      case "pending":
+      case "PENDING":
         return (
           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
             <Clock className="w-3 h-3 mr-1" />
             Pending
           </Badge>
         );
-      case "completed":
+      case "COMPLETED":
         return (
           <Badge className="bg-green-100 text-green-800 border-green-200">
             <CheckCircle2 className="w-3 h-3 mr-1" />
             Completed
           </Badge>
         );
-      case "failed":
+      case "FAILED":
         return (
           <Badge className="bg-red-100 text-red-800 border-red-200">
             <XCircle className="w-3 h-3 mr-1" />
@@ -556,254 +238,136 @@ export default function ManageDepositsPage() {
     }
   };
 
-  const getTypeBadge = (type: Deposit["depositType"]) => {
-    switch (type) {
-      case "user_request":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-            <User className="w-3 h-3 mr-1" />
-            User Request
-          </Badge>
-        );
-      case "admin_created":
-        return (
-          <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-            <Shield className="w-3 h-3 mr-1" />
-            Admin Created
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">{type}</Badge>;
-    }
-  };
+  const getPaymentMethodBadge = (deposit: DepositDto) => {
+    const pm = deposit.payment?.paymentMethod;
+    const pmType = getPaymentMethodType(pm);
+    const label = getPaymentMethodLabel(pm);
 
-  const getMethodBadge = (deposit: Deposit) => {
-    if (deposit.method === "crypto") {
+    const isCrypto =
+      (pmType && pmType.toLowerCase() === "crypto") ||
+      (!pmType && typeof pm !== "string" && (pm?.type || "").toLowerCase() === "crypto");
+
+    if (isCrypto) {
       return (
         <Badge className="bg-orange-100 text-orange-800 border-orange-200">
           <Wallet className="w-3 h-3 mr-1" />
-          {deposit.cryptoType}
-        </Badge>
-      );
-    } else {
-      return (
-        <Badge className="bg-green-100 text-green-800 border-green-200">
-          <Smartphone className="w-3 h-3 mr-1" />
-          {deposit.mobileApp}
+          Crypto
         </Badge>
       );
     }
+
+    return (
+      <Badge className="bg-green-100 text-green-800 border-green-200">
+        <Smartphone className="w-3 h-3 mr-1" />
+        {label}
+      </Badge>
+    );
   };
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase();
-  };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
+
+  const getUserName = (deposit: DepositDto) => {
+    if (typeof deposit.user === "object") {
+      return `${deposit.user.firstName} ${deposit.user.lastName}`;
+    }
+    return "Unknown User";
   };
 
-  // CRUD Operations
-  const handleCreateDeposit = () => {
-    setEditingDeposit(null);
-    setDepositForm({
-      method: "crypto",
-      status: "pending",
-      depositType: "admin_created",
-      amount: 0,
-    });
-    setIsCreateModalOpen(true);
+  const getUserEmail = (deposit: DepositDto) => {
+    if (typeof deposit.user === "object") {
+      return deposit.user.email;
+    }
+    return "Unknown";
   };
 
-  const handleEditDeposit = (deposit: Deposit) => {
-    setEditingDeposit(deposit);
-    setDepositForm(deposit);
-    setIsEditModalOpen(true);
+  // CRUD
+  const handleCreateDeposit = async (data: AdminCreateDepositFormData) => {
+    try {
+      setProcessing(true);
+      await AdminDepositsApi.create(data);
+      toast.success("Deposit created successfully");
+      setIsCreateModalOpen(false);
+      loadDeposits();
+    } catch (error: any) {
+      toast.error("Failed to create deposit", {
+        description: error?.response?.data?.message || error.message,
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const handleViewDeposit = (deposit: Deposit) => {
-    setViewingDeposit(deposit);
+  const handleUpdateStatus = async (data: UpdateDepositStatusFormData) => {
+    if (!selectedDeposit) return;
+    try {
+      setProcessing(true);
+      await AdminDepositsApi.updateStatus(selectedDeposit._id, data);
+      toast.success("Deposit status updated successfully");
+      setIsStatusModalOpen(false);
+      setSelectedDeposit(null);
+      loadDeposits();
+    } catch (error: any) {
+      toast.error("Failed to update deposit status", {
+        description: error?.response?.data?.message || error.message,
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDeleteDeposit = async (depositId: string) => {
+    try {
+      await AdminDepositsApi.remove(depositId);
+      toast.success("Deposit deleted successfully");
+      loadDeposits();
+    } catch (error: any) {
+      toast.error("Failed to delete deposit", {
+        description: error?.response?.data?.message || error.message,
+      });
+    }
+  };
+
+  const handleViewDeposit = (deposit: DepositDto) => {
+    setSelectedDeposit(deposit);
     setIsViewModalOpen(true);
   };
 
-  const handleSaveDeposit = () => {
-    if (editingDeposit) {
-      // Update existing deposit
-      const updatedDeposit: Deposit = {
-        ...editingDeposit,
-        ...depositForm,
-        updatedAt: new Date().toISOString(),
-        processedBy: "Admin User",
-        processedDate: new Date().toISOString(),
-      } as Deposit;
-
-      // Update user balance if status changed
-      if (editingDeposit.status !== depositForm.status) {
-        const user = users.find((u) => u.id === updatedDeposit.userId);
-        if (user) {
-          let balanceChange = 0;
-          if (
-            editingDeposit.status === "completed" &&
-            depositForm.status === "failed"
-          ) {
-            balanceChange = -updatedDeposit.amount; // Reversal
-          } else if (
-            editingDeposit.status !== "completed" &&
-            depositForm.status === "completed"
-          ) {
-            balanceChange = updatedDeposit.amount; // Add funds
-          }
-
-          if (balanceChange !== 0) {
-            setUsers(
-              users.map((u) =>
-                u.id === updatedDeposit.userId
-                  ? { ...u, balance: u.balance + balanceChange }
-                  : u
-              )
-            );
-          }
-        }
-      }
-
-      setDeposits(
-        deposits.map((d) => (d.id === editingDeposit.id ? updatedDeposit : d))
-      );
-    } else {
-      // Create new deposit
-      const newDeposit: Deposit = {
-        id: `DEP-${String(deposits.length + 1).padStart(3, "0")}`,
-        userId: depositForm.userId || 0,
-        userName: depositForm.userName || "",
-        userEmail: depositForm.userEmail || "",
-        amount: depositForm.amount || 0,
-        method: depositForm.method || "crypto",
-        cryptoType: depositForm.cryptoType,
-        mobileApp: depositForm.mobileApp,
-        transactionHash: depositForm.transactionHash,
-        paymentHandle: depositForm.paymentHandle,
-        status: depositForm.status || "pending",
-        depositType: "admin_created",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        processedBy: "Admin User",
-        processedDate: new Date().toISOString(),
-        notes: depositForm.notes,
-      };
-
-      // Update user balance if status is completed
-      if (newDeposit.status === "completed") {
-        const user = users.find((u) => u.id === newDeposit.userId);
-        if (user) {
-          setUsers(
-            users.map((u) =>
-              u.id === newDeposit.userId
-                ? { ...u, balance: u.balance + newDeposit.amount }
-                : u
-            )
-          );
-        }
-      }
-
-      setDeposits([...deposits, newDeposit]);
-    }
-
-    setIsCreateModalOpen(false);
-    setIsEditModalOpen(false);
-    setDepositForm({});
-    setEditingDeposit(null);
+  const handleStatusChangeClick = (deposit: DepositDto) => {
+    setSelectedDeposit(deposit);
+    setIsStatusModalOpen(true);
   };
 
-  const handleDeleteDeposit = (depositId: string) => {
-    const deposit = deposits.find((d) => d.id === depositId);
-    if (deposit && deposit.status === "completed") {
-      // Reverse balance change
-      const user = users.find((u) => u.id === deposit.userId);
-      if (user) {
-        setUsers(
-          users.map((u) =>
-            u.id === deposit.userId
-              ? { ...u, balance: u.balance - deposit.amount }
-              : u
-          )
-        );
-      }
-    }
-    setDeposits(deposits.filter((d) => d.id !== depositId));
-  };
-
-  const handleStatusChange = (
-    depositId: string,
-    newStatus: Deposit["status"]
-  ) => {
-    const deposit = deposits.find((d) => d.id === depositId);
-    if (!deposit) return;
-
-    const updatedDeposit: Deposit = {
-      ...deposit,
-      status: newStatus,
-      updatedAt: new Date().toISOString(),
-      processedBy: "Admin User",
-      processedDate: new Date().toISOString(),
-    };
-
-    // Handle balance changes
-    const user = users.find((u) => u.id === deposit.userId);
-    if (user) {
-      let balanceChange = 0;
-      if (deposit.status === "completed" && newStatus === "failed") {
-        balanceChange = -deposit.amount; // Reversal
-      } else if (deposit.status !== "completed" && newStatus === "completed") {
-        balanceChange = deposit.amount; // Add funds
-      }
-
-      if (balanceChange !== 0) {
-        setUsers(
-          users.map((u) =>
-            u.id === deposit.userId
-              ? { ...u, balance: u.balance + balanceChange }
-              : u
-          )
-        );
-      }
-    }
-
-    setDeposits(deposits.map((d) => (d.id === depositId ? updatedDeposit : d)));
-  };
-
-  // Calculate stats
+  // Stats
   const totalDeposits = deposits.length;
   const totalAmount = deposits.reduce((sum, d) => sum + d.amount, 0);
-  const pendingDeposits = deposits.filter((d) => d.status === "pending").length;
+  const pendingDeposits = deposits.filter((d) => d.status === "PENDING").length;
+  const pendingPct =
+    totalDeposits > 0 ? Math.round((pendingDeposits / totalDeposits) * 100) : 0;
+
   const completedToday = deposits.filter(
     (d) =>
-      d.status === "completed" &&
+      d.status === "COMPLETED" &&
       new Date(d.createdAt).toDateString() === new Date().toDateString()
   ).length;
-  const completedTodayAmount = deposits
-    .filter(
-      (d) =>
-        d.status === "completed" &&
-        new Date(d.createdAt).toDateString() === new Date().toDateString()
-    )
-    .reduce((sum, d) => sum + d.amount, 0);
+
+  const totalPages = Math.ceil((total || 0) / (limit || 10));
 
   return (
     <SidebarProvider>
@@ -818,11 +382,11 @@ export default function ManageDepositsPage() {
               actionButton={{
                 text: "Create Deposit",
                 icon: <Plus className="size-4" />,
-                onClick: handleCreateDeposit,
+                onClick: () => setIsCreateModalOpen(true),
               }}
             />
 
-            {/* Stats Cards */}
+            {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
                 <div className="flex items-center justify-between mb-3">
@@ -833,12 +397,8 @@ export default function ManageDepositsPage() {
                     {totalDeposits}
                   </Badge>
                 </div>
-                <p className="text-xs font-mono text-zinc-600 mb-1">
-                  TOTAL DEPOSITS
-                </p>
-                <p className="text-2xl font-bold text-emerald-900">
-                  {totalDeposits}
-                </p>
+                <p className="text-xs font-mono text-zinc-600 mb-1">TOTAL DEPOSITS</p>
+                <p className="text-2xl font-bold text-emerald-900">{totalDeposits}</p>
               </Card>
 
               <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
@@ -847,15 +407,11 @@ export default function ManageDepositsPage() {
                     <Clock className="size-5 text-emerald-900" />
                   </div>
                   <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
-                    {Math.round((pendingDeposits / totalDeposits) * 100)}%
+                    {pendingPct}%
                   </Badge>
                 </div>
-                <p className="text-xs font-mono text-zinc-600 mb-1">
-                  PENDING REQUESTS
-                </p>
-                <p className="text-2xl font-bold text-emerald-900">
-                  {pendingDeposits}
-                </p>
+                <p className="text-xs font-mono text-zinc-600 mb-1">PENDING REQUESTS</p>
+                <p className="text-2xl font-bold text-emerald-900">{pendingDeposits}</p>
               </Card>
 
               <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
@@ -867,12 +423,8 @@ export default function ManageDepositsPage() {
                     {completedToday}
                   </Badge>
                 </div>
-                <p className="text-xs font-mono text-zinc-600 mb-1">
-                  COMPLETED TODAY
-                </p>
-                <p className="text-2xl font-bold text-emerald-900">
-                  {completedToday}
-                </p>
+                <p className="text-xs font-mono text-zinc-600 mb-1">COMPLETED TODAY</p>
+                <p className="text-2xl font-bold text-emerald-900">{completedToday}</p>
               </Card>
 
               <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
@@ -880,13 +432,8 @@ export default function ManageDepositsPage() {
                   <div className="size-10 rounded-xl bg-emerald-50 border-2 border-emerald-900 flex items-center justify-center">
                     <TrendingUp className="size-5 text-emerald-900" />
                   </div>
-                  <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
-                    {formatCurrency(totalAmount)}
-                  </Badge>
                 </div>
-                <p className="text-xs font-mono text-zinc-600 mb-1">
-                  TOTAL VOLUME
-                </p>
+                <p className="text-xs font-mono text-zinc-600 mb-1">TOTAL VOLUME</p>
                 <p className="text-2xl font-bold text-emerald-900">
                   {formatCurrency(totalAmount)}
                 </p>
@@ -896,15 +443,11 @@ export default function ManageDepositsPage() {
             {/* Filters */}
             <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
               <CardHeader>
-                <CardTitle className="text-emerald-900">
-                  Filters & Search
-                </CardTitle>
-                <CardDescription>
-                  Filter deposits by status, type, method, and search terms
-                </CardDescription>
+                <CardTitle className="text-emerald-900">Filters & Search</CardTitle>
+                <CardDescription>Filter deposits by status and search terms</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
                     <Input
@@ -921,35 +464,26 @@ export default function ManageDepositsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="COMPLETED">Completed</SelectItem>
+                      <SelectItem value="FAILED">Failed</SelectItem>
                     </SelectContent>
                   </Select>
 
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <Select
+                    value={String(limit)}
+                    onValueChange={(value) => {
+                      setLimit(Number(value));
+                      setPage(1);
+                    }}
+                  >
                     <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
-                      <SelectValue placeholder="Type" />
+                      <SelectValue placeholder="Per page" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="user_request">
-                        User Requests
-                      </SelectItem>
-                      <SelectItem value="admin_created">
-                        Admin Created
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={methodFilter} onValueChange={setMethodFilter}>
-                    <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
-                      <SelectValue placeholder="Method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Methods</SelectItem>
-                      <SelectItem value="crypto">Crypto</SelectItem>
-                      <SelectItem value="mobile">Mobile Money</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="20">20 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -958,8 +492,7 @@ export default function ManageDepositsPage() {
                     onClick={() => {
                       setSearchTerm("");
                       setStatusFilter("all");
-                      setTypeFilter("all");
-                      setMethodFilter("all");
+                      setPage(1);
                     }}
                     className="bg-zinc-50 focus:border-emerald-500"
                   >
@@ -976,13 +509,14 @@ export default function ManageDepositsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-emerald-900">Deposits</CardTitle>
-                    <CardDescription>
-                      {filteredDeposits.length} deposits found
-                    </CardDescription>
+                    <CardDescription>{filteredDeposits.length} deposits found</CardDescription>
                   </div>
                   <Button
                     variant="outline"
                     className="bg-emerald-800 border-emerald-800 text-white hover:bg-emerald-700"
+                    onClick={() => {
+                      // TODO: implement export
+                    }}
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Export
@@ -1004,9 +538,6 @@ export default function ManageDepositsPage() {
                           Method
                         </TableHead>
                         <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
-                          Type
-                        </TableHead>
-                        <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
                           Status
                         </TableHead>
                         <TableHead className="text-emerald-900 font-semibold text-xs sm:text-sm">
@@ -1018,126 +549,137 @@ export default function ManageDepositsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredDeposits.map((deposit) => (
-                        <TableRow key={deposit.id} className="hover:bg-zinc-50">
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="w-10 h-10">
-                                <AvatarImage src={deposit.userName} />
-                                <AvatarFallback className="bg-emerald-100 text-emerald-900">
-                                  {getInitials(deposit.userName)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-zinc-900">
-                                  {deposit.userName}
-                                </div>
-                                <div className="text-sm text-zinc-500">
-                                  {deposit.userEmail}
-                                </div>
-                                <div className="text-sm text-zinc-500">
-                                  {deposit.id}
-                                </div>
-                              </div>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            <div className="flex items-center justify-center">
+                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                              Loading deposits...
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium text-zinc-900">
-                              {formatCurrency(deposit.amount)}
-                            </div>
-                          </TableCell>
-                          <TableCell>{getMethodBadge(deposit)}</TableCell>
-                          <TableCell>
-                            {getTypeBadge(deposit.depositType)}
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(deposit.status)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-zinc-900">
-                              {formatDate(deposit.createdAt)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => handleViewDeposit(deposit)}
-                                >
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                {deposit.status === "pending" && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(
-                                        deposit.id,
-                                        "completed"
-                                      )
-                                    }
-                                  >
-                                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                                    Approve
-                                  </DropdownMenuItem>
-                                )}
-                                {deposit.status === "pending" && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(deposit.id, "failed")
-                                    }
-                                  >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Mark as Failed
-                                  </DropdownMenuItem>
-                                )}
-                                {deposit.status === "completed" && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(deposit.id, "failed")
-                                    }
-                                  >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Mark as Failed
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  onClick={() => handleEditDeposit(deposit)}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Deposit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleDeleteDeposit(deposit.id)
-                                  }
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete Deposit
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        filteredDeposits.map((deposit) => (
+                          <TableRow key={deposit._id} className="hover:bg-zinc-50">
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="w-10 h-10">
+                                  <AvatarFallback className="bg-emerald-100 text-emerald-900">
+                                    {getInitials(getUserName(deposit))}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-medium text-zinc-900">
+                                    {getUserName(deposit)}
+                                  </div>
+                                  <div className="text-sm text-zinc-500">{getUserEmail(deposit)}</div>
+                                  <div className="text-sm text-zinc-500">{deposit._id}</div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium text-zinc-900">
+                                {formatCurrency(deposit.amount)}
+                              </div>
+                            </TableCell>
+                            <TableCell>{getPaymentMethodBadge(deposit)}</TableCell>
+                            <TableCell>{getStatusBadge(deposit.status)}</TableCell>
+                            <TableCell>
+                              <div className="text-sm text-zinc-900">{formatDate(deposit.createdAt)}</div>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleViewDeposit(deposit)}>
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+
+                                  {deposit.status === "PENDING" && (
+                                    <DropdownMenuItem
+                                      onClick={() => handleStatusChangeClick(deposit)}
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                                      Update Status
+                                    </DropdownMenuItem>
+                                  )}
+
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
+                                        className="text-red-600"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete Deposit
+                                      </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete
+                                          the deposit record.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleDeleteDeposit(deposit._id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
 
-                {filteredDeposits.length === 0 && (
+                {!loading && filteredDeposits.length === 0 && (
                   <div className="text-center py-8">
                     <div className="text-zinc-500 mb-2">No deposits found</div>
                     <div className="text-sm text-zinc-400">
                       Try adjusting your filters or search terms
+                    </div>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-zinc-500">
+                      Page {page} of {totalPages} • {total} total deposits
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                      >
+                        Next
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1146,732 +688,447 @@ export default function ManageDepositsPage() {
           </div>
         </div>
 
-        {/* Create/Edit Deposit Modal */}
-        <Dialog
-          open={isCreateModalOpen || isEditModalOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              setIsCreateModalOpen(false);
-              setIsEditModalOpen(false);
-              setDepositForm({});
-              setEditingDeposit(null);
-            }
-          }}
-        >
-          <DialogContent className="w-[90vw] max-w-4xl h-[90vh] overflow-hidden p-0">
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-emerald-800 to-emerald-900 px-6 py-4 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <DialogTitle className="text-xl font-bold">
-                      {editingDeposit ? "Edit Deposit" : "Create New Deposit"}
-                    </DialogTitle>
-                    <DialogDescription className="text-emerald-100 mt-1">
-                      {editingDeposit
-                        ? "Update deposit information and settings"
-                        : "Add a new deposit to the system"}
-                    </DialogDescription>
-                  </div>
-                </div>
-              </div>
+        {/* Create Deposit Modal */}
+        <CreateDepositModal
+          open={isCreateModalOpen}
+          onOpenChange={setIsCreateModalOpen}
+          onSubmit={handleCreateDeposit}
+          loading={processing}
+        />
 
-              {/* Content */}
-              <div className="flex-1 overflow-hidden">
-                <Tabs
-                  defaultValue="deposit-info"
-                  className="h-full flex flex-col"
-                >
-                  <div className="px-6 py-4 border-b bg-zinc-50">
-                    <TabsList className="grid w-full grid-cols-2 bg-white shadow-sm">
-                      <TabsTrigger
-                        value="deposit-info"
-                        className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white text-emerald-700 font-medium"
-                      >
-                        <DollarSign className="w-4 h-4 mr-2" />
-                        Deposit Information
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="additional-details"
-                        className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white text-emerald-700 font-medium"
-                      >
-                        <Settings className="w-4 h-4 mr-2" />
-                        Additional Details
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
+        {/* View Deposit Modal */}
+        <ViewDepositModal
+          open={isViewModalOpen}
+          onOpenChange={setIsViewModalOpen}
+          deposit={selectedDeposit}
+          onStatusChange={handleStatusChangeClick}
+        />
 
-                  <div className="flex-1 overflow-y-auto p-6">
-                    <TabsContent
-                      value="deposit-info"
-                      className="space-y-6 mt-0"
-                    >
-                      {/* User Selection */}
-                      <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-200">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="flex items-center gap-2 text-emerald-900">
-                            <User className="w-5 h-5" />
-                            User Information
-                          </CardTitle>
-                          <CardDescription>
-                            Select the user for this deposit
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <div className="space-y-3">
-                            <Label
-                              htmlFor="user"
-                              className="text-sm font-semibold text-emerald-900 flex items-center gap-2"
-                            >
-                              <Users className="w-4 h-4" />
-                              Select User
-                            </Label>
-                            <Select
-                              value={depositForm.userId?.toString() || ""}
-                              onValueChange={(value) => {
-                                const user = users.find(
-                                  (u) => u.id === parseInt(value)
-                                );
-                                if (user) {
-                                  setDepositForm({
-                                    ...depositForm,
-                                    userId: user.id,
-                                    userName: user.name,
-                                    userEmail: user.email,
-                                  });
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="h-11 bg-white border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20">
-                                <SelectValue placeholder="Select a user" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {users.map((user) => (
-                                  <SelectItem
-                                    key={user.id}
-                                    value={user.id.toString()}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <Avatar className="w-6 h-6">
-                                        <AvatarImage src={user.avatar || ""} />
-                                        <AvatarFallback className="bg-emerald-100 text-emerald-800 text-xs">
-                                          {getInitials(user.name)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                        <div className="font-medium">
-                                          {user.name}
-                                        </div>
-                                        <div className="text-xs text-zinc-500">
-                                          {user.email}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          {depositForm.userId && (
-                            <div className="bg-zinc-50 p-4 rounded-lg">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <Label className="text-xs text-zinc-600">
-                                    User ID
-                                  </Label>
-                                  <p className="font-medium text-zinc-900">
-                                    {depositForm.userId}
-                                  </p>
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-zinc-600">
-                                    Email
-                                  </Label>
-                                  <p className="font-medium text-zinc-900">
-                                    {depositForm.userEmail}
-                                  </p>
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-zinc-600">
-                                    Current Balance
-                                  </Label>
-                                  <p className="font-medium text-zinc-900">
-                                    {formatCurrency(
-                                      users.find(
-                                        (u) => u.id === depositForm.userId
-                                      )?.balance || 0
-                                    )}
-                                  </p>
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-zinc-600">
-                                    Membership
-                                  </Label>
-                                  <p className="font-medium text-zinc-900">
-                                    {
-                                      users.find(
-                                        (u) => u.id === depositForm.userId
-                                      )?.membership
-                                    }
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-
-                      {/* Deposit Details */}
-                      <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="flex items-center gap-2 text-blue-900">
-                            <DollarSign className="w-5 h-5" />
-                            Deposit Details
-                          </CardTitle>
-                          <CardDescription>
-                            Enter deposit amount and payment method
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-3">
-                              <Label
-                                htmlFor="amount"
-                                className="text-sm font-semibold text-blue-900 flex items-center gap-2"
-                              >
-                                <DollarSign className="w-4 h-4" />
-                                Amount (USD)
-                              </Label>
-                              <Input
-                                id="amount"
-                                type="number"
-                                step="0.01"
-                                value={depositForm.amount || 0}
-                                onChange={(e) =>
-                                  setDepositForm({
-                                    ...depositForm,
-                                    amount: parseFloat(e.target.value) || 0,
-                                  })
-                                }
-                                className="h-11 bg-white border-zinc-200 focus:border-blue-500 focus:ring-blue-500/20"
-                                placeholder="0.00"
-                              />
-                            </div>
-                            <div className="space-y-3">
-                              <Label
-                                htmlFor="status"
-                                className="text-sm font-semibold text-blue-900 flex items-center gap-2"
-                              >
-                                <Activity className="w-4 h-4" />
-                                Status
-                              </Label>
-                              <Select
-                                value={depositForm.status || "pending"}
-                                onValueChange={(value) =>
-                                  setDepositForm({
-                                    ...depositForm,
-                                    status: value as Deposit["status"],
-                                  })
-                                }
-                              >
-                                <SelectTrigger className="h-11 bg-white border-zinc-200 focus:border-blue-500 focus:ring-blue-500/20">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">
-                                    <div className="flex items-center gap-2">
-                                      <Clock className="w-4 h-4 text-yellow-600" />
-                                      Pending
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="completed">
-                                    <div className="flex items-center gap-2">
-                                      <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                      Completed
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="failed">
-                                    <div className="flex items-center gap-2">
-                                      <XCircle className="w-4 h-4 text-red-600" />
-                                      Failed
-                                    </div>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <Label
-                              htmlFor="method"
-                              className="text-sm font-semibold text-blue-900 flex items-center gap-2"
-                            >
-                              <CreditCard className="w-4 h-4" />
-                              Payment Method
-                            </Label>
-                            <Select
-                              value={depositForm.method || "crypto"}
-                              onValueChange={(value) =>
-                                setDepositForm({
-                                  ...depositForm,
-                                  method: value as Deposit["method"],
-                                  cryptoType:
-                                    value === "crypto"
-                                      ? depositForm.cryptoType
-                                      : undefined,
-                                  mobileApp:
-                                    value === "mobile"
-                                      ? depositForm.mobileApp
-                                      : undefined,
-                                })
-                              }
-                            >
-                              <SelectTrigger className="h-11 bg-white border-zinc-200 focus:border-blue-500 focus:ring-blue-500/20">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="crypto">
-                                  <div className="flex items-center gap-2">
-                                    <Wallet className="w-4 h-4" />
-                                    Cryptocurrency
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="mobile">
-                                  <div className="flex items-center gap-2">
-                                    <Smartphone className="w-4 h-4" />
-                                    Mobile Money
-                                  </div>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          {depositForm.method === "crypto" && (
-                            <div className="space-y-3">
-                              <Label
-                                htmlFor="cryptoType"
-                                className="text-sm font-semibold text-blue-900 flex items-center gap-2"
-                              >
-                                <Wallet className="w-4 h-4" />
-                                Cryptocurrency Type
-                              </Label>
-                              <Select
-                                value={depositForm.cryptoType || ""}
-                                onValueChange={(value) =>
-                                  setDepositForm({
-                                    ...depositForm,
-                                    cryptoType: value as Deposit["cryptoType"],
-                                  })
-                                }
-                              >
-                                <SelectTrigger className="h-11 bg-white border-zinc-200 focus:border-blue-500 focus:ring-blue-500/20">
-                                  <SelectValue placeholder="Select cryptocurrency" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="BTC">
-                                    Bitcoin (BTC)
-                                  </SelectItem>
-                                  <SelectItem value="ETH">
-                                    Ethereum (ETH)
-                                  </SelectItem>
-                                  <SelectItem value="USDT">
-                                    Tether (USDT)
-                                  </SelectItem>
-                                  <SelectItem value="USDC">
-                                    USD Coin (USDC)
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-
-                          {depositForm.method === "mobile" && (
-                            <div className="space-y-3">
-                              <Label
-                                htmlFor="mobileApp"
-                                className="text-sm font-semibold text-blue-900 flex items-center gap-2"
-                              >
-                                <Smartphone className="w-4 h-4" />
-                                Mobile App
-                              </Label>
-                              <Select
-                                value={depositForm.mobileApp || ""}
-                                onValueChange={(value) =>
-                                  setDepositForm({
-                                    ...depositForm,
-                                    mobileApp: value as Deposit["mobileApp"],
-                                  })
-                                }
-                              >
-                                <SelectTrigger className="h-11 bg-white border-zinc-200 focus:border-blue-500 focus:ring-blue-500/20">
-                                  <SelectValue placeholder="Select mobile app" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Cash App">
-                                    Cash App
-                                  </SelectItem>
-                                  <SelectItem value="Zelle">Zelle</SelectItem>
-                                  <SelectItem value="Venmo">Venmo</SelectItem>
-                                  <SelectItem value="PayPal">PayPal</SelectItem>
-                                  <SelectItem value="Skrill">Skrill</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-
-                          <div className="space-y-3">
-                            <Label
-                              htmlFor="transactionHash"
-                              className="text-sm font-semibold text-blue-900 flex items-center gap-2"
-                            >
-                              <Copy className="w-4 h-4" />
-                              Transaction Hash / Reference
-                            </Label>
-                            <Input
-                              id="transactionHash"
-                              value={depositForm.transactionHash || ""}
-                              onChange={(e) =>
-                                setDepositForm({
-                                  ...depositForm,
-                                  transactionHash: e.target.value,
-                                })
-                              }
-                              className="h-11 bg-white border-zinc-200 focus:border-blue-500 focus:ring-blue-500/20"
-                              placeholder="Enter transaction hash or reference"
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-
-                    <TabsContent
-                      value="additional-details"
-                      className="space-y-6 mt-0"
-                    >
-                      {/* Admin Notes */}
-                      <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-200">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="flex items-center gap-2 text-purple-900">
-                            <MessageSquare className="w-5 h-5" />
-                            Admin Notes
-                          </CardTitle>
-                          <CardDescription>
-                            Add notes or comments about this deposit
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <div className="space-y-3">
-                            <Label
-                              htmlFor="notes"
-                              className="text-sm font-semibold text-purple-900 flex items-center gap-2"
-                            >
-                              <MessageSquare className="w-4 h-4" />
-                              Notes
-                            </Label>
-                            <Textarea
-                              id="notes"
-                              value={depositForm.notes || ""}
-                              onChange={(e) =>
-                                setDepositForm({
-                                  ...depositForm,
-                                  notes: e.target.value,
-                                })
-                              }
-                              className="min-h-[120px] bg-white border-zinc-200 focus:border-purple-500 focus:ring-purple-500/20 resize-none"
-                              placeholder="Enter any notes or comments about this deposit..."
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Processing Information */}
-                      <Card className="bg-gradient-to-br from-orange-50 to-white border-orange-200">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="flex items-center gap-2 text-orange-900">
-                            <Settings className="w-5 h-5" />
-                            Processing Information
-                          </CardTitle>
-                          <CardDescription>
-                            Automatic processing details
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-orange-900">
-                                Created By
-                              </Label>
-                              <div className="p-3 bg-zinc-50 rounded-lg">
-                                <p className="text-sm font-medium text-zinc-900">
-                                  Admin User
-                                </p>
-                              </div>
-                            </div>
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-orange-900">
-                                Created Date
-                              </Label>
-                              <div className="p-3 bg-zinc-50 rounded-lg">
-                                <p className="text-sm font-medium text-zinc-900">
-                                  {new Date().toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {editingDeposit && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="space-y-3">
-                                <Label className="text-sm font-semibold text-orange-900">
-                                  Last Updated
-                                </Label>
-                                <div className="p-3 bg-zinc-50 rounded-lg">
-                                  <p className="text-sm font-medium text-zinc-900">
-                                    {formatDate(editingDeposit.updatedAt)}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="space-y-3">
-                                <Label className="text-sm font-semibold text-orange-900">
-                                  Processed By
-                                </Label>
-                                <div className="p-3 bg-zinc-50 rounded-lg">
-                                  <p className="text-sm font-medium text-zinc-900">
-                                    {editingDeposit.processedBy || "N/A"}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                  </div>
-                </Tabs>
-              </div>
-
-              {/* Footer */}
-              <div className="border-t bg-zinc-50 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-zinc-600">
-                    {editingDeposit
-                      ? "Updating deposit information"
-                      : "Creating new deposit"}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsCreateModalOpen(false);
-                        setIsEditModalOpen(false);
-                        setDepositForm({});
-                        setEditingDeposit(null);
-                      }}
-                      className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSaveDeposit}
-                      className="bg-emerald-800 hover:bg-emerald-700 text-white px-6"
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      {editingDeposit ? "Update Deposit" : "Create Deposit"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Deposit Details Modal */}
-        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-          <DialogContent className="w-[90vw] max-w-4xl">
-            <DialogHeader>
-              <DialogTitle className="text-emerald-900">
-                Deposit Details
-              </DialogTitle>
-              <DialogDescription>
-                Deposit ID: {viewingDeposit?.id}
-              </DialogDescription>
-            </DialogHeader>
-            {viewingDeposit && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        User Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={viewingDeposit.userName} />
-                          <AvatarFallback className="bg-emerald-100 text-emerald-900">
-                            {getInitials(viewingDeposit.userName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium text-zinc-900">
-                            {viewingDeposit.userName}
-                          </div>
-                          <div className="text-sm text-zinc-500">
-                            {viewingDeposit.userEmail}
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Current Balance
-                        </Label>
-                        <p className="text-lg font-bold text-emerald-900">
-                          {formatCurrency(viewingDeposit.userBalance || 0)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        Deposit Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Amount
-                        </Label>
-                        <p className="text-2xl font-bold text-emerald-900">
-                          {formatCurrency(viewingDeposit.amount)}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Payment Method
-                        </Label>
-                        <div className="mt-1">
-                          {getMethodBadge(viewingDeposit)}
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Type
-                        </Label>
-                        <div className="mt-1">
-                          {getTypeBadge(viewingDeposit.depositType)}
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Status
-                        </Label>
-                        <div className="mt-1">
-                          {getStatusBadge(viewingDeposit.status)}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      Transaction Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Transaction Hash / Reference
-                        </Label>
-                        <p className="text-sm text-zinc-900 font-mono">
-                          {viewingDeposit.transactionHash || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Created Date
-                        </Label>
-                        <p className="text-sm text-zinc-900">
-                          {formatDate(viewingDeposit.createdAt)}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Last Updated
-                        </Label>
-                        <p className="text-sm text-zinc-900">
-                          {formatDate(viewingDeposit.updatedAt)}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-zinc-700">
-                          Processed By
-                        </Label>
-                        <p className="text-sm text-zinc-900">
-                          {viewingDeposit.processedBy || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {viewingDeposit.notes && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Admin Notes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-zinc-900">
-                        {viewingDeposit.notes}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsViewModalOpen(false)}
-                className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-              >
-                Close
-              </Button>
-              {viewingDeposit?.status === "pending" && (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      handleStatusChange(viewingDeposit.id, "failed");
-                      setIsViewModalOpen(false);
-                    }}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Mark as Failed
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      handleStatusChange(viewingDeposit.id, "completed");
-                      setIsViewModalOpen(false);
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Approve
-                  </Button>
-                </div>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Update Status Modal */}
+        <UpdateStatusModal
+          open={isStatusModalOpen}
+          onOpenChange={setIsStatusModalOpen}
+          deposit={selectedDeposit}
+          onSubmit={handleUpdateStatus}
+          loading={processing}
+        />
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+// --- Create Deposit Modal -----------------------------------------------------
+function CreateDepositModal({
+  open,
+  onOpenChange,
+  onSubmit,
+  loading,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: AdminCreateDepositFormData) => void;
+  loading: boolean;
+}) {
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AdminCreateDepositFormData>({
+    resolver: zodResolver(AdminCreateDepositSchema),
+    defaultValues: {
+      status: "PENDING",
+      notes: "",
+    },
+    mode: "onTouched",
+  });
+
+  const handleFormSubmit = (data: AdminCreateDepositFormData) => {
+    onSubmit(data);
+    reset();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create New Deposit</DialogTitle>
+          <DialogDescription>
+            Create a new deposit for a user. This will add funds to their account.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="userId">User ID</Label>
+              <Input id="userId" {...register("userId")} placeholder="Enter user ID" />
+              {errors.userId && (
+                <p className="text-sm text-red-600">{errors.userId.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (USD)</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                {...register("amount", { valueAsNumber: true })}
+                placeholder="0.00"
+              />
+              {errors.amount && (
+                <p className="text-sm text-red-600">{errors.amount.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethodId">Payment Method ID (Optional)</Label>
+              <Input
+                id="paymentMethodId"
+                {...register("paymentMethodId")}
+                placeholder="Enter payment method ID"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="proofOfPayment">Proof of Payment (Optional)</Label>
+              <Input
+                id="proofOfPayment"
+                {...register("proofOfPayment")}
+                placeholder="Enter proof of payment URL or reference"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="COMPLETED">Completed</SelectItem>
+                      <SelectItem value="FAILED">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.status && (
+                <p className="text-sm text-red-600">{errors.status.message as string}</p>
+              )}
+            </div>
+
+            {/* REQUIRED Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                {...register("notes")}
+                placeholder="Add admin notes for this deposit (required)..."
+                rows={3}
+              />
+              {errors.notes && (
+                <p className="text-sm text-red-600">{errors.notes.message}</p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false);
+                reset();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Creating..." : "Create Deposit"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// --- View Deposit Modal -------------------------------------------------------
+function ViewDepositModal({
+  open,
+  onOpenChange,
+  deposit,
+  onStatusChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  deposit: DepositDto | null;
+  onStatusChange: (deposit: DepositDto) => void;
+}) {
+  if (!deposit) return null;
+
+  const getUserName = () => {
+    if (typeof deposit.user === "object") {
+      return `${deposit.user.firstName} ${deposit.user.lastName}`;
+    }
+    return "Unknown User";
+  };
+  const getUserEmail = () => {
+    if (typeof deposit.user === "object") {
+      return deposit.user.email;
+    }
+    return "Unknown";
+  };
+  const getProcessedByName = () => {
+    if (deposit.processedBy && typeof deposit.processedBy === "object") {
+      return `${deposit.processedBy.firstName} ${deposit.processedBy.lastName}`;
+    }
+    return (deposit as any).processedBy || "N/A";
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Deposit Details</DialogTitle>
+          <DialogDescription>Deposit ID: {deposit._id}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">User Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-12 h-12">
+                    <AvatarFallback className="bg-emerald-100 text-emerald-900">
+                      {getUserName()
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium text-zinc-900">{getUserName()}</div>
+                    <div className="text-sm text-zinc-500">{getUserEmail()}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Deposit Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium text-zinc-700">Amount</Label>
+                  <p className="text-2xl font-bold text-emerald-900">
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                    }).format(deposit.amount)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-zinc-700">Status</Label>
+                  <div className="mt-1">
+                    {deposit.status === "PENDING" ? (
+                      <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Pending
+                      </Badge>
+                    ) : deposit.status === "COMPLETED" ? (
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        Completed
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-red-100 text-red-800 border-red-200">
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Failed
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Transaction Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label className="text-sm font-medium text-zinc-700">Created Date</Label>
+                  <p className="text-sm text-zinc-900">
+                    {new Date(deposit.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-zinc-700">Last Updated</Label>
+                  <p className="text-sm text-zinc-900">
+                    {new Date(deposit.updatedAt).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-zinc-700">Processed By</Label>
+                  <p className="text-sm text-zinc-900">{getProcessedByName()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-zinc-700">Processed Date</Label>
+                  <p className="text-sm text-zinc-900">
+                    {deposit.processedAt ? new Date(deposit.processedAt).toLocaleString() : "N/A"}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {deposit.notes && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Admin Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-zinc-900 whitespace-pre-wrap">{deposit.notes}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+          {deposit.status === "PENDING" && (
+            <Button
+              onClick={() => {
+                onStatusChange(deposit);
+                onOpenChange(false);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Update Status
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// --- Update Status Modal (reason REQUIRED) -----------------------------------
+function UpdateStatusModal({
+  open,
+  onOpenChange,
+  deposit,
+  onSubmit,
+  loading,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  deposit: DepositDto | null;
+  onSubmit: (data: UpdateDepositStatusFormData) => void;
+  loading: boolean;
+}) {
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<UpdateDepositStatusFormData>({
+    resolver: zodResolver(UpdateDepositStatusSchema),
+    defaultValues: {
+      status: "COMPLETED",
+      reason: "",
+    },
+    mode: "onTouched",
+  });
+
+  const handleFormSubmit = (data: UpdateDepositStatusFormData) => {
+    onSubmit(data);
+    reset();
+  };
+
+  if (!deposit) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Update Deposit Status</DialogTitle>
+          <DialogDescription>Update the status for deposit {deposit._id}</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                    <SelectItem value="FAILED">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.status && (
+              <p className="text-sm text-red-600">{errors.status.message as string}</p>
+            )}
+          </div>
+
+          {/* REQUIRED Reason (always visible & required for audit trail) */}
+          <div className="space-y-2">
+            <Label htmlFor="reason">Reason</Label>
+            <Textarea
+              id="reason"
+              {...register("reason")}
+              placeholder="Provide a clear reason for this status change (required)..."
+              rows={3}
+            />
+            {errors.reason && (
+              <p className="text-sm text-red-600">{errors.reason.message}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false);
+                reset();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Status"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
