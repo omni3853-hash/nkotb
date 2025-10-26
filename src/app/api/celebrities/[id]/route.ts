@@ -9,8 +9,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         await dbConnect();
         return await getCelebrityByIdController(req, { params });
     } catch (e) {
-        if (e instanceof CustomError) return NextResponse.json({ message: e.message }, { status: e.statusCode });
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        if (e instanceof CustomError) {
+      return NextResponse.json({ message: e.message }, { status: e.statusCode });
+    }
+    // expose a better error in non-prod
+    const msg =
+      process.env.NODE_ENV === "production"
+        ? "Internal Server Error"
+        : (e as Error).message || "Internal Server Error";
+    return NextResponse.json({ message: msg }, { status: 500 });
     }
 }
 
@@ -29,8 +36,15 @@ export async function PATCH(req: AuthRequest, { params }: { params: Promise<{ id
 
         return await updateCelebrityController(req, { params });
     } catch (e) {
-        if (e instanceof CustomError) return NextResponse.json({ message: e.message }, { status: e.statusCode });
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        if (e instanceof CustomError) {
+      return NextResponse.json({ message: e.message }, { status: e.statusCode });
+    }
+    // expose a better error in non-prod
+    const msg =
+      process.env.NODE_ENV === "production"
+        ? "Internal Server Error"
+        : (e as Error).message || "Internal Server Error";
+    return NextResponse.json({ message: msg }, { status: 500 });
     }
 }
 
@@ -41,7 +55,14 @@ export async function DELETE(req: AuthRequest, { params }: { params: Promise<{ i
         if (middlewareResponse.status !== 200) return middlewareResponse;
         return await deleteCelebrityController(req, { params });
     } catch (e) {
-        if (e instanceof CustomError) return NextResponse.json({ message: e.message }, { status: e.statusCode });
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        if (e instanceof CustomError) {
+      return NextResponse.json({ message: e.message }, { status: e.statusCode });
+    }
+    // expose a better error in non-prod
+    const msg =
+      process.env.NODE_ENV === "production"
+        ? "Internal Server Error"
+        : (e as Error).message || "Internal Server Error";
+    return NextResponse.json({ message: msg }, { status: 500 });
     }
 }

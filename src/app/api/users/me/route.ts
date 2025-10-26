@@ -14,8 +14,15 @@ export async function GET(req: NextRequest) {
 
         return await meController(req);
     } catch (e) {
-        if (e instanceof CustomError) return NextResponse.json({ message: e.message }, { status: e.statusCode });
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        if (e instanceof CustomError) {
+      return NextResponse.json({ message: e.message }, { status: e.statusCode });
+    }
+    // expose a better error in non-prod
+    const msg =
+      process.env.NODE_ENV === "production"
+        ? "Internal Server Error"
+        : (e as Error).message || "Internal Server Error";
+    return NextResponse.json({ message: msg }, { status: 500 });
     }
 }
 
@@ -29,7 +36,14 @@ export async function PATCH(req: NextRequest) {
         
         return await updateMeController(req);
     } catch (e) {
-        if (e instanceof CustomError) return NextResponse.json({ message: e.message }, { status: e.statusCode });
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        if (e instanceof CustomError) {
+      return NextResponse.json({ message: e.message }, { status: e.statusCode });
+    }
+    // expose a better error in non-prod
+    const msg =
+      process.env.NODE_ENV === "production"
+        ? "Internal Server Error"
+        : (e as Error).message || "Internal Server Error";
+    return NextResponse.json({ message: msg }, { status: 500 });
     }
 }

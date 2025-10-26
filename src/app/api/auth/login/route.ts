@@ -3,12 +3,21 @@ import { dbConnect } from "@/lib/utils/dbConnect.utils";
 import { loginController } from "@/lib/controllers/auth.controller";
 import { CustomError } from "@/lib/utils/customError.utils";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
     try {
         await dbConnect();
         return await loginController(req);
     } catch (e) {
-        if (e instanceof CustomError) return NextResponse.json({ message: e.message }, { status: e.statusCode });
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        if (e instanceof CustomError) {
+            return NextResponse.json({ message: e.message }, { status: e.statusCode });
+        }
+        // expose a better error in non-prod
+        const msg =
+            process.env.NODE_ENV === "production"
+                ? "Internal Server Error"
+                : (e as Error).message || "Internal Server Error";
+        return NextResponse.json({ message: msg }, { status: 500 });
     }
 }
