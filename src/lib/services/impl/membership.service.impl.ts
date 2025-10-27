@@ -11,8 +11,6 @@ import { CreateNotificationDto } from "@/lib/dto/notification.dto";
 import EmailServiceImpl from "@/lib/services/impl/email.service.impl";
 import { User } from "@/lib/models/user.model";
 import { PaymentMethod } from "@/lib/models/payment-method.model";
-import TransactionServiceImpl from "@/lib/services/impl/transaction.service.impl";
-import { TransactionPurpose } from "@/lib/enums/transaction.enum";
 
 function computeExpiry(start: Date, period: BillingPeriod, durationDays?: number) {
     const d = new Date(start);
@@ -25,7 +23,6 @@ function computeExpiry(start: Date, period: BillingPeriod, durationDays?: number
 class MembershipServiceImpl implements MembershipService {
     private notif = new NotificationServiceImpl();
     private email = new EmailServiceImpl();
-    private trx = new TransactionServiceImpl();
 
     /** Centralized helper: set user.membership (with audit), inside same session */
     private async setUserMembership(
@@ -71,17 +68,6 @@ class MembershipServiceImpl implements MembershipService {
                 if (!Number.isFinite(amount) || amount <= 0) {
                     throw new CustomError(400, "Invalid membership amount");
                 }
-
-                // 0) Charge wallet atomically
-                await this.trx.debit(
-                    user._id.toString(),
-                    amount,
-                    TransactionPurpose.MEMBERSHIP_PAYMENT,
-                    `Membership purchase: ${plan.name}`,
-                    null,
-                    { planId: plan._id.toString(), period: plan.period, durationDays: plan.durationDays },
-                    session
-                );
 
                 const startedAt = new Date();
                 const expiresAt = computeExpiry(startedAt, plan.period, plan.durationDays);
@@ -172,17 +158,6 @@ class MembershipServiceImpl implements MembershipService {
                 if (!Number.isFinite(amount) || amount <= 0) {
                     throw new CustomError(400, "Invalid upgrade amount");
                 }
-
-                // 0) Charge wallet atomically for upgrade
-                await this.trx.debit(
-                    user._id.toString(),
-                    amount,
-                    TransactionPurpose.MEMBERSHIP_UPGRADE,
-                    `Membership upgrade -> ${newPlan.name}`,
-                    null,
-                    { from: current.planSnapshot.name, to: newPlan.name, newPlanId: newPlan._id.toString() },
-                    session
-                );
 
                 // Close current and open a new PENDING one
                 current.status = MembershipStatus.CANCELED;
