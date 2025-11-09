@@ -547,7 +547,7 @@ export default function BlogPage() {
                             { label: "Articles", value: "500+" },
                             { label: "Categories", value: "10+" },
                             { label: "Writers", value: "50+" },
-                            { label: "Readers", value: "10K+" }
+                            { label: "Readers", value: "11K+" }
                         ].map((stat, index) => (
                             <div key={index} className="text-center">
                                 <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</div>
