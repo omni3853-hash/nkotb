@@ -192,6 +192,100 @@ export default function Page() {
     "Anna purchased tickets to Tech Conference 2025",
     "Chris reserved a video message from Chris Hemsworth",
     "Sophie joined the platform - Welcome!",
+    "Olivia reserved Rihanna for a private listening party",
+    "Liam purchased front-row seats to Fashion Week",
+    "Noah upgraded to Platinum membership",
+    "Ava saved Drake to favorites",
+    "Ethan added $1,200 to his balance",
+    "Mia completed a reservation with Zendaya",
+    "Lucas purchased VIP lounge access for Comic Con",
+    "Chloe referred a friend and earned a $25 bonus",
+    "Mason redeemed a promo code for 15% off",
+    "Lily reserved Ed Sheeran for a virtual serenade",
+    "Jack left a 5-star review for last night’s gala",
+    "Aria joined the platform - Welcome!",
+    "Leo saved Billie Eilish to favorites",
+    "Nora secured backstage passes for IndieFest",
+    "Henry upgraded to Annual Premium",
+    "Isla added $750 to her balance",
+    "Daniel completed a reservation with Tom Holland",
+    "Ruby purchased meet & greet access for Adele",
+    "Samuel enabled two-factor authentication",
+    "Maya created a new wishlist: “Dream Guests”",
+    "Sebastian reserved a Q&A with Robert Downey Jr.",
+    "Ella purchased early-bird tickets to Startup Summit",
+    "Aiden unlocked the “Super Fan” badge",
+    "Hannah saved Cristiano Ronaldo to favorites",
+    "Caleb added $2,000 to his balance",
+    "Audrey secured VIP access to Gaming Expo",
+    "Nathan upgraded to Creator Pro",
+    "Layla completed a reservation with Oprah",
+    "Julian subscribed to event alerts",
+    "Zara redeemed a $50 loyalty credit",
+    "Isaac saved LeBron James to favorites",
+    "Penelope purchased two VIP passes for Art Basel",
+    "Gabriel reserved a live AMA with Elon Musk",
+    "Stella added $300 to her balance",
+    "Anthony upgraded to Business Plus",
+    "Violet completed a reservation with Margot Robbie",
+    "Dylan purchased backstage tour passes",
+    "Harper saved Selena Gomez to favorites",
+    "Owen won a giveaway for Festival Weekend",
+    "Sadie reserved a private workshop with Gordon Ramsay",
+    "Aaron purchased VIP meet & greet for BTS",
+    "Emilia added $1,000 to her balance",
+    "Ryan upgraded to Lifetime Premium",
+    "Ivy saved Taylor Swift to favorites",
+    "Justin completed a reservation with Chris Evans",
+    "Sienna purchased early-entry for Wellness Retreat",
+    "Parker enabled instant notifications",
+    "Eliza reserved a virtual concert with The Weeknd",
+    "Mateo added $650 to his balance",
+    "Poppy saved Lionel Messi to favorites",
+    "Jayden redeemed a seasonal discount",
+    "Lucia upgraded to Family Plan",
+    "Kai secured front-row for Esports Championship",
+    "Naomi completed a reservation with Zendaya",
+    "Felix purchased VIP yacht party tickets",
+    "Clara saved Doja Cat to favorites",
+    "Roman added $420 to his balance",
+    "Nina unlocked the “Trendsetter” badge",
+    "Ezra reserved a masterclass with Hans Zimmer",
+    "Bianca purchased red-carpet access to Film Premiere",
+    "Theo saved Beyoncé to favorites",
+    "Iris completed a reservation with Jason Momoa",
+    "Miles upgraded to Premier Concierge",
+    "Quinn added $900 to their balance",
+    "Hazel secured VIP suite for Championship Final",
+    "Riley redeemed a referral reward",
+    "Ada purchased backstage lounge for Jazz Night",
+    "Brody saved Dua Lipa to favorites",
+    "Mae reserved a photo session with Priyanka Chopra",
+    "Kian upgraded to Team Workspace",
+    "Freya added $560 to her balance",
+    "Zayn completed a reservation with Keanu Reeves",
+    "Luna purchased priority access to Charity Auction",
+    "Jasper saved Zendaya to favorites",
+    "Esme redeemed a 20% loyalty boost",
+    "Archer reserved a cameo from Chris Hemsworth",
+    "Skye purchased all-access for Tech Week",
+    "Rowan added $1,350 to their balance",
+    "Daisy upgraded to VIP+",
+    "Kara completed a reservation with Tom Hiddleston",
+    "Flynn saved Rihanna to favorites",
+    "Milan secured meet & greet with Dwayne Johnson",
+    "Tess purchased VIP terrace for Sunset Gala",
+    "Omar added $480 to his balance",
+    "Nova unlocked the “Early Bird” badge",
+    "Ariel reserved a backstage Q&A with Adele",
+    "Kylie purchased two VIP brunch passes",
+    "Reid saved Billie Eilish to favorites",
+    "Zoe completed a reservation with Chris Pratt",
+    "Cody upgraded to Event Producer plan",
+    "Serena added $2,500 to her balance",
+    "Hugo redeemed a gift credit",
+    "Mabel secured VIP balcony for Opera Night",
+    "Atlas purchased platinum lounge for Startup Night"
   ]);
   const [marqueePosition, setMarqueePosition] = useState(0);
   useEffect(() => {
@@ -409,9 +503,9 @@ export default function Page() {
               ) : (
                 <>
                   {/* CARDS ROW */}
-                  <div className="flex flex-col lg:flex-row mt-5 px-2 sm:px-4 lg:px-6 gap-4 lg:gap-3">
+                  <div className="flex flex-col md:flex-row mt-5 px-2 sm:px-4 lg:px-6 gap-4 md:gap-3">
                     {/* Left card */}
-                    <div className="w-full lg:min-w-lg border rounded-[22px] pb-4 pt-4 px-4 bg-zinc-900 flex flex-col justify-between">
+                    <div className="w-full md:min-w-lg border rounded-[22px] pb-4 pt-4 px-3 sm:px-4 bg-zinc-900 flex flex-col justify-between">
                       <div className="flex gap-x-2 justify-between">
                         <span className="text-emerald-300 h-fit bg-emerald-700/20 border border-emerald-300/20 text-[13px] w-fit rounded-full px-3 py-1">
                           {membershipLabel}
@@ -419,21 +513,21 @@ export default function Page() {
                         <MdContactless className="text-zinc-500 text-5xl" />
                       </div>
 
-                      <div className="px-2 mt-7">
-                        <h2 className="text-zinc-300 text-xl sm:text-2xl lg:text-3xl font-bold break-all">
+                      <div className="px-2 mt-5 sm:mt-7">
+                        <h2 className="text-zinc-300 text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold break-all">
                           {cardPseudoNumber}
                         </h2>
                       </div>
 
-                      <div className="flex items-center gap-x-4 sm:gap-x-8 lg:gap-x-14 mt-5">
-                        <div className="px-2 flex-1">
+                      <div className="flex items-center gap-x-3 sm:gap-x-4 md:gap-x-8 lg:gap-x-14 mt-4 sm:mt-5">
+                        <div className="px-2 flex-1 min-w-0">
                           <p className="text-zinc-500 text-xs">CARD HOLDER</p>
-                          <h2 className="text-zinc-300 text-lg sm:text-2xl lg:text-3xl font-bold">{cardHolderName}</h2>
+                          <h2 className="text-zinc-300 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold truncate">{cardHolderName}</h2>
                         </div>
 
                         <div className="flex-shrink-0">
                           <p className="text-zinc-500 text-xs">EXPIRY</p>
-                          <h2 className="text-zinc-300 text-lg sm:text-2xl lg:text-3xl font-bold">
+                          <h2 className="text-zinc-300 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold">
                             {currentMembership
                               ? new Date(currentMembership.expiresAt).toLocaleDateString(undefined, { month: "2-digit", year: "2-digit" })
                               : "—"}
@@ -442,35 +536,35 @@ export default function Page() {
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-3">
-                        <div className="px-2">
-                          <p className="text-zinc-500 text-[13px]">BALANCE</p>
-                          <h2 className="text-zinc-100 text-2xl sm:text-3xl lg:text-4xl font-bold">
+                        <div className="px-2 min-w-0 flex-1">
+                          <p className="text-zinc-500 text-[11px] sm:text-[13px]">BALANCE</p>
+                          <h2 className="text-zinc-100 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold truncate">
                             {fmtCurrency((user as any)?.balance)}
                           </h2>
                         </div>
                         <Button
                           size="sm"
-                          className="bg-gradient-to-r from-zinc-700/50 to-zinc-800/70 py-3 sm:py-5 px-6 sm:px-8 rounded-full text-zinc-100 text-[13px] flex items-center gap-2 w-full sm:w-auto"
+                          className="bg-gradient-to-r from-zinc-700/50 to-zinc-800/70 py-2 sm:py-3 md:py-5 px-4 sm:px-6 md:px-8 rounded-full text-zinc-100 text-[11px] sm:text-[13px] flex items-center gap-2 w-full sm:w-auto shrink-0"
                           onClick={() => router.push("/user-dashboard/deposit")}
                         >
-                          <PlusIcon className="size-4" />
+                          <PlusIcon className="size-3 sm:size-4" />
                           <span>Add Balance</span>
                         </Button>
                       </div>
                     </div>
 
                     {/* Right card */}
-                    <div className="w-full border-2 border-emerald-900 rounded-2xl bg-emerald-900 py-4 px-4 sm:px-6 flex flex-col justify-between">
+                    <div className="w-full border-2 border-emerald-900 rounded-2xl bg-emerald-900 py-3 sm:py-4 px-3 sm:px-4 md:px-6 flex flex-col justify-between">
                       <div>
-                        <Badge className="bg-emerald-800 text-zinc-100 border-2 border-emerald-700 hover:bg-emerald-800 text-xs mb-4 sm:mb-6">
+                        <Badge className="bg-emerald-800 text-zinc-100 border-2 border-emerald-700 hover:bg-emerald-800 text-[10px] sm:text-xs mb-3 sm:mb-4 md:mb-6">
                           MEMBERSHIP STATUS
                         </Badge>
-                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-100 mb-3 sm:mb-4">
+                        <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-zinc-100 mb-2 sm:mb-3 md:mb-4 break-words">
                           {currentMembership
                             ? `${planNameOf(currentMembership)} • ${currentMembership.status}`
                             : "No Membership"}
                         </p>
-                        <p className="text-xs sm:text-sm text-zinc-100 mb-2">
+                        <p className="text-[10px] sm:text-xs md:text-sm text-zinc-100 mb-2 leading-relaxed">
                           {currentMembership
                             ? `Started: ${fmtDate(currentMembership.startedAt)} • Expires: ${fmtDate(currentMembership.expiresAt)}`
                             : "Activate a membership to access exclusive reservations and priority support."}

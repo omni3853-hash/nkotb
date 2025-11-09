@@ -278,50 +278,50 @@ export default function AdminOverview() {
               </div>
 
               {/* Platform Overview Cards (left card: same static copy, right card: kept UI) */}
-              <div className="flex flex-col lg:flex-row mt-5 px-2 sm:px-4 lg:px-6 gap-4 lg:gap-3">
-                <div className="w-full lg:min-w-lg border rounded-[22px] pb-4 pt-4 px-4 bg-zinc-900 flex flex-col justify-between">
+              <div className="flex flex-col md:flex-row mt-5 px-2 sm:px-4 lg:px-6 gap-4 md:gap-3">
+                <div className="w-full md:min-w-lg border rounded-[22px] pb-4 pt-4 px-3 sm:px-4 bg-zinc-900 flex flex-col justify-between">
                   <div className="flex gap-x-2 justify-between">
                     <span className="text-emerald-300 h-fit bg-emerald-700/20 border border-emerald-300/20 text-[13px] w-fit rounded-full px-3 py-1">
                       SYSTEM STATUS
                     </span>
                     <Server className="text-zinc-500 text-5xl" />
                   </div>
-                  <div className="px-2 mt-7">
-                    <h2 className="text-zinc-300 text-xl sm:text-2xl lg:text-3xl font-bold break-all">
+                  <div className="px-2 mt-5 sm:mt-7">
+                    <h2 className="text-zinc-300 text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold break-words">
                       ALL SYSTEMS OPERATIONAL
                     </h2>
                   </div>
-                  <div className="flex items-center gap-x-4 sm:gap-x-8 lg:gap-x-14 mt-5">
-                    <div className="px-2 flex-1">
+                  <div className="flex items-center gap-x-3 sm:gap-x-4 md:gap-x-8 lg:gap-x-14 mt-4 sm:mt-5">
+                    <div className="px-2 flex-1 min-w-0">
                       <p className="text-zinc-500 text-xs">UPTIME</p>
-                      <h2 className="text-zinc-300 text-lg sm:text-2xl lg:text-3xl font-bold">99.9%</h2>
+                      <h2 className="text-zinc-300 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold">99.9%</h2>
                     </div>
                     <div className="flex-shrink-0">
                       <p className="text-zinc-500 text-xs">RESPONSE TIME</p>
-                      <h2 className="text-zinc-300 text-lg sm:text-2xl lg:text-3xl font-bold">45ms</h2>
+                      <h2 className="text-zinc-300 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold">45ms</h2>
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-3">
-                    <div className="px-2">
-                      <p className="text-zinc-500 text-[13px]">ACTIVE SERVERS</p>
-                      <h2 className="text-zinc-100 text-2xl sm:text-3xl lg:text-4xl font-bold">12/12</h2>
+                    <div className="px-2 min-w-0 flex-1">
+                      <p className="text-zinc-500 text-[11px] sm:text-[13px]">ACTIVE SERVERS</p>
+                      <h2 className="text-zinc-100 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">12/12</h2>
                     </div>
-                    <Button size="sm" className="bg-gradient-to-r from-zinc-700/50 to-zinc-800/70 py-3 sm:py-5 px-6 sm:px-8 rounded-full text-zinc-100 text-[13px] flex items-center gap-2 w-full sm:w-auto">
-                      <Zap className="size-4" />
+                    <Button size="sm" className="bg-gradient-to-r from-zinc-700/50 to-zinc-800/70 py-2 sm:py-3 md:py-5 px-4 sm:px-6 md:px-8 rounded-full text-zinc-100 text-[11px] sm:text-[13px] flex items-center gap-2 w-full sm:w-auto shrink-0">
+                      <Zap className="size-3 sm:size-4" />
                       <span>Monitor</span>
                     </Button>
                   </div>
                 </div>
 
-                <div className="w-full border-2 border-emerald-900 rounded-2xl bg-emerald-900 py-4 px-4 sm:px-6 flex flex-col justify-between">
+                <div className="w-full border-2 border-emerald-900 rounded-2xl bg-emerald-900 py-3 sm:py-4 px-3 sm:px-4 md:px-6 flex flex-col justify-between">
                   <div>
-                    <Badge className="bg-emerald-800 text-zinc-100 border-2 border-emerald-700 hover:bg-emerald-800 text-xs mb-4 sm:mb-6">
+                    <Badge className="bg-emerald-800 text-zinc-100 border-2 border-emerald-700 hover:bg-emerald-800 text-[10px] sm:text-xs mb-3 sm:mb-4 md:mb-6">
                       PLATFORM HEALTH
                     </Badge>
-                    <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-100 mb-3 sm:mb-4">
+                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-zinc-100 mb-2 sm:mb-3 md:mb-4 break-words">
                       Excellent Performance
                     </p>
-                    <p className="text-xs sm:text-sm text-zinc-100 mb-4 sm:mb-6">
+                    <p className="text-[10px] sm:text-xs md:text-sm text-zinc-100 mb-3 sm:mb-4 md:mb-6 leading-relaxed">
                       All systems running smoothly with optimal performance metrics and security protocols active.
                     </p>
                   </div>
@@ -344,16 +344,16 @@ export default function AdminOverview() {
 
               {/* Recent Platform Activity (table UI kept; audits mapped) */}
               <div className="px-2 sm:px-4 lg:px-6">
-                <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
+                <Card className="border-2 border-zinc-200 rounded-2xl p-4 sm:p-6 bg-white">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-4">
                     <div>
                       <h2 className="text-lg font-bold text-zinc-900">Recent Platform Activity</h2>
                       <p className="text-sm text-zinc-600 mt-1">Latest audit actions and system events</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         variant="outline"
-                        className="border-2 border-zinc-200 rounded-xl bg-transparent"
+                        className="border-2 border-zinc-200 rounded-xl bg-transparent w-full sm:w-auto"
                         onClick={() => (window.location.href = "/admin-dashboard/activity-log")}
                       >
                         <ActivityIcon className="size-4 mr-2" />
@@ -361,7 +361,7 @@ export default function AdminOverview() {
                       </Button>
                       <Button
                         variant="outline"
-                        className="border-2 border-zinc-200 rounded-xl bg-transparent"
+                        className="border-2 border-zinc-200 rounded-xl bg-transparent w-full sm:w-auto"
                         onClick={() => (window.location.href = "/admin-dashboard/activity-log")}
                       >
                         <Eye className="size-4 mr-2" />
@@ -369,7 +369,7 @@ export default function AdminOverview() {
                       </Button>
                       <Button
                         variant="outline"
-                        className="border-2 border-zinc-200 rounded-xl bg-transparent"
+                        className="border-2 border-zinc-200 rounded-xl bg-transparent w-full sm:w-auto"
                         onClick={() => {
                           // export the same rows as CSV
                           const header = ["ID", "User", "Action", "Amount", "Status", "Date & Time"];
@@ -395,7 +395,8 @@ export default function AdminOverview() {
                   </div>
 
                   <div className="border-2 border-zinc-200 rounded-2xl overflow-hidden">
-                    <Table>
+                    <div className="overflow-x-auto">
+                      <Table>
                       <TableHeader className="bg-zinc-50">
                         <TableRow>
                           <TableHead className="font-mono text-xs">TRANSACTION ID</TableHead>
@@ -437,6 +438,7 @@ export default function AdminOverview() {
                         )}
                       </TableBody>
                     </Table>
+                    </div>
                   </div>
                 </Card>
               </div>

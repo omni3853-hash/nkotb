@@ -1,4 +1,3 @@
-// src/lib/services/impl/deposit.service.impl.ts
 import mongoose from "mongoose";
 import { Deposit, IDeposit, IDepositPopulated } from "@/lib/models/deposit.model";
 import { User } from "@/lib/models/user.model";

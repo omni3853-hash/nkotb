@@ -32,14 +32,14 @@ function AuthContent() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-r from-white via-white to-zinc-100">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-r from-white via-white to-zinc-100">
       {/* Left side - Auth form */}
-      <div className="w-1/2 flex items-center justify-center p-10">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-10 min-h-[50vh] lg:min-h-screen">
         {renderAuthComponent()}
       </div>
 
       {/* Right side - Hero section */}
-      <div className="w-1/2 bg-emerald-900 rounded-3xl m-4 flex items-center justify-center overflow-hidden">
+      <div className="w-full lg:w-1/2 bg-emerald-900 rounded-none lg:rounded-3xl m-0 lg:m-4 flex items-center justify-center overflow-hidden min-h-[50vh] lg:min-h-auto">
         <HeroSection />
       </div>
     </div>

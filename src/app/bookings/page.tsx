@@ -488,16 +488,16 @@ export default function CelebritiesPage() {
 
       {/* Celebrity Detail Modal — informational only (no rating, no booking) */}
       {selectedCelebrity && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl border border-zinc-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 max-w-[95vw] sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h2 className="text-3xl font-bold text-emerald-900 mb-2">{selectedCelebrity.name}</h2>
-                <p className="text-lg text-emerald-600 font-medium mb-4">{selectedCelebrity.category}</p>
-                <p className="text-zinc-600 mb-6">{selectedCelebrity.description || "—"}</p>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-900 mb-2">{selectedCelebrity.name}</h2>
+                <p className="text-base sm:text-lg text-emerald-600 font-medium mb-3 sm:mb-4">{selectedCelebrity.category}</p>
+                <p className="text-sm sm:text-base text-zinc-600 mb-4 sm:mb-6">{selectedCelebrity.description || "—"}</p>
 
                 {/* Quick facts (rating removed) */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                   <div className="bg-emerald-50 rounded-lg p-4">
                     <div className="text-sm text-zinc-600">Base Price</div>
                     <div className="text-2xl font-bold text-emerald-900">{formatPrice(selectedCelebrity.basePrice)}</div>

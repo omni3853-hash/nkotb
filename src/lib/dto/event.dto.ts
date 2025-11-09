@@ -20,6 +20,13 @@ export class CreateEventDto {
         total: number;
         popular?: boolean;
     }>;
+    reviews?: Array<{
+        author: string;
+        rating: number;
+        comment?: string;
+        verified?: boolean;
+        date?: string;
+    }>;
     availability?: string;
     featured?: boolean;
     trending?: boolean;
@@ -46,6 +53,15 @@ export class CreateEventDto {
                 features: Joi.array().items(Joi.string().allow("")).default([]),
                 total: Joi.number().min(0).required(),
                 popular: Joi.boolean().default(false),
+            })
+        ).default([]),
+        reviews: Joi.array().items(
+            Joi.object({
+                author: Joi.string().trim().required(),
+                rating: Joi.number().min(1).max(5).required(),
+                comment: Joi.string().allow(""),
+                verified: Joi.boolean().default(false),
+                date: Joi.string().allow(""),
             })
         ).default([]),
         availability: Joi.string().valid(
@@ -83,6 +99,14 @@ export class UpdateEventDto {
         total?: number;
         sold?: number;
         popular?: boolean;
+    }>;
+    reviews?: Array<{
+        _id?: string;
+        author?: string;
+        rating?: number;
+        comment?: string;
+        verified?: boolean;
+        date?: string;
     }>;
     availability?: string;
     featured?: boolean;

@@ -296,13 +296,13 @@ export default function CelebritiesPage() {
         <div className="flex flex-1 flex-col bg-zinc-100">
           <div className="@container/main flex flex-1 flex-col gap-4 px-3 py-4">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6">
-              <div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 gap-3 sm:gap-0">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">
                   <span className="text-zinc-500">Book</span>{" "}
                   <span className="text-emerald-900">Celebrities</span>
                 </h2>
-                <p className="mt-1 text-sm sm:text-base text-zinc-500">
+                <p className="mt-1 text-xs sm:text-sm md:text-base text-zinc-500">
                   Connect with your favorite stars
                 </p>
               </div>
@@ -412,12 +412,12 @@ export default function CelebritiesPage() {
             {/* Hot Celebrities */}
             <div className="px-4 sm:px-6">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame className="size-5 text-orange-500 sm:size-6" />
-                  <h3 className="text-xl font-bold text-zinc-800 sm:text-2xl">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Flame className="size-4 sm:size-5 md:size-6 text-orange-500 flex-shrink-0" />
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-zinc-800">
                     Hot Celebrities
                   </h3>
-                  <Badge className="border-0 bg-orange-500 text-xs text-white">
+                  <Badge className="border-0 bg-orange-500 text-[10px] sm:text-xs text-white">
                     Trending
                   </Badge>
                 </div>
@@ -426,14 +426,14 @@ export default function CelebritiesPage() {
                   className="w-full rounded-xl bg-transparent sm:w-auto"
                   size="sm"
                   onClick={() => {
-                    // simple UX: reset filters & scroll to “All”
+                    // simple UX: reset filters & scroll to "All"
                     clearFilters();
                     document.getElementById("all-celebs")?.scrollIntoView({
                       behavior: "smooth",
                     });
                   }}
                 >
-                  View All <ChevronRight className="size-4" />
+                  View All <ChevronRight className="size-3 sm:size-4" />
                 </Button>
               </div>
 
@@ -506,22 +506,24 @@ export default function CelebritiesPage() {
                                 {k(c.views ?? 0)}
                               </div>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-mono text-xs text-muted-foreground">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-mono text-[10px] sm:text-xs text-muted-foreground">
                                   FROM
                                 </p>
-                                <p className="font-mono text-base font-bold text-emerald-900 sm:text-lg">
+                                <p className="font-mono text-sm sm:text-base md:text-lg font-bold text-emerald-900 truncate">
                                   {fmtMoney(c.basePrice || 0)}
                                 </p>
                               </div>
-                              <Button
-                                size="sm"
-                                className="rounded-lg px-3 py-2 text-[11px] text-white sm:text-[12px] bg-emerald-900 hover:bg-emerald-800 group-hover:scale-105 transition-transform"
-                              >
-                                Book Now
-                              </Button>
-                              <ShareBtn url={shareUrl} title={`Book ${c.name}`} />
+                              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                                <Button
+                                  size="sm"
+                                  className="rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] md:text-[12px] text-white bg-emerald-900 hover:bg-emerald-800 group-hover:scale-105 transition-transform"
+                                >
+                                  Book Now
+                                </Button>
+                                <ShareBtn url={shareUrl} title={`Book ${c.name}`} />
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -533,19 +535,19 @@ export default function CelebritiesPage() {
 
             {/* Filters + Search */}
             <div className="px-4 sm:px-6">
-              <div className="rounded-2xl border-2 bg-white p-4 sm:p-6">
-                <div className="flex flex-col gap-4">
+              <div className="rounded-xl sm:rounded-2xl border-2 bg-white p-3 sm:p-4 md:p-6">
+                <div className="flex flex-col gap-3 sm:gap-4">
                   <div className="relative w-full">
-                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 transform text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 size-3 sm:size-4 -translate-y-1/2 transform text-gray-400" />
                     <Input
                       placeholder="Search celebrities..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-full rounded-xl pl-10"
+                      className="w-full rounded-xl pl-9 sm:pl-10 text-sm sm:text-base"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row">
                     <Select
                       value={category}
                       onValueChange={(v) =>
@@ -586,8 +588,8 @@ export default function CelebritiesPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                  <p className="text-sm text-gray-600">
+                <div className="mt-3 sm:mt-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Showing {items.length} of {total.toLocaleString()}
                   </p>
                   {(search || category !== "All" || price !== "all") && (
@@ -606,7 +608,7 @@ export default function CelebritiesPage() {
 
             {/* All Celebrities Grid */}
             <div className="px-4 sm:px-6" id="all-celebs">
-              <h3 className="mb-4 text-xl font-bold text-zinc-800 sm:text-2xl">
+              <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl md:text-2xl font-bold text-zinc-800">
                 All Celebrities
               </h3>
 
@@ -649,37 +651,37 @@ export default function CelebritiesPage() {
                               className="h-full w-full object-cover"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            <div className="absolute left-2 top-2 sm:left-3 sm:top-3">
+                            <div className="absolute left-1.5 sm:left-2 md:left-3 top-1.5 sm:top-2 md:top-3">
                               <Badge
-                                className={`${availClass} border-0 text-xs text-white`}
+                                className={`${availClass} border-0 text-[10px] sm:text-xs text-white`}
                               >
                                 {availability}
                               </Badge>
                             </div>
-                            <div className="absolute right-2 top-2 flex flex-col gap-1 sm:right-3 sm:top-3 sm:gap-2">
+                            <div className="absolute right-1.5 sm:right-2 md:right-3 top-1.5 sm:top-2 md:top-3 flex flex-col gap-0.5 sm:gap-1 md:gap-2">
                               {c.hot && (
-                                <Badge className="border-0 bg-orange-500 text-xs text-white">
-                                  <Flame className="mr-1 size-3" />
+                                <Badge className="border-0 bg-orange-500 text-[10px] sm:text-xs text-white">
+                                  <Flame className="mr-0.5 sm:mr-1 size-2.5 sm:size-3" />
                                   Hot
                                 </Badge>
                               )}
                               {c.trending && (
-                                <Badge className="border-0 bg-emerald-900 text-xs text-white">
-                                  <TrendingUp className="mr-1 size-3" />
+                                <Badge className="border-0 bg-emerald-900 text-[10px] sm:text-xs text-white">
+                                  <TrendingUp className="mr-0.5 sm:mr-1 size-2.5 sm:size-3" />
                                   Trending
                                 </Badge>
                               )}
                             </div>
-                            <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3">
-                              <h4 className="mb-1 text-lg font-bold text-white sm:text-xl">
+                            <div className="absolute bottom-1.5 sm:bottom-2 md:bottom-3 left-1.5 sm:left-2 md:left-3 right-1.5 sm:right-2 md:right-3">
+                              <h4 className="mb-0.5 sm:mb-1 text-base sm:text-lg md:text-xl font-bold text-white line-clamp-1">
                                 {c.name}
                               </h4>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                 {(c.tags || []).slice(0, 2).map((t, i) => (
                                   <Badge
                                     key={`${t}-${i}`}
                                     variant="outline"
-                                    className="border-white/30 bg-white/20 text-xs text-white backdrop-blur-sm"
+                                    className="border-white/30 bg-white/20 text-[10px] sm:text-xs text-white backdrop-blur-sm"
                                   >
                                     {t}
                                   </Badge>
@@ -688,22 +690,22 @@ export default function CelebritiesPage() {
                             </div>
                           </div>
 
-                          <CardContent className="pt-3 sm:pt-4">
-                            <p className="mb-2 line-clamp-2 text-xs text-muted-foreground sm:mb-3 sm:text-sm">
+                          <CardContent className="pt-2 sm:pt-3 md:pt-4 px-2 sm:px-4">
+                            <p className="mb-2 line-clamp-2 text-[10px] sm:text-xs md:text-sm text-muted-foreground">
                               {c.description || "—"}
                             </p>
 
-                            <div className="mb-2 flex items-center justify-between sm:mb-3">
-                              <div className="flex items-center gap-1">
-                                <Star className="size-3 fill-yellow-500 text-yellow-500 sm:size-4" />
-                                <span className="text-xs font-bold sm:text-sm">
+                            <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
+                              <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 flex-1">
+                                <Star className="size-2.5 sm:size-3 md:size-4 fill-yellow-500 text-yellow-500 flex-shrink-0" />
+                                <span className="text-[10px] sm:text-xs md:text-sm font-bold truncate">
                                   {c.rating?.toFixed?.(1) ?? c.rating ?? "—"}
                                 </span>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
                                   ({c.bookings ?? c.totalReviews ?? 0})
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
                                 <ShareBtn
                                   url={shareUrl}
                                   title={`Book ${c.name}`}
@@ -711,18 +713,18 @@ export default function CelebritiesPage() {
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-mono text-xs text-muted-foreground">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-mono text-[10px] sm:text-xs text-muted-foreground">
                                   FROM
                                 </p>
-                                <p className="font-mono text-base font-bold text-emerald-900 sm:text-lg">
+                                <p className="font-mono text-sm sm:text-base md:text-lg font-bold text-emerald-900 truncate">
                                   {fmtMoney(c.basePrice || 0)}
                                 </p>
                               </div>
                               <Button
                                 size="sm"
-                                className="rounded-xl px-3 py-2 text-[10px] text-white sm:py-4 sm:px-4 sm:text-[12px] bg-emerald-900 hover:bg-emerald-800 group-hover:scale-105 transition-transform"
+                                className="rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 md:py-4 md:px-4 text-[10px] sm:text-[11px] md:text-[12px] text-white bg-emerald-900 hover:bg-emerald-800 group-hover:scale-105 transition-transform shrink-0"
                               >
                                 View Details
                               </Button>
@@ -735,17 +737,17 @@ export default function CelebritiesPage() {
               </div>
 
               {!loading && items.length === 0 && (
-                <div className="py-12 text-center">
-                  <div className="mx-auto mb-4 text-gray-400">
-                    <Star className="mx-auto h-16 w-16" />
+                <div className="py-8 sm:py-12 text-center px-4">
+                  <div className="mx-auto mb-3 sm:mb-4 text-gray-400">
+                    <Star className="mx-auto h-12 w-12 sm:h-16 sm:w-16" />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  <h3 className="mb-2 text-base sm:text-lg font-semibold text-gray-900">
                     No celebrities found
                   </h3>
-                  <p className="mb-4 text-base text-gray-600">
+                  <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-600">
                     Try adjusting your search criteria or filters
                   </p>
-                  <Button variant="outline" onClick={clearFilters}>
+                  <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto">
                     Clear Filters
                   </Button>
                 </div>

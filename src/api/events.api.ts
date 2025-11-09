@@ -2,6 +2,15 @@ import { EventQuery, EventQuerySchema, CreateEventFormData, CreateEventSchema, U
 import z from "zod";
 import { api } from "./axios";
 
+export type EventReview = {
+    _id: string;
+    author: string;
+    rating: number;
+    comment: string;
+    verified: boolean;
+    date: string;
+};
+
 export type Event = {
     _id: string;
     title: string;
@@ -25,6 +34,7 @@ export type Event = {
     time: string;
     attendees: number;
     ticketTypes: Array<z.infer<typeof TicketTypeCreateSchema>>;
+    reviews: EventReview[];
     isActive: boolean;
     createdAt: string | Date;
     updatedAt: string | Date;
@@ -52,65 +62,52 @@ function qsOf(query: Record<string, unknown>) {
 }
 
 export const EventsApi = {
-    /** GET /events (public/user) */
     async list(q: Partial<EventQuery> = {}): Promise<Paginated<Event>> {
         const params = EventQuerySchema.partial().parse(q);
         const res = await api.get(`/events${qsOf(params)}`);
         return pickList<Event>(res);
     },
 
-    /** GET /events/[id] */
     async getById(id: string): Promise<Event> {
         const res = await api.get(`/events/${id}`);
         return pickItem<Event>(res);
     },
 
-    /** GET /events/slug/[slug] */
     async getBySlug(slug: string): Promise<Event> {
         const res = await api.get(`/events/slug/${slug}`);
         return pickItem<Event>(res);
     },
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                ADMIN: EVENTS                               */
-/* -------------------------------------------------------------------------- */
-
 export const AdminEventsApi = {
-    /** GET /admin/events */
     async list(q: Partial<EventQuery> = {}): Promise<Paginated<Event>> {
         const params = EventQuerySchema.partial().parse(q);
         const res = await api.get(`/admin/events${qsOf(params)}`);
         return pickList<Event>(res);
     },
 
-    /** GET /admin/events/[id] */
     async getById(id: string): Promise<Event> {
         const res = await api.get(`/admin/events/${id}`);
         return pickItem<Event>(res);
     },
 
-    /** POST /admin/events */
     async create(dto: CreateEventFormData): Promise<Event> {
         const payload = CreateEventSchema.parse(dto);
         const res = await api.post(`/admin/events`, payload);
         return pickItem<Event>(res);
     },
 
-    /** PATCH /admin/events/[id] */
     async update(id: string, dto: UpdateEventFormData): Promise<Event> {
         const payload = UpdateEventSchema.parse(dto);
         const res = await api.patch(`/admin/events/${id}`, payload);
         return pickItem<Event>(res);
     },
 
-    /** PATCH /admin/events/[id] (toggle active fast-path) */
     async toggleActive(id: string, isActive: boolean): Promise<Event> {
         const res = await api.patch(`/admin/events/${id}`, { isActive });
         return pickItem<Event>(res);
     },
 
-    /** DELETE /admin/events/[id] */
     async remove(id: string): Promise<void> {
         await api.delete(`/admin/events/${id}`);
     },

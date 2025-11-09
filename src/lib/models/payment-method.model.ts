@@ -1,6 +1,6 @@
-import mongoose, { Document, Schema, Model, Types } from 'mongoose';
-import { AccountType } from '../enums/account.enum';
-import type { IUser } from './user.model';
+import mongoose, { Document, Schema, Model, Types } from "mongoose";
+import { AccountType } from "../enums/account.enum";
+import type { IUser } from "./user.model";
 
 export interface IPaymentMethod extends Document {
   _id: Types.ObjectId;
@@ -34,14 +34,18 @@ export interface IPaymentMethod extends Document {
   updatedAt: Date;
 }
 
-export interface IPaymentMethodPopulated extends Omit<IPaymentMethod, 'user'> {
+export interface IPaymentMethodPopulated extends Omit<IPaymentMethod, "user"> {
   user: IUser;
 }
 
 const PaymentMethodSchema: Schema<IPaymentMethod> = new Schema(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    type: { type: String, enum: AccountType, required: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    type: {
+      type: String,
+      enum: Object.values(AccountType),
+      required: true,
+    },
     // Crypto
     cryptocurrency: { type: String },
     network: { type: String },
@@ -59,9 +63,9 @@ const PaymentMethodSchema: Schema<IPaymentMethod> = new Schema(
     email: { type: String },
     // Common
     status: { type: Boolean, default: true },
-    processingTime: { type: String, default: '1-3 business days' },
+    processingTime: { type: String, default: "1-3 business days" },
     fee: { type: Number, default: 0 },
-    isDefault: { type: Boolean, default: false }
+    isDefault: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
@@ -71,4 +75,5 @@ PaymentMethodSchema.index({ walletAddress: 1 }, { sparse: true });
 PaymentMethodSchema.index({ accountNumber: 1 }, { sparse: true });
 
 export const PaymentMethod: Model<IPaymentMethod> =
-  mongoose.models.PaymentMethod || mongoose.model<IPaymentMethod>('PaymentMethod', PaymentMethodSchema);
+  mongoose.models.PaymentMethod ||
+  mongoose.model<IPaymentMethod>("PaymentMethod", PaymentMethodSchema);

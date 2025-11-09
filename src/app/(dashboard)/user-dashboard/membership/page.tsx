@@ -430,7 +430,7 @@ export default function MembershipPage() {
                       setPassword("");
                     }
                   }}>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl mx-4 sm:mx-0">
+                    <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl mx-2 sm:mx-4 md:mx-0 p-4 sm:p-6">
                       <DialogHeader className="pb-2">
                         <DialogTitle className="text-purple-900 text-base sm:text-lg font-bold flex items-center gap-2">
                           <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-100 flex items-center justify-center">

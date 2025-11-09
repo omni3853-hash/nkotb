@@ -65,6 +65,7 @@ export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
       { title: "Manage Celebrities", url: "/admin-dashboard/manage-celebrities", icon: Star },
       { title: "User Management", url: "/admin-dashboard/manage-users", icon: Users },
       { title: "Manage Memberships", url: "/admin-dashboard/manage-membership", icon: Crown },
+      { title: "Blog Management", url: "/admin-dashboard/manage-posts", icon: Activity },
       { title: "Event Management", url: "/admin-dashboard/manage-events", icon: Calendar },
       { title: "Deposit Management", url: "/admin-dashboard/manage-deposits", icon: CreditCard },
       { title: "Activity Log", url: "/admin-dashboard/activity-log", icon: Activity },

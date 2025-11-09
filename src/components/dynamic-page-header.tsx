@@ -28,20 +28,20 @@ export function DynamicPageHeader({
   className = "",
 }: DynamicPageHeaderProps) {
   return (
-    <div className={`flex px-6 justify-between ${className}`}>
-      <div>
-        <h2 className="text-4xl font-bold tracking-tight text-emerald-9">
+    <div className={`flex flex-col sm:flex-row px-4 sm:px-6 justify-between gap-4 sm:gap-0 ${className}`}>
+      <div className="min-w-0 flex-1">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-emerald-900 break-words">
           {title}
         </h2>
-        {subtitle && <p className="text-zinc-500">{subtitle}</p>}
+        {subtitle && <p className="text-sm sm:text-base text-zinc-500 mt-1">{subtitle}</p>}
       </div>
 
       {(actionButton || secondaryButton) && (
-        <div className="flex items-center gap-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-x-2 shrink-0">
           {secondaryButton && (
             <Button
               variant="outline"
-              className="inline-flex flex-row items-center gap-2 border-zinc-300 text-zinc-700 hover:bg-zinc-50 px-4 py-2 rounded-full"
+              className="inline-flex flex-row items-center justify-center gap-2 border-zinc-300 text-zinc-700 hover:bg-zinc-50 px-3 sm:px-4 py-2 rounded-full text-sm sm:text-base w-full sm:w-auto"
               size="sm"
               onClick={secondaryButton.onClick}
             >
@@ -53,7 +53,7 @@ export function DynamicPageHeader({
           {actionButton && (
             <Button
               variant="outline"
-              className="inline-flex flex-row items-center gap-2 bg-emerald-900 px-4 py-2 rounded-full text-white"
+              className="inline-flex flex-row items-center justify-center gap-2 bg-emerald-900 px-3 sm:px-4 py-2 rounded-full text-white text-sm sm:text-base w-full sm:w-auto"
               size="sm"
               onClick={actionButton.onClick}
             >

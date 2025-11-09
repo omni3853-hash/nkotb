@@ -225,61 +225,59 @@ export default function ActivityLogPage() {
               </Card>
             </div>
 
-            <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
+            <Card className="border-2 border-zinc-200 rounded-2xl p-4 sm:p-6 bg-white">
               <CardHeader>
-                <CardTitle className="text-emerald-900">Filters & Search</CardTitle>
-                <CardDescription>Filter by model fields only</CardDescription>
+                <CardTitle className="text-emerald-900 text-lg sm:text-xl">Filters & Search</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Filter by model fields only</CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="relative sm:col-span-3">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
-                    <Input
-                      placeholder="Search action/resource/resourceId/description/user…"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 bg-zinc-50 focus:border-emerald-500"
-                    />
-                  </div>
+              <CardContent className="space-y-4 sm:space-y-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                  <Input
+                    placeholder="Search action/resource/resourceId/description/user…"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-zinc-50 focus:border-emerald-500 w-full"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   <Input
                     placeholder="action (server)"
                     value={serverAction ?? ""}
                     onChange={(e) => setServerAction(e.target.value || undefined)}
-                    className="bg-zinc-50 focus:border-emerald-500 sm:col-span-2"
+                    className="bg-zinc-50 focus:border-emerald-500 w-full"
                   />
                   <Input
                     placeholder="resource (server)"
                     value={serverResource ?? ""}
                     onChange={(e) => setServerResource(e.target.value || undefined)}
-                    className="bg-zinc-50 focus:border-emerald-500 sm:col-span-2"
+                    className="bg-zinc-50 focus:border-emerald-500 w-full"
                   />
-                  <div className="flex gap-2 sm:col-span-5">
-                    <Input
-                      type="date"
-                      value={fromDate ?? ""}
-                      onChange={(e) => setFromDate(e.target.value || undefined)}
-                      className="bg-zinc-50 focus:border-emerald-500"
-                    />
-                    <Input
-                      type="date"
-                      value={toDate ?? ""}
-                      onChange={(e) => setToDate(e.target.value || undefined)}
-                      className="bg-zinc-50 focus:border-emerald-500"
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => { setPage(1); load(); }}
-                      disabled={isLoading}
-                      className="bg-zinc-50"
-                    >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                      Apply
-                    </Button>
-                    <Button variant="ghost" onClick={resetServerFilters}>Clear</Button>
-                  </div>
+                  <Input
+                    type="date"
+                    value={fromDate ?? ""}
+                    onChange={(e) => setFromDate(e.target.value || undefined)}
+                    className="bg-zinc-50 focus:border-emerald-500 w-full"
+                  />
+                  <Input
+                    type="date"
+                    value={toDate ?? ""}
+                    onChange={(e) => setToDate(e.target.value || undefined)}
+                    className="bg-zinc-50 focus:border-emerald-500 w-full"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => { setPage(1); load(); }}
+                    disabled={isLoading}
+                    className="bg-zinc-50 w-full sm:w-auto"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                    Apply
+                  </Button>
+                  <Button variant="ghost" onClick={resetServerFilters} className="w-full sm:w-auto">Clear</Button>
                 </div>
               </CardContent>
             </Card>
@@ -291,7 +289,8 @@ export default function ActivityLogPage() {
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg border-0 bg-white overflow-hidden">
-                  <Table>
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow className="border-b border-gray-100 hover:bg-transparent">
                         <TableHead className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider py-4">
@@ -436,8 +435,9 @@ export default function ActivityLogPage() {
                           </TableRow>
                         ))
                       )}
-                    </TableBody>
-                  </Table>
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-4">

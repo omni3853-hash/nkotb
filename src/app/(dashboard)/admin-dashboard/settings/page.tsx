@@ -750,7 +750,7 @@ export default function AdminSettingsPage() {
                         <CardTitle className="text-emerald-900">General Settings</CardTitle>
                         <CardDescription>Basic site information and support contacts</CardDescription>
                       </div>
-                      <div className="flex items-center gap-2">
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         {generalHasChanges && (
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
                             Unsaved Changes
@@ -860,7 +860,7 @@ export default function AdminSettingsPage() {
                         <CardTitle className="text-emerald-900">Platform Settings</CardTitle>
                         <CardDescription>Booking fees and platform policies</CardDescription>
                       </div>
-                      <div className="flex items-center gap-2">
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         {platformHasChanges && (
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
                             Unsaved Changes
@@ -946,7 +946,7 @@ export default function AdminSettingsPage() {
                         <CardTitle className="text-emerald-900">Payment Methods</CardTitle>
                         <CardDescription>Manage methods and quickly filter by type, status, default, or search.</CardDescription>
                       </div>
-                      <div className="flex items-center gap-2">
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         <Button
                           variant="outline"
                           onClick={loadPaymentMethods}
@@ -971,9 +971,9 @@ export default function AdminSettingsPage() {
 
                   <CardContent className="space-y-6">
                     {/* Filters */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 rounded-lg border border-zinc-200 bg-zinc-50">
+                    <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-1 md:grid-cols-4 gap-3 p-3 rounded-lg border border-zinc-200 bg-zinc-50">
                       <div className="space-y-1">
-                        <Label className="text-emerald-900 flex items-center gap-2">
+                        <Label className="text-emerald-900 flex items-center gap-2 text-sm">
                           <Filter className="w-4 h-4" /> Type
                         </Label>
                         <select
@@ -989,7 +989,7 @@ export default function AdminSettingsPage() {
                       </div>
 
                       <div className="space-y-1">
-                        <Label className="text-emerald-900">Status</Label>
+                        <Label className="text-emerald-900 text-sm">Status</Label>
                         <select
                           value={filterStatus}
                           onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
@@ -1002,7 +1002,7 @@ export default function AdminSettingsPage() {
                       </div>
 
                       <div className="space-y-1">
-                        <Label className="text-emerald-900">Default</Label>
+                        <Label className="text-emerald-900 text-sm">Default</Label>
                         <select
                           value={filterDefault}
                           onChange={(e) => setFilterDefault(e.target.value as FilterDefault)}
@@ -1015,20 +1015,20 @@ export default function AdminSettingsPage() {
                       </div>
 
                       <div className="space-y-1">
-                        <Label className="text-emerald-900">Search</Label>
+                        <Label className="text-emerald-900 text-sm">Search</Label>
                         <Input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Bank, provider, coin, account #..."
-                          className="bg-white"
+                          className="bg-white w-full"
                         />
                       </div>
 
-                      <div className="md:col-span-4 flex items-center justify-end gap-2">
-                        <Badge variant="outline" className="border-zinc-300 text-zinc-700">
+                      <div className="md:col-span-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-2">
+                        <Badge variant="outline" className="border-zinc-300 text-zinc-700 w-full sm:w-auto text-center sm:text-left">
                           {filteredPayments.length} result{filteredPayments.length === 1 ? "" : "s"}
                         </Badge>
-                        <Button variant="outline" onClick={clearFilters} className="border-zinc-300 text-zinc-700 hover:bg-zinc-100">
+                        <Button variant="outline" onClick={clearFilters} className="border-zinc-300 text-zinc-700 hover:bg-zinc-100 w-full sm:w-auto">
                           Reset Filters
                         </Button>
                       </div>
@@ -1044,10 +1044,10 @@ export default function AdminSettingsPage() {
                     ) : (
                       <div className="space-y-3">
                         {filteredPayments.map((m) => (
-                          <Card key={asId(m._id)} className="bg-zinc-50 border-zinc-200">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between gap-4">
-                                <div className="min-w-0">
+                            <Card key={asId(m._id)} className="bg-zinc-50 border-zinc-200">
+                            <CardContent className="p-3 sm:p-4">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                                <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <div className="font-medium text-emerald-900">
                                       {m.bankName || m.provider || m.cryptocurrency || m.accountName || m.type}

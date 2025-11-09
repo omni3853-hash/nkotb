@@ -19,6 +19,13 @@ export class CreateCelebrityDto {
         availability?: number;
         popular?: boolean;
     }>;
+    reviews?: Array<{
+        author: string;
+        rating: number;
+        comment?: string;
+        verified?: boolean;
+        date?: string;
+    }>;
     availability?: string;
     trending?: boolean;
     hot?: boolean;
@@ -44,6 +51,15 @@ export class CreateCelebrityDto {
                 features: Joi.array().items(Joi.string().allow("")).default([]),
                 availability: Joi.number().min(0).default(0),
                 popular: Joi.boolean().default(false),
+            })
+        ).default([]),
+        reviews: Joi.array().items(
+            Joi.object({
+                author: Joi.string().trim().required(),
+                rating: Joi.number().min(1).max(5).required(),
+                comment: Joi.string().allow(""),
+                verified: Joi.boolean().default(false),
+                date: Joi.string().allow(""),
             })
         ).default([]),
         availability: Joi.string().valid("Available", "Limited", "Booked", "Unavailable").optional(),
@@ -78,6 +94,14 @@ export class UpdateCelebrityDto {
         availability?: number;
         popular?: boolean;
     }>;
+    reviews?: Array<{
+        _id?: string;
+        author?: string;
+        rating?: number;
+        comment?: string;
+        verified?: boolean;
+        date?: string;
+    }>;
     availability?: string;
     trending?: boolean;
     hot?: boolean;
@@ -85,9 +109,7 @@ export class UpdateCelebrityDto {
     isActive?: boolean;
 
     static validationSchema = CreateCelebrityDto.validationSchema.fork(
-        [
-            "name", "category", "basePrice",
-        ],
+        ["name", "category", "basePrice"],
         (s) => (s as Joi.Schema).optional()
     );
 

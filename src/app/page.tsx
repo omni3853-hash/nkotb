@@ -457,12 +457,12 @@ export default function Example() {
 
           {/* Right: hero portrait + floating stats */}
           <div
-            className={`relative w-full h-80 sm:h-96 lg:h-[38rem] flex items-center justify-center ${isImageTransitioning ? "fade-out-left" : "fade-in-right"}`}
+            className={`relative w-full h-64 sm:h-80 md:h-96 lg:h-[38rem] flex items-center justify-center ${isImageTransitioning ? "fade-out-left" : "fade-in-right"}`}
             data-scroll-animate
             id="hero-image"
           >
             <div className="relative z-10">
-              <div className="max-w-xs sm:max-w-sm lg:max-w-lg h-full rounded-full overflow-hidden shadow-2xl border-4 border-white/20 backdrop-blur-sm">
+              <div className="max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-lg h-full rounded-full overflow-hidden shadow-2xl border-2 sm:border-4 border-white/20 backdrop-blur-sm">
                 <img
                   src={hero?.image || "/placeholder.svg"}
                   alt={hero?.name || "Featured celebrity"}
@@ -472,7 +472,7 @@ export default function Example() {
               </div>
             </div>
 
-            <div className="absolute top-4 sm:top-14 left-2 sm:left-8 animate-float bg-amber-900/40 backdrop-blur-md rounded-xl shadow-xl p-3 sm:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20">
+            <div className="absolute top-2 sm:top-4 md:top-14 left-1 sm:left-2 md:left-8 animate-float bg-amber-900/40 backdrop-blur-md rounded-lg sm:rounded-xl shadow-xl p-2 sm:p-3 md:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center flex-shrink-0">
                   <Star className="size-4 sm:size-5 text-amber-600 fill-current" />
@@ -484,7 +484,7 @@ export default function Example() {
               </div>
             </div>
 
-            <div className="absolute top-12 sm:top-24 right-2 sm:right-16 animate-float-delayed-1 bg-emerald-800/40 backdrop-blur-md rounded-xl shadow-xl p-3 sm:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20">
+            <div className="absolute top-10 sm:top-12 md:top-24 right-1 sm:right-2 md:right-16 animate-float-delayed-1 bg-emerald-800/40 backdrop-blur-md rounded-lg sm:rounded-xl shadow-xl p-2 sm:p-3 md:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-full flex items-center justify-center flex-shrink-0">
                   <Calendar className="size-4 sm:size-5 text-emerald-600" />
@@ -497,9 +497,9 @@ export default function Example() {
             </div>
 
             <div
-              className={`absolute bottom-12 sm:bottom-29 left-2 sm:left-8 animate-float-delayed-2 ${getAvailabilityColor(
+              className={`absolute bottom-2 sm:bottom-4 md:bottom-12 left-1 sm:left-2 md:left-8 animate-float-delayed-2 ${getAvailabilityColor(
                 hero?.availability
-              )} backdrop-blur-md rounded-xl shadow-xl p-3 sm:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20`}
+              )} backdrop-blur-md rounded-lg sm:rounded-xl shadow-xl p-2 sm:p-3 md:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20`}
             >
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center flex-shrink-0">
@@ -512,7 +512,7 @@ export default function Example() {
               </div>
             </div>
 
-            <div className="absolute bottom-4 sm:bottom-22 right-2 sm:right-8 animate-float-delayed-3 bg-purple-800/40 backdrop-blur-md rounded-xl shadow-xl p-3 sm:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20">
+            <div className="absolute bottom-1 sm:bottom-2 md:bottom-4 right-1 sm:right-2 md:right-8 animate-float-delayed-3 bg-purple-800/40 backdrop-blur-md rounded-lg sm:rounded-xl shadow-xl p-2 sm:p-3 md:p-4 border border-white/20 hover:scale-105 transition-transform duration-300 z-20">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center flex-shrink-0">
                   <DollarSign className="size-4 sm:size-5 text-purple-600" />
@@ -715,7 +715,7 @@ export default function Example() {
           </div>
           <div className="mt-14 max-w-6xl mx-auto space-y-8">
             <div className="flex flex-col lg:flex-row items-center gap-7">
-              <div className="border p-2.5 mx-auto rounded-2xl bg-zinc-100/60 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer group w/full lg:w-auto" data-scroll-animate>
+              <div className="border p-2.5 mx-auto rounded-2xl bg-zinc-100/60 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer group w-full lg:w-auto" data-scroll-animate>
                 <Image src="/mic.svg" alt="Verified Talent" width={150} height={150} className="size-24 sm:size-30 mx-auto group-hover:scale-110 transition-transform duration-300" />
                 <div className="rounded-xl mt-5 text-center border border-zinc-200 shadow-lg shadow-zinc-200 bg-zinc-50 p-3 group-hover:border-emerald-200/50 group-hover:shadow-emerald-100 transition-all duration-300">
                   <h3 className="font-bold text-lg sm:text-xl text-emerald-900 mb-2 group-hover:text-emerald-800 transition-colors duration-300">
@@ -727,7 +727,7 @@ export default function Example() {
                 </div>
               </div>
 
-              <div className="border p-2.5 rounded-2xl bg-zinc-100/60 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer group w/full lg:w-auto" data-scroll-animate>
+              <div className="border p-2.5 rounded-2xl bg-zinc-100/60 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer group w-full lg:w-auto" data-scroll-animate>
                 <Image src="/global.svg" alt="Global Reach" width={160} height={150} className="w-24 sm:w-30 h-24 sm:h-30 mx-auto group-hover:scale-110 transition-transform duration-300" />
                 <div className="rounded-xl mt-5 text-center border border-zinc-200 shadow-lg shadow-zinc-200 bg-white p-3 group-hover:border-emerald-200 group-hover:shadow-emerald-100 transition-all duration-300">
                   <h3 className="font-bold text-lg sm:text-xl text-emerald-900 mb-2 group-hover:text-emerald-800 transition-colors duration-300">
@@ -739,7 +739,7 @@ export default function Example() {
                 </div>
               </div>
 
-              <div className="border p-2.5 mx-auto rounded-2xl bg-zinc-100/60 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer group w/full lg:w-auto" data-scroll-animate>
+              <div className="border p-2.5 mx-auto rounded-2xl bg-zinc-100/60 hover:bg-emerald-50/50 hover:border-emerald-200/50 transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer group w-full lg:w-auto" data-scroll-animate>
                 <Image src="/check.svg" alt="Secure" width={150} height={150} className="w-24 sm:w-30 h-24 sm:h-30 mx-auto group-hover:scale-110 transition-transform duration-300" />
                 <div className="rounded-xl mt-6 text-center border border-zinc-200 shadow-lg shadow-zinc-200 bg-white p-3 group-hover:border-emerald-200 group-hover:shadow-emerald-100 transition-all duration-300">
                   <h3 className="font-bold text-lg sm:text-xl text-emerald-900 mb-2 group-hover:text-emerald-800 transition-colors duration-300">

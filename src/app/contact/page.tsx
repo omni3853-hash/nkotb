@@ -201,7 +201,7 @@ export default function ContactPage() {
           </div>
 
           {/* Contact Form and Info Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
             {/* Contact Form */}
             <div data-scroll-animate id="contact-form-section">
               <div className="bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 rounded-2xl p-6 sm:p-8 lg:p-10 border border-emerald-100/50">
@@ -433,11 +433,11 @@ export default function ContactPage() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+          className="fixed bottom-4 sm:bottom-6 md:bottom-8 right-4 sm:right-6 md:right-8 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
           aria-label="Scroll to top"
         >
           <svg
-            className="size-5 group-hover:scale-110 transition-transform duration-300"
+            className="size-4 sm:size-5 group-hover:scale-110 transition-transform duration-300"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

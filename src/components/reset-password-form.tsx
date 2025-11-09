@@ -62,7 +62,7 @@ export function ResetPasswordForm() {
             src="/logo.png"
             className="h-10 w-auto"
           />
-          <span className="font-semibold text-2xl text-black">Premier Talent Agency</span>
+          
         </div>
       </div>
 

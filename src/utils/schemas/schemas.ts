@@ -1,4 +1,3 @@
-// schemas.ts
 import { z } from "zod";
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -126,7 +125,7 @@ export type DeliveryOptionQuery = z.infer<typeof DeliveryOptionQuerySchema>;
  * DELIVERY REQUESTS
  * ────────────────────────────────────────────────────────────────────────── */
 export const CreateDeliveryRequestSchema = z.object({
-    deliveryOption: z.string().min(1), // ObjectId as string; server validates strictly
+    deliveryOption: z.string().min(1),
     deliveryAddress: AddressZ,
     specialInstruction: z.string().optional(),
 });
@@ -200,7 +199,6 @@ export const CreateMembershipPlanSchema = z.object({
         .min(1)
         .optional()
         .superRefine((val, ctx) => {
-            // handled below via refinement based on period
         }),
     description: z.string().optional().default(""),
     icon: z.string().optional(),
@@ -264,29 +262,20 @@ export type MembershipPlanQuery = z.infer<typeof MembershipPlanQuerySchema>;
  * PAYMENT METHODS (create/update/query)
  * ────────────────────────────────────────────────────────────────────────── */
 export const CreatePaymentMethodSchema = z.object({
-    // user is typically taken from auth context; keep optional here
-    user: z.string().optional(), // or ObjectIdString.optional()
+    user: z.string().optional(),
     type: AccountTypeZ,
-
-    // crypto
     cryptocurrency: z.string().optional(),
     network: z.string().optional(),
     walletAddress: z.string().optional(),
     qrCode: z.string().optional(),
-
-    // bank
     bankName: z.string().optional(),
     accountName: z.string().optional(),
     accountNumber: z.string().optional(),
     routingNumber: z.string().optional(),
     swiftCode: z.string().optional(),
-
-    // mobile
     provider: z.string().optional(),
     handle: z.string().optional(),
     email: z.string().email().optional(),
-
-    // common
     status: z.coerce.boolean().default(true),
     processingTime: z.string().default("1-3 business days"),
     fee: NonNegativeNumber.default(0),
@@ -296,26 +285,18 @@ export type CreatePaymentMethodFormData = z.infer<typeof CreatePaymentMethodSche
 
 export const UpdatePaymentMethodSchema = z.object({
     type: AccountTypeZ.optional(),
-
-    // crypto
     cryptocurrency: z.string().optional(),
     network: z.string().optional(),
     walletAddress: z.string().optional(),
     qrCode: z.string().optional(),
-
-    // bank
     bankName: z.string().optional(),
     accountName: z.string().optional(),
     accountNumber: z.string().optional(),
     routingNumber: z.string().optional(),
     swiftCode: z.string().optional(),
-
-    // mobile
     provider: z.string().optional(),
     handle: z.string().optional(),
     email: z.string().email().optional(),
-
-    // common
     status: z.coerce.boolean().optional(),
     processingTime: z.string().optional(),
     fee: NonNegativeNumber.optional(),
@@ -337,7 +318,7 @@ export type PaymentMethodQuery = z.infer<typeof PaymentMethodQuerySchema>;
 export const UpdatePlatformSchema = z.object({
     siteName: z.string().optional(),
     siteTagline: z.string().optional(),
-    siteDescription: z.string().optional(), // allow("")
+    siteDescription: z.string().optional(),
     supportEmail: z.string().email().optional(),
     supportPhone: z.string().optional(),
     minDepositAmount: NonNegativeNumber.optional(),
@@ -354,7 +335,7 @@ export const UpdateSelfSchema = z.object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     phone: z.string().optional(),
-    dateOfBirth: z.string().optional(), // keep as string to match DTO
+    dateOfBirth: z.string().optional(),
     profileImage: z.string().nullable().optional(),
     bio: z.string().optional(),
     address: z
@@ -434,7 +415,7 @@ export const CreateBookingSchema = z.object({
 export type CreateBookingFormData = z.infer<typeof CreateBookingSchema>;
 
 export const BookingQuerySchema = z.object({
-    status: z.string().optional(),      // keep flexible to match server enum
+    status: z.string().optional(),
     celebrityId: z.string().optional(),
     page: z.number().min(1).default(1).optional(),
     limit: z.number().min(1).max(100).default(10).optional(),
@@ -456,7 +437,7 @@ export type AdminUpdateBookingStatusFormData = z.infer<
 
 // ---- Celebrity sub-schemas (map to your model; slug auto on server) ----
 export const BookingTypeInputSchema = z.object({
-    _id: z.string().optional(), // for edits
+    _id: z.string().optional(),
     name: z.string().trim().min(1),
     duration: z.string().trim().min(1),
     price: z.number().min(0),
@@ -466,18 +447,36 @@ export const BookingTypeInputSchema = z.object({
     popular: z.boolean().optional().default(false),
 });
 
+export const ReviewCreateSchema = z.object({
+    author: z.string().trim().min(1),
+    rating: z.coerce.number().min(1).max(5),
+    comment: z.string().optional().default(""),
+    verified: z.boolean().optional().default(false),
+    date: z.string().optional().default(""),
+});
+
+export const ReviewUpdateSchema = z.object({
+    _id: z.string().optional(),
+    author: z.string().trim().min(1).optional(),
+    rating: z.coerce.number().min(1).max(5).optional(),
+    comment: z.string().optional(),
+    verified: z.boolean().optional(),
+    date: z.string().optional(),
+});
+
 export const CreateCelebritySchema = z.object({
     name: z.string().trim().min(1),
     category: z.string().trim().min(1),
     basePrice: z.number().min(0),
     description: z.string().optional().default(""),
     responseTime: z.string().optional().default(""),
-    availability: z.string().optional(), // server validates via enum
+    availability: z.string().optional(),
     tags: z.array(z.string()).optional().default([]),
     image: z.string().nullable().optional(),
     coverImage: z.string().nullable().optional(),
     achievements: z.array(z.string()).optional().default([]),
     bookingTypes: z.array(BookingTypeInputSchema).optional().default([]),
+    reviews: z.array(ReviewCreateSchema).optional().default([]),
     trending: z.boolean().optional().default(false),
     hot: z.boolean().optional().default(false),
     verified: z.boolean().optional().default(false),
@@ -485,7 +484,9 @@ export const CreateCelebritySchema = z.object({
 });
 export type CreateCelebrityFormData = z.infer<typeof CreateCelebritySchema>;
 
-export const UpdateCelebritySchema = CreateCelebritySchema.partial();
+export const UpdateCelebritySchema = CreateCelebritySchema.partial().extend({
+    reviews: z.array(ReviewUpdateSchema).optional(),
+});
 export type UpdateCelebrityFormData = z.infer<typeof UpdateCelebritySchema>;
 
 export const CelebrityQuerySchema = z.object({
@@ -542,21 +543,16 @@ export const CreateEventSchema = z.object({
     title: z.string().trim().min(1),
     category: z.string().trim().min(1),
     tags: z.array(z.string().trim()).default([]),
-
     image: UrlNullableEmpty.optional(),
     coverImage: UrlNullableEmpty.optional(),
-
     basePrice: z.coerce.number().min(0),
-
     description: z.string().optional().default(""),
     location: z.string().optional().default(""),
     date: z.string().optional().default(""),
     time: z.string().optional().default(""),
-
     attendees: z.coerce.number().int().min(0).optional().default(0),
-
     ticketTypes: z.array(TicketTypeCreateSchema).default([]),
-
+    reviews: z.array(ReviewCreateSchema).optional().default([]),
     availability: EventAvailabilityEnum.optional(),
     featured: z.boolean().optional().default(false),
     trending: z.boolean().optional().default(false),
@@ -570,21 +566,16 @@ export const UpdateEventSchema = z.object({
     title: z.string().trim().min(1).optional(),
     category: z.string().trim().min(1).optional(),
     tags: z.array(z.string().trim()).optional(),
-
     image: UrlNullableEmpty.optional(),
     coverImage: UrlNullableEmpty.optional(),
-
     basePrice: z.coerce.number().min(0).optional(),
-
     description: z.string().optional(),
     location: z.string().optional(),
     date: z.string().optional(),
     time: z.string().optional(),
-
     attendees: z.coerce.number().int().min(0).optional(),
-
     ticketTypes: z.array(TicketTypeUpdateSchema).optional(),
-
+    reviews: z.array(ReviewUpdateSchema).optional(),
     availability: EventAvailabilityEnum.optional(),
     featured: z.boolean().optional(),
     trending: z.boolean().optional(),
@@ -634,13 +625,6 @@ export const AdminUpdateTicketStatusSchema = z.object({
 });
 export type AdminUpdateTicketStatusFormData = z.infer<typeof AdminUpdateTicketStatusSchema>;
 
-/* --------------------------------- Reviews --------------------------------- */
-export const CreateReviewSchema = z.object({
-    rating: z.number().int().min(1).max(5),
-    comment: z.string().max(1000).optional().default(""),
-});
-export type CreateReviewFormData = z.infer<typeof CreateReviewSchema>;
-
 /* =============================== DEPOSITS ================================ */
 export const CreateDepositSchema = z.object({
     amount: z.number().positive(),
@@ -685,3 +669,42 @@ export const TransactionQuerySchema = z.object({
     limit: z.number().int().min(1).max(100).optional(),
 });
 export type TransactionQuery = z.infer<typeof TransactionQuerySchema>;
+
+export const BlogPostStatusEnum = z.enum([
+  "draft",
+  "published",
+  "archived",
+]);
+
+export const BlogPostQuerySchema = z.object({   
+    search: z.string().optional(),
+    category: z.string().optional(),
+    tag: z.string().optional(),
+    celebrityId: z.string().optional(),
+    eventId: z.string().optional(),
+    status: z.enum(["draft", "published", "archived"]).optional(),
+    onlyActive: z.boolean().optional(),
+    onlyPublished: z.boolean().optional(),
+    page: z.number().optional(),
+    limit: z.number().optional(),
+});
+
+export const CreateBlogPostSchema = z.object({
+    title: z.string().min(1),
+    category: z.string().min(1),
+    tags: z.array(z.string()).default([]),
+    thumbnail: z.string().url().or(z.literal("")).nullable().optional(),
+    coverImage: z.string().url().or(z.literal("")).nullable().optional(),
+    excerpt: z.string().optional(),
+    content: z.string().min(1),
+    relatedCelebrities: z.array(z.string()).default([]),
+    relatedEvents: z.array(z.string()).default([]),
+    status: z.enum(["draft", "published", "archived"]).optional(),
+    isFeatured: z.boolean().optional(),
+    isActive: z.boolean().optional(),
+});
+
+export const UpdateBlogPostSchema = CreateBlogPostSchema.partial();
+
+export type CreateBlogPostFormData = z.infer<typeof CreateBlogPostSchema>;
+export type UpdateBlogPostFormData = z.infer<typeof UpdateBlogPostSchema>;

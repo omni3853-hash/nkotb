@@ -6,6 +6,16 @@ import { logAudit } from "@/lib/utils/auditLogger";
 import mongoose from "mongoose";
 import EmailServiceImpl from "@/lib/services/impl/email.service.impl";
 
+function computeEventRatingFromReviews(reviews: { rating: number }[]) {
+    if (!reviews || reviews.length === 0) {
+        return { rating: 0, totalReviews: 0 };
+    }
+    const totalReviews = reviews.length;
+    const sum = reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+    const rating = Number((sum / totalReviews).toFixed(2));
+    return { rating, totalReviews };
+}
+
 export default class EventServiceImpl implements EventService {
     private email = new EmailServiceImpl();
 
@@ -13,7 +23,15 @@ export default class EventServiceImpl implements EventService {
         const session = await mongoose.startSession();
         try {
             return await session.withTransaction(async () => {
-                const created = await Event.create([dto], { session });
+                const payload: any = { ...dto };
+
+                if (payload.reviews && payload.reviews.length > 0) {
+                    const { rating, totalReviews } = computeEventRatingFromReviews(payload.reviews);
+                    payload.rating = rating;
+                    payload.totalReviews = totalReviews;
+                }
+
+                const created = await Event.create([payload], { session });
                 const event = created[0];
 
                 await logAudit({
@@ -75,7 +93,21 @@ export default class EventServiceImpl implements EventService {
         const doc = await Event.findById(id);
         if (!doc) throw new CustomError(404, "Event not found");
 
-        Object.assign(doc, dto);
+        const { reviews, rating, totalReviews, ...rest } = dto as any;
+
+        if (reviews) {
+            doc.reviews = reviews as any;
+        }
+
+        const currentReviews = doc.reviews || [];
+        const { rating: computedRating, totalReviews: computedTotal } =
+            computeEventRatingFromReviews(currentReviews as any);
+
+        doc.rating = computedRating;
+        doc.totalReviews = computedTotal;
+
+        Object.assign(doc, rest);
+
         await doc.save();
 
         await logAudit({

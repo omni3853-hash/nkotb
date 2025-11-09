@@ -153,15 +153,15 @@ export function EventModal({ event, isOpen, onClose, shareUrl }: EventModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-0 gap-0 bg-background rounded-xl border-border">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl md:max-w-4xl lg:max-w-6xl max-h-[95vh] overflow-y-auto p-0 gap-0 bg-background rounded-xl border-border">
         <div className="relative">
           {/* Header Image */}
-          <div className="relative h-72 md:h-96 overflow-hidden rounded-t-xl">
+          <div className="relative h-48 sm:h-64 md:h-72 lg:h-96 overflow-hidden rounded-t-xl">
             <img src={event.image || "/placeholder.svg"} alt={event.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 right-0 p-6 flex items-start justify-between">
+            <div className="absolute top-0 left-0 right-0 p-3 sm:p-4 md:p-6 flex items-start justify-between gap-2">
               <div className="flex items-center gap-3">
                 <Badge className={`px-4 py-2 text-xs font-mono uppercase tracking-wider border ${getStatusColor(event.status)}`}>
                   {event.status === "selling-fast" && <Zap className="h-3.5 w-3.5 mr-1.5" />}
@@ -176,39 +176,39 @@ export function EventModal({ event, isOpen, onClose, shareUrl }: EventModalProps
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 {/* SHARE */}
                 <Button
                   size="icon"
                   variant="secondary"
                   onClick={doShare}
                   title={copied ? "Link copied!" : "Share"}
-                  className="h-10 w-10 rounded-lg bg-white/95 hover:bg-white backdrop-blur-sm border border-border/50"
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-white/95 hover:bg-white backdrop-blur-sm border border-border/50"
                 >
-                  <Share2 className="h-4 w-4" />
+                  <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
 
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="h-10 w-10 rounded-lg bg-white/95 hover:bg-white backdrop-blur-sm border border-border/50"
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-white/95 hover:bg-white backdrop-blur-sm border border-border/50"
                   onClick={onClose}
                   title="Close"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
 
             {/* Bottom Info */}
-            <div className="absolute bottom-0 left-0 right-0 p-6">
-              <div className="flex items-end justify-between">
-                <div className="flex-1">
-                  <Badge variant="outline" className="mb-3 bg-white/10 backdrop-blur-sm border-white/20 text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6">
+              <div className="flex items-end justify-between gap-2 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <Badge variant="outline" className="mb-2 sm:mb-3 bg-white/10 backdrop-blur-sm border-white/20 text-white text-xs sm:text-sm">
                     {event.category}
                   </Badge>
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 leading-tight text-balance">{event.title}</h2>
-                  <div className="flex flex-wrap items-center gap-4 text-white/90">
+                  <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold text-white mb-1 sm:mb-2 leading-tight text-balance break-words">{event.title}</h2>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-white/90 text-xs sm:text-sm">
                     <div className="flex items-center gap-1.5">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       <span className="font-mono font-semibold">{event.rating}</span>
@@ -224,8 +224,8 @@ export function EventModal({ event, isOpen, onClose, shareUrl }: EventModalProps
                 </div>
 
                 {/* Starting price chip */}
-                <div className="hidden md:block">
-                  <Badge className="bg-white/90 text-emerald-900 border-0 text-sm font-semibold">
+                <div className="hidden sm:block shrink-0">
+                  <Badge className="bg-white/90 text-emerald-900 border-0 text-xs sm:text-sm font-semibold">
                     from ${event.price}
                   </Badge>
                 </div>
@@ -234,9 +234,9 @@ export function EventModal({ event, isOpen, onClose, shareUrl }: EventModalProps
           </div>
 
           {/* Main Content */}
-          <div className="grid lg:grid-cols-3 gap-8 p-6 md:p-8">
+          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 md:p-8">
             {/* Left: Details */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Quick facts */}
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2 text-sm">
@@ -359,7 +359,7 @@ export function EventModal({ event, isOpen, onClose, shareUrl }: EventModalProps
 
             {/* Right: Summary Card (no booking) */}
             <div className="lg:col-span-1">
-              <div className="sticky top-6 bg-card rounded-xl border border-border p-6 space-y-6">
+              <div className="sticky top-4 sm:top-6 bg-card rounded-xl border border-border p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Price Header */}
                 <div>
                   <div className="flex items-baseline gap-2 mb-1">

@@ -254,9 +254,9 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="lg:col-span-1">
                 <Card className="bg-white">
-                  <CardHeader className="text-center pb-4">
+                  <CardHeader className="text-center pb-3 sm:pb-4">
                     <div className="relative inline-block">
-                      <Avatar className="h-24 w-24 border-4 bg-zinc-100">
+                      <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 sm:border-4 bg-zinc-100">
                         <AvatarImage src={(profileImage as string) || me?.profileImage || ""} />
                         <AvatarFallback className="bg-emerald-100 text-emerald-800 text-2xl font-semibold">
                           {initials(me?.firstName, me?.lastName)}
@@ -275,25 +275,25 @@ export default function ProfilePage() {
                       </Button>
                       <input ref={fileRef} type="file" className="hidden" accept="image/*" onChange={onFile} />
                     </div>
-                    <CardTitle className="mt-3 text-emerald-900">{loading ? "Loading…" : fullName}</CardTitle>
-                    <CardDescription className="text-zinc-600">{me?.email}</CardDescription>
-                    {uploadPct > 0 && <div className="mt-3 text-xs text-zinc-600">Uploading… {uploadPct}%</div>}
+                    <CardTitle className="mt-2 sm:mt-3 text-base sm:text-lg text-emerald-900 break-words">{loading ? "Loading…" : fullName}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm text-zinc-600 break-words">{me?.email}</CardDescription>
+                    {uploadPct > 0 && <div className="mt-2 sm:mt-3 text-xs text-zinc-600">Uploading… {uploadPct}%</div>}
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <Calendar className="h-4 w-4 text-emerald-600" />
-                      <span className="text-zinc-600">Member since {me ? new Date(me.createdAt).toLocaleString() : "—"}</span>
+                  <CardContent className="space-y-2 sm:space-y-3">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600 flex-shrink-0" />
+                      <span className="text-zinc-600 truncate">Member since {me ? new Date(me.createdAt).toLocaleString() : "—"}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <MapPin className="h-4 w-4 text-emerald-600" />
-                      <span className="text-zinc-600">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600 flex-shrink-0" />
+                      <span className="text-zinc-600 truncate">
                         {[me?.address?.city, me?.address?.state, me?.address?.country].filter(Boolean).join(", ") || "—"}
                       </span>
                     </div>
                     <Separator />
                     <div>
-                      <h4 className="mb-2 font-semibold text-emerald-900">Bio</h4>
-                      <p className="text-sm text-zinc-600">{me?.bio || "—"}</p>
+                      <h4 className="mb-1 sm:mb-2 text-sm sm:text-base font-semibold text-emerald-900">Bio</h4>
+                      <p className="text-xs sm:text-sm text-zinc-600 break-words">{me?.bio || "—"}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -302,40 +302,40 @@ export default function ProfilePage() {
               <div className="lg:col-span-2">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                   <TabsList className="grid w-full grid-cols-3 bg-emerald-50">
-                    <TabsTrigger value="personal" className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white">
-                      <User className="mr-2 h-4 w-4" /> Personal
+                    <TabsTrigger value="personal" className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white text-xs sm:text-sm">
+                      <User className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Personal</span><span className="sm:hidden">Info</span>
                     </TabsTrigger>
-                    <TabsTrigger value="security" className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white">
-                      <Lock className="mr-2 h-4 w-4" /> Security
+                    <TabsTrigger value="security" className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white text-xs sm:text-sm">
+                      <Lock className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Security</span><span className="sm:hidden">Pass</span>
                     </TabsTrigger>
-                    <TabsTrigger value="notifications" className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white">
-                      <Bell className="mr-2 h-4 w-4" /> Notifications
+                    <TabsTrigger value="notifications" className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white text-xs sm:text-sm">
+                      <Bell className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Notifications</span><span className="sm:hidden">Notif</span>
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="personal" className="mt-3">
                     <Card className="bg-white">
-                      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2 text-emerald-900">
-                            <User className="h-5 w-5" />
-                            Personal Information
+                      <CardHeader className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-emerald-900">
+                            <User className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                            <span className="truncate">Personal Information</span>
                           </CardTitle>
-                          <CardDescription>Update your personal details</CardDescription>
+                          <CardDescription className="text-xs sm:text-sm">Update your personal details</CardDescription>
                         </div>
                         {!isEditing ? (
                           <Button
                             variant="outline"
                             onClick={() => setIsEditing(true)}
-                            className="bg-emerald-800 text-zinc-100 hover:bg-emerald-700"
+                            className="bg-emerald-800 text-zinc-100 hover:bg-emerald-700 w-full sm:w-auto"
                           >
-                            <Edit3 className="mr-2 h-4 w-4" /> Edit
+                            <Edit3 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Edit
                           </Button>
                         ) : (
-                          <div className="flex flex-col gap-2 sm:flex-row">
+                          <div className="flex flex-col gap-2 sm:flex-row w-full sm:w-auto">
                             <Button
                               variant="outline"
-                              className="border-red-300 text-red-700 hover:bg-red-50"
+                              className="border-red-300 text-red-700 hover:bg-red-50 w-full sm:w-auto"
                               onClick={() => {
                                 reset();
                                 setIsEditing(false);
@@ -345,17 +345,17 @@ export default function ProfilePage() {
                               preserveWidth
                               isLoading={false}
                             >
-                              <X className="mr-2 h-4 w-4" /> Cancel
+                              <X className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Cancel
                             </Button>
                             <Button
                               onClick={handleSubmit(onSubmit)}
-                              className="bg-emerald-600 text-white hover:bg-emerald-700"
+                              className="bg-emerald-600 text-white hover:bg-emerald-700 w-full sm:w-auto"
                               isLoading={isSubmitting}
                               loadingText="Saving…"
                               disabled={!isDirty}
                               preserveWidth
                             >
-                              <Save className="mr-2 h-4 w-4" />
+                              <Save className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                               Save
                             </Button>
                           </div>

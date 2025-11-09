@@ -495,34 +495,34 @@ export default function ManageCelebritiesPage() {
         <SiteHeader />
         <div className="flex flex-1 flex-col bg-zinc-100 px-2 sm:px-3">
           <div className="@container/main flex flex-1 flex-col gap-4 sm:gap-6 px-3 sm:px-6 py-4 sm:py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-emerald-900">Manage Celebrities</h1>
                 <p className="text-sm text-zinc-600">Create, edit, and manage celebrities. View bookings and share profiles.</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={clearFilters}>Reset Filters</Button>
-                <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" /> New Celebrity</Button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto">Reset Filters</Button>
+                <Button onClick={openCreate} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2" /> New Celebrity</Button>
               </div>
             </div>
 
             <Card className="bg-white">
               <CardHeader>
-                <CardTitle className="text-emerald-900">Celebrities</CardTitle>
-                <CardDescription>Search, filter, paginate</CardDescription>
+                <CardTitle className="text-emerald-900 text-lg sm:text-xl">Celebrities</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Search, filter, paginate</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
-                  <div className="md:col-span-2 relative">
-                    <Input placeholder="Search name, tags, description…" value={search} onChange={(e) => setSearch(e.target.value)} />
-                    <span className="absolute right-2 top-2 text-zinc-400 text-xs">Enter</span>
+                <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+                  <div className="sm:col-span-2 relative">
+                    <Input placeholder="Search name, tags, description…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full" />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">Enter</span>
                   </div>
 
                   <Select
                     value={filters.category ?? undefined}
                     onValueChange={(v) => setFilters(s => v === "__CLEAR__" ? { ...s, category: undefined } : { ...s, category: v })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Category" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__CLEAR__">Clear</SelectItem>
                       <SelectItem value="Actor">Actor</SelectItem>
@@ -537,7 +537,7 @@ export default function ManageCelebritiesPage() {
                     value={filters.isActive ?? undefined}
                     onValueChange={(v) => setFilters(s => v === "__CLEAR__" ? { ...s, isActive: undefined } : { ...s, isActive: v })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Active?" /></SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Active?" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__CLEAR__">Clear</SelectItem>
                       <SelectItem value="true">Active</SelectItem>
@@ -545,12 +545,12 @@ export default function ManageCelebritiesPage() {
                     </SelectContent>
                   </Select>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:col-span-2 lg:col-span-1">
                     <Select
                       value={filters.trending ?? undefined}
                       onValueChange={(v) => setFilters(s => v === "__CLEAR__" ? { ...s, trending: undefined } : { ...s, trending: v })}
                     >
-                      <SelectTrigger><SelectValue placeholder="Trending?" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Trending?" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__CLEAR__">Clear</SelectItem>
                         <SelectItem value="true">Yes</SelectItem>
@@ -562,7 +562,7 @@ export default function ManageCelebritiesPage() {
                       value={filters.hot ?? undefined}
                       onValueChange={(v) => setFilters(s => v === "__CLEAR__" ? { ...s, hot: undefined } : { ...s, hot: v })}
                     >
-                      <SelectTrigger><SelectValue placeholder="Hot?" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Hot?" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__CLEAR__">Clear</SelectItem>
                         <SelectItem value="true">Yes</SelectItem>
@@ -574,7 +574,7 @@ export default function ManageCelebritiesPage() {
                       value={filters.verified ?? undefined}
                       onValueChange={(v) => setFilters(s => v === "__CLEAR__" ? { ...s, verified: undefined } : { ...s, verified: v })}
                     >
-                      <SelectTrigger><SelectValue placeholder="Verified?" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Verified?" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__CLEAR__">Clear</SelectItem>
                         <SelectItem value="true">Yes</SelectItem>
@@ -585,7 +585,8 @@ export default function ManageCelebritiesPage() {
                 </div>
 
                 <div className="rounded-md border overflow-x-auto">
-                  <Table>
+                  <div className="min-w-full">
+                    <Table>
                     <TableHeader>
                       <TableRow className="bg-zinc-50">
                         <TableHead>Name</TableHead>
@@ -666,6 +667,7 @@ export default function ManageCelebritiesPage() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
 
                 <PaginationControls page={page} limit={limit} total={total} onPage={setPage} onLimit={(l) => { setLimit(l); setPage(1) }} />

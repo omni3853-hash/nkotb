@@ -85,7 +85,7 @@ export function SignUpForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm px-4 sm:px-0">
       <div className="mb-12">
         <div className="flex items-center gap-2">
           <img
@@ -93,7 +93,7 @@ export function SignUpForm() {
             src="/logo.png"
             className="h-10 w-auto"
           />
-          <span className="font-semibold text-2xl text-black">Premier Talent Agency</span>
+          
         </div>
       </div>
 

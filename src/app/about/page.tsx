@@ -285,16 +285,16 @@ export default function AboutPage() {
               </div>
 
               {/* Floating Stats */}
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-xl p-6 border border-zinc-200/50 backdrop-blur-sm">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl flex items-center justify-center shadow-sm">
-                    <Award className="size-7 text-emerald-600" />
+              <div className="absolute -bottom-2 sm:-bottom-4 md:-bottom-6 -left-1 sm:-left-2 md:-left-4 lg:-left-6 bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-xl p-2 sm:p-3 md:p-4 lg:p-6 border border-zinc-200/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm">
+                    <Award className="size-5 sm:size-6 md:size-7 text-emerald-600" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-emerald-900">
+                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-emerald-900">
                       4 Years
                     </div>
-                    <div className="text-sm text-zinc-500 font-medium">
+                    <div className="text-xs sm:text-sm text-zinc-500 font-medium">
                       Industry Leading
                     </div>
                   </div>
@@ -600,10 +600,10 @@ export default function AboutPage() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+          className="fixed bottom-4 sm:bottom-6 md:bottom-8 right-4 sm:right-6 md:right-8 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
           aria-label="Scroll to top"
         >
-          <ChevronRight className="size-5 group-hover:scale-110 transition-transform duration-300 rotate-90" />
+          <ChevronRight className="size-4 sm:size-5 group-hover:scale-110 transition-transform duration-300 rotate-90" />
         </button>
       )}
     </div>

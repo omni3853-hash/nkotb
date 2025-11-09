@@ -398,21 +398,19 @@ export default function ManageUsersPage() {
                 <CardTitle className="text-emerald-900">Filters & Search</CardTitle>
                 <CardDescription>Only model-backed fields</CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="relative sm:col-span-3">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
-                    <Input
-                      placeholder="Search name/email/phone…"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 bg-zinc-50 focus:border-emerald-500"
-                    />
-                  </div>
+              <CardContent className="space-y-4 sm:space-y-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                  <Input
+                    placeholder="Search name/email/phone…"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-zinc-50 focus:border-emerald-500 w-full"
+                  />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                   <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as Role | "all")}>
-                    <SelectTrigger className="bg-zinc-50">
+                    <SelectTrigger className="bg-zinc-50 w-full">
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -423,7 +421,7 @@ export default function ManageUsersPage() {
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as UserStatus | "all")}>
-                    <SelectTrigger className="bg-zinc-50">
+                    <SelectTrigger className="bg-zinc-50 w-full">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -434,7 +432,7 @@ export default function ManageUsersPage() {
                     </SelectContent>
                   </Select>
                   <Select value={verifiedFilter} onValueChange={(v) => setVerifiedFilter(v as any)}>
-                    <SelectTrigger className="bg-zinc-50">
+                    <SelectTrigger className="bg-zinc-50 w-full">
                       <SelectValue placeholder="Verified" />
                     </SelectTrigger>
                     <SelectContent>
@@ -444,7 +442,7 @@ export default function ManageUsersPage() {
                     </SelectContent>
                   </Select>
                   <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-                    <SelectTrigger className="bg-zinc-50">
+                    <SelectTrigger className="bg-zinc-50 w-full">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>

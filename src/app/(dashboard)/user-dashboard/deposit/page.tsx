@@ -1022,18 +1022,18 @@ export default function DepositPage() {
 
       {/* Success Dialog */}
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
               Deposit Submitted
             </DialogTitle>
-            <DialogDescription>
-              Your deposit has been submitted with your proof of payment. You’ll be credited once it’s confirmed.
+            <DialogDescription className="text-sm">
+              Your deposit has been submitted with your proof of payment. You'll be credited once it's confirmed.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end">
-            <Button onClick={() => setSuccessOpen(false)}>Okay</Button>
+            <Button onClick={() => setSuccessOpen(false)} className="w-full sm:w-auto">Okay</Button>
           </div>
         </DialogContent>
       </Dialog>

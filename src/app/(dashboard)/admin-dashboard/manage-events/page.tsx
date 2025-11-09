@@ -309,19 +309,19 @@ function EventFilters({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+        <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="relative sm:col-span-2 lg:col-span-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <Input
               placeholder="Search events..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 bg-zinc-50 focus:border-emerald-500"
+              className="pl-10 bg-zinc-50 focus:border-emerald-500 w-full"
             />
           </div>
 
           <Select value={category || "all"} onValueChange={onCategoryChange}>
-            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
+            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500 w-full">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -334,7 +334,7 @@ function EventFilters({
             value={onlyActive ? "active" : "all"}
             onValueChange={(v) => onOnlyActiveChange(v === "active")}
           >
-            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
+            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500 w-full">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -347,7 +347,7 @@ function EventFilters({
             value={limit.toString()}
             onValueChange={(v) => onLimitChange(Number(v))}
           >
-            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500">
+            <SelectTrigger className="bg-zinc-50 focus:border-emerald-500 w-full">
               <SelectValue placeholder="Per page" />
             </SelectTrigger>
             <SelectContent>
