@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
-import { DM_Sans, Geist_Mono } from "next/font/google";
+import { Anton } from "next/font/google"; 
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import UserProvider from "@/contexts/UserContext";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const anton = Anton({
+  variable: "--font-anton",
+  weight: "400",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://premiertalentagency.com'),
-  title: "Premier Talent Agency - Celebrity Booking Platform",
+  metadataBase: new URL('https://nkotb.com'),
+  title: "NKOTB - Celebrity Booking Platform",
   description: "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
   keywords: [
     "celebrity booking",
@@ -31,9 +27,9 @@ export const metadata: Metadata = {
     "musicians booking",
     "influencer booking"
   ],
-  authors: [{ name: "Premier Talent Agency" }],
-  creator: "Premier Talent Agency",
-  publisher: "Premier Talent Agency",
+  authors: [{ name: "NKOTB" }],
+  creator: "NKOTB",
+  publisher: "NKOTB",
   robots: {
     index: true,
     follow: true,
@@ -48,25 +44,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://premiertalentagency.com",
-    siteName: "Premier Talent Agency",
-    title: "Premier Talent Agency - Celebrity Booking Platform",
+    url: "https://nkotb.com",
+    siteName: "NKOTB",
+    title: "NKOTB - Celebrity Booking Platform",
     description: "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
     images: [
       {
         url: "/logo.png",
         width: 1200,
         height: 630,
-        alt: "Premier Talent Agency Logo",
+        alt: "NKOTB",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Premier Talent Agency - Celebrity Booking Platform",
+    title: "NKOTB - Celebrity Booking Platform",
     description: "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
     images: ["/logo.png"],
-    creator: "@PremierTalentAgency",
+    creator: "@nkotb",
   },
   icons: {
     icon: "/favicon.ico",
@@ -84,7 +80,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${anton.variable} antialiased`}>
         <UserProvider>
           {children}
         </UserProvider>

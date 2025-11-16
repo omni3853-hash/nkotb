@@ -5,7 +5,7 @@ import { CustomError } from "../../utils/customError.utils";
 /**
  * Brand tokens (env-driven)
  */
-const APP = process.env.APP_NAME || "Premier Talent ";
+const APP = process.env.APP_NAME || "NKOTB";
 const BRAND = process.env.EMAIL_FROM_NAME || APP;
 const COLOR = process.env.MAJOR_COLOR || "#4F46E5"; // default indigo
 const ACCENT = process.env.MINOR_COLOR || "#22C55E"; // default green
