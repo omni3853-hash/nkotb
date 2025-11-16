@@ -11,7 +11,7 @@ import { BillingPeriod } from "../enums/membership.enums";
 export default async function runSeed() {
     console.log("[SEED] ▶️ Seeding started...");
 
-    const adminEmail = "jkenosuh@gmail.com";
+    const adminEmail = "nkotbbostonblueinquiries@gmail.com";
     const adminPlainPassword = "Admin@Celeb123";
 
     let admin = await User.findOne({ email: adminEmail });

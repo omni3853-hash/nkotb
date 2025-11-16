@@ -81,7 +81,7 @@ export function Header2() {
                     >
                         {/* Sidebar Content */}
                         <div
-                            className="flex flex-col items-center space-y-6 py-10 bg-black text-white w-1/2"
+                            className="flex flex-col items-center space-y-6 py-10 bg-black text-white"
                             style={{ transform: "translateY(0)" }}
                         >
                             {/* Close Button */}

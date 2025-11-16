@@ -1,4 +1,5 @@
 import mongoose, { Connection } from "mongoose";
+import runSeed from "./seed.utils";
 
 // Optional but recommended diagnostics
 mongoose.set("strictQuery", true);
@@ -75,3 +76,5 @@ export async function maybeSeed() {
     console.error("[SEED] Skipped or failed:", (e as Error).message);
   }
 }
+
+// maybeSeed()

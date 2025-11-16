@@ -12,7 +12,7 @@ const anton = Anton({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://nkotb.com'),
-  title: "NKOTB - Celebrity Booking Platform",
+  title: "NKOTB - New Kids On The Block",
   description: "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
   keywords: [
     "celebrity booking",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://nkotb.com",
     siteName: "NKOTB",
-    title: "NKOTB - Celebrity Booking Platform",
+    title: "NKOTB - New Kids On The Block",
     description: "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
     images: [
       {
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "NKOTB - Celebrity Booking Platform",
+    title: "NKOTB - New Kids On The Block",
     description: "Connect with A-list celebrities, musicians, and influencers for your next unforgettable event. From intimate meet-and-greets to grand galas, we make celebrity bookings seamless, secure, and extraordinary.",
     images: ["/logo.png"],
     creator: "@nkotb",
