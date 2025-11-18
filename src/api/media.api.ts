@@ -25,18 +25,18 @@ export const MediaApi = {
 
     // Create a new media item
     async create(data: { title: string; mediaUrl: string; category: MediaCategory }): Promise<Media> {
-        const response = await api.post(`/media`, data);
+        const response = await api.post(`/admin/media`, data);
         return response.data;
     },
 
     // Update an existing media item
     async update(id: string, data: { title?: string; mediaUrl?: string; category?: MediaCategory }): Promise<Media> {
-        const response = await api.patch(`/media/${id}`, data);
+        const response = await api.patch(`/admin/media/${id}`, data);
         return response.data;
     },
 
     // Delete a media item
     async remove(id: string): Promise<void> {
-        await api.delete(`/media/${id}`);
+        await api.delete(`/admin/media/${id}`);
     },
 };

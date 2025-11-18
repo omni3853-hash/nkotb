@@ -121,6 +121,21 @@ export interface EmailService {
     currency?: string
   ): Promise<void>;
 
+  sendOfflineTicketWithQr?(params: {
+    email: string;
+    fullName: string;
+    eventTitle: string;
+    eventSlug: string;
+    ticketTypeName: string;
+    quantity: number;
+    totalAmount: number;
+    currency?: string;
+    checkinCode: string;
+    ticketId: string;
+    eventDate?: string | Date;
+    eventLocation?: string;
+  }): Promise<void>;
+
   sendTicketStatusChanged?(
     email: string,
     fullName: string,
@@ -135,4 +150,29 @@ export interface EmailService {
   sendDepositQueuedForReview(email: string, fullName: string, amount: number, depositId: string): Promise<void>;
   sendDepositApproved(email: string, fullName: string, amount: number, depositId: string): Promise<void>;
   sendDepositFailed(email: string, fullName: string, amount: number, depositId: string, reason: string): Promise<void>;
+
+  // ---------------- SUPPORT (NEW) ----------------
+  sendSupportTicketReceived?(params: {
+    email: string;
+    fullName: string;
+    subject: string;
+    message: string;
+    ticketId: string;
+  }): Promise<void>;
+
+  sendSupportTicketReply?(params: {
+    email: string;
+    fullName: string;
+    subject: string;
+    ticketId: string;
+    replyBody: string;
+  }): Promise<void>;
+
+  sendSupportTicketNotificationToAdmin?(params: {
+    subject: string;
+    fromEmail: string;
+    fromName: string;
+    message: string;
+    ticketId: string;
+  }): Promise<void>;
 }

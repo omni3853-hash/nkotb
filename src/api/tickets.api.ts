@@ -1,4 +1,4 @@
-import { AdminTicketQuery, AdminTicketQuerySchema, TicketQuery, TicketQuerySchema, CreateTicketFormData, CreateTicketSchema, AdminUpdateTicketStatusFormData, AdminUpdateTicketStatusSchema } from "@/utils/schemas/schemas";
+import { AdminTicketQuery, AdminTicketQuerySchema, TicketQuery, TicketQuerySchema, CreateTicketFormData, CreateTicketSchema, AdminUpdateTicketStatusFormData, AdminUpdateTicketStatusSchema, CreateOfflineTicketFormData, CreateOfflineTicketSchema } from "@/utils/schemas/schemas";
 import { api } from "./axios";
 
 export type Ticket = {
@@ -57,6 +57,12 @@ export const TicketsApi = {
     async create(dto: CreateTicketFormData): Promise<Ticket> {
         const payload = CreateTicketSchema.parse(dto);
         const res = await api.post(`/tickets`, payload);
+        return pickItem<Ticket>(res);
+    },
+
+    async createOffline(dto: CreateOfflineTicketFormData): Promise<Ticket> {
+        const payload = CreateOfflineTicketSchema.parse(dto);
+        const res = await api.post(`/tickets/offline`, payload);
         return pickItem<Ticket>(res);
     },
 };

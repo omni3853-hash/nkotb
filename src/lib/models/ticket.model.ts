@@ -1,9 +1,29 @@
 import mongoose, { Schema, Model, Document, Types } from "mongoose";
 import { TicketStatus } from "@/lib/enums/event.enums";
+import { PaymentMethod } from "./payment-method.model"; // ensure model is loaded
+
+// NEW: guest buyer snapshot
+export interface IOfflineTicketBuyer {
+    fullName: string;
+    email: string;
+    phone?: string;
+}
+
+// NEW: offline payment snapshot
+export interface IOfflineTicketPayment {
+    paymentMethod?: Types.ObjectId;  // PaymentMethod _id
+    amount?: number;                 // amount paid
+    proofOfPayment?: string;         // receipt url / ref / note
+    reference?: string;              // internal reference if needed
+}
 
 export interface ITicket extends Document {
     _id: Types.ObjectId;
-    user: Types.ObjectId;
+
+    // For logged-in purchases, this is set.
+    // For guest/offline purchases, this may be null.
+    user?: Types.ObjectId | null;
+
     event: Types.ObjectId;
 
     eventTitleSnapshot: string;
@@ -18,6 +38,13 @@ export interface ITicket extends Document {
     notes?: string;
     status: TicketStatus;
 
+    // NEW: guest + payment + QR
+    isGuest: boolean;
+    buyer?: IOfflineTicketBuyer;
+    offlinePayment?: IOfflineTicketPayment;
+    checkinCode?: string;     // unique code printed & in QR
+    qrCodeDataUrl?: string;   // cached QR data URL (optional)
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -27,9 +54,39 @@ export interface ITicketPopulated extends Omit<ITicket, "user" | "event"> {
     event: any;
 }
 
+// keep PaymentMethod model from being tree-shaken
+const PAYMENT_METHOD_MODEL_NAME: string = PaymentMethod.modelName;
+
+const OfflineTicketBuyerSchema = new Schema<IOfflineTicketBuyer>(
+    {
+        fullName: { type: String, required: true },
+        email: { type: String, required: true },
+        phone: { type: String },
+    },
+    { _id: false }
+);
+
+const OfflineTicketPaymentSchema = new Schema<IOfflineTicketPayment>(
+    {
+        paymentMethod: { type: Schema.Types.ObjectId, ref: "PaymentMethod" },
+        amount: { type: Number },
+        proofOfPayment: { type: String },
+        reference: { type: String },
+    },
+    { _id: false }
+);
+
 const TicketSchema = new Schema<ITicket>(
     {
-        user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+        // UPDATED: no longer required (so guests can have null user)
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: false,
+            index: true,
+            default: null,
+        },
+
         event: { type: Schema.Types.ObjectId, ref: "Event", required: true, index: true },
 
         eventTitleSnapshot: { type: String, required: true },
@@ -46,13 +103,23 @@ const TicketSchema = new Schema<ITicket>(
             type: String,
             enum: Object.values(TicketStatus),
             default: TicketStatus.PENDING,
-            index: true
+            index: true,
         },
+
+        // NEW: offline guest + payment details
+        isGuest: { type: Boolean, default: false, index: true },
+        buyer: { type: OfflineTicketBuyerSchema, default: undefined },
+        offlinePayment: { type: OfflineTicketPaymentSchema, default: undefined },
+
+        // NEW: QR details
+        checkinCode: { type: String, unique: true, sparse: true },
+        qrCodeDataUrl: { type: String },
     },
     { timestamps: true }
 );
 
 TicketSchema.index({ user: 1, event: 1, createdAt: -1 });
+TicketSchema.index({ checkinCode: 1 }, { unique: true, sparse: true });
 
 export const Ticket: Model<ITicket> =
     mongoose.models.Ticket || mongoose.model<ITicket>("Ticket", TicketSchema);

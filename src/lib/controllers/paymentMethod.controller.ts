@@ -1,5 +1,4 @@
-// src/app/api/admin/payment-methods/controllers.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { validator } from "@/lib/utils/validator.utils";
 import {
     CreatePaymentMethodDto,
@@ -187,7 +186,7 @@ export async function setDefaultPaymentMethodController(
 }
 
 /* ---------------- User ---------------- */
-export async function listActivePaymentMethodsController(req: AuthRequest) {
+export async function listActivePaymentMethodsController(req: NextRequest) {
     try {
         // For user list, also honor 'type', default type, and allow 'all'
         const dto = PaymentMethodQueryDto.fromURL(req.url, {

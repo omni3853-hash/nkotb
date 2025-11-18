@@ -1,3 +1,4 @@
+import { SupportPriority, SupportStatus } from "@/lib/enums/support.enums";
 import { z } from "zod";
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -606,6 +607,27 @@ export const CreateTicketSchema = z.object({
 });
 export type CreateTicketFormData = z.infer<typeof CreateTicketSchema>;
 
+export const CreateOfflineTicketSchema = z.object({
+    event: z.string().min(1, "Event is required"),
+    ticketTypeId: z.string().min(1, "Ticket type is required"),
+    quantity: z.number().int().min(1, "Minimum quantity is 1"),
+
+    // Guest buyer details (no account required)
+    buyerFullName: z.string().min(2, "Full name is required"),
+    buyerEmail: z.string().email("Valid email is required"),
+    buyerPhone: z.string().optional(),
+
+    // Optional notes to organiser
+    notes: z.string().optional().default(""),
+
+    // Offline payment snapshot (PaymentMethod + proof)
+    paymentMethodId: z.string().optional(),
+    paidAmount: z.number().positive().optional(),
+    proofOfPayment: z.string().optional(), // receipt url / reference / txt
+});
+
+export type CreateOfflineTicketFormData = z.infer<typeof CreateOfflineTicketSchema>;
+
 export const TicketQuerySchema = z.object({
     status: TicketStatusEnum.optional(),
     eventId: z.string().optional(),
@@ -671,12 +693,12 @@ export const TransactionQuerySchema = z.object({
 export type TransactionQuery = z.infer<typeof TransactionQuerySchema>;
 
 export const BlogPostStatusEnum = z.enum([
-  "draft",
-  "published",
-  "archived",
+    "draft",
+    "published",
+    "archived",
 ]);
 
-export const BlogPostQuerySchema = z.object({   
+export const BlogPostQuerySchema = z.object({
     search: z.string().optional(),
     category: z.string().optional(),
     tag: z.string().optional(),
@@ -708,3 +730,33 @@ export const UpdateBlogPostSchema = CreateBlogPostSchema.partial();
 
 export type CreateBlogPostFormData = z.infer<typeof CreateBlogPostSchema>;
 export type UpdateBlogPostFormData = z.infer<typeof UpdateBlogPostSchema>;
+
+
+export const CreateSupportTicketSchema = z.object({
+    fullName: z.string().min(2, "Full name is required"),
+    email: z.string().email("Valid email is required"),
+    phone: z
+        .string()
+        .optional(),
+    subject: z.string().min(3, "Subject is required"),
+    message: z.string().min(5, "Message is too short"),
+    priority: z.nativeEnum(SupportPriority).optional(),
+});
+
+export type CreateSupportTicketFormData = z.infer<typeof CreateSupportTicketSchema>;
+
+// ADMIN reply
+export const AdminReplySupportTicketSchema = z.object({
+    body: z.string().min(2, "Reply cannot be empty"),
+});
+export type AdminReplySupportTicketFormData = z.infer<
+    typeof AdminReplySupportTicketSchema
+>;
+
+// ADMIN status update
+export const AdminUpdateSupportStatusSchema = z.object({
+    status: z.nativeEnum(SupportStatus),
+});
+export type AdminUpdateSupportStatusFormData = z.infer<
+    typeof AdminUpdateSupportStatusSchema
+>;

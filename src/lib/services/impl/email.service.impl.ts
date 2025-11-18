@@ -1,6 +1,7 @@
 import nodemailer, { SendMailOptions } from "nodemailer";
 import { EmailService } from "../email.service";
 import { CustomError } from "../../utils/customError.utils";
+import QRCode from "qrcode";
 
 /**
  * Brand tokens (env-driven)
@@ -10,27 +11,33 @@ const BRAND = process.env.EMAIL_FROM_NAME || APP;
 const COLOR = process.env.MAJOR_COLOR || "#4F46E5"; // default indigo
 const ACCENT = process.env.MINOR_COLOR || "#22C55E"; // default green
 const LOGO = process.env.LOGO_URL || "";
-const CONTACT = process.env.CONTACT_INFO || "support@example.com";
+const CONTACT = process.env.CONTACT_INFO || "support@example.com"; // kept but not rendered to users
 const FRONTEND_URL = process.env.FRONTEND_URL || "#";
 const FROM = `"${BRAND}" <${process.env.EMAIL_USER}>`;
 const DEFAULT_CURRENCY = process.env.CURRENCY || "USD";
-const NOTIFY_EMAILS = (process.env.NOTIFY_EMAILS || "").split(",").map(s => s.trim()).filter(Boolean);
+const NOTIFY_EMAILS = (process.env.NOTIFY_EMAILS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 /**
  * Helpers
  */
 const nf = (currency?: string) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: currency || DEFAULT_CURRENCY });
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency || DEFAULT_CURRENCY,
+  });
 
 const fmtDate = (d: Date) =>
-  new Date(d).toLocaleString("en-GB", { year: "numeric", month: "long", day: "numeric" });
+  new Date(d).toLocaleString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
 /**
- * A polished, bulletproof base layout with:
- * - preheader support
- * - gradient header
- * - card container
- * - consistent spacing + inline styles for broad client support
+ * Base email layout
  */
 function layout(params: {
   title: string;
@@ -40,7 +47,9 @@ function layout(params: {
   footerNoteHtml?: string;
 }) {
   const { title, preheader, bodyHtml, cta, footerNoteHtml } = params;
-  const pre = preheader ? preheader.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+  const pre = preheader
+    ? preheader.replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    : "";
 
   return `
 <!doctype html>
@@ -50,7 +59,6 @@ function layout(params: {
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>${title}</title>
     <style>
-      /* Some mobile-safe resets */
       @media screen and (max-width: 600px) {
         .container { width: 100% !important; border-radius: 0 !important; }
         .px { padding-left: 16px !important; padding-right: 16px !important; }
@@ -59,7 +67,10 @@ function layout(params: {
     </style>
   </head>
   <body style="margin:0;background:#f6f7fb;">
-    ${pre ? `<span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;">${pre}</span>` : ""}
+    ${pre
+      ? `<span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;">${pre}</span>`
+      : ""
+    }
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f6f7fb;">
       <tr>
         <td align="center" style="padding:28px 16px;">
@@ -72,7 +83,10 @@ function layout(params: {
                     <tr>
                       <td align="left" style="font-weight:800;font-size:18px;letter-spacing:.2px">${APP}</td>
                       <td align="right">
-                        ${LOGO ? `<img src="${LOGO}" alt="${APP}" height="32" style="display:inline-block;border-radius:6px;border:1px solid rgba(255,255,255,.25)" />` : ""}
+                        ${LOGO
+      ? `<img src="${LOGO}" alt="${APP}" height="32" style="display:inline-block;border-radius:6px;border:1px solid rgba(255,255,255,.25)" />`
+      : ""
+    }
                       </td>
                     </tr>
                   </table>
@@ -94,16 +108,25 @@ function layout(params: {
               <td class="px" style="padding:16px 24px 22px;">
                 <div style="height:1px;background:#eef0f4;margin:8px 0 12px;"></div>
                 ${footerNoteHtml || ""}
-                <div style="color:#64748b;font-size:12px;text-align:center;margin-top:8px;">
-                  Need help? <a href="mailto:${CONTACT}" style="color:${COLOR};text-decoration:none;">${CONTACT}</a> ·
-                  <a href="${FRONTEND_URL}" style="color:${COLOR};text-decoration:none;">Visit dashboard</a>
-                  <div style="margin-top:8px;opacity:.8">${BRAND}</div>
+                <div style="text-align:center;margin-top:12px;">
+                  <a
+                    href="${FRONTEND_URL}/support"
+                    class="btn"
+                    style="background:${COLOR};border:1px solid ${COLOR};color:#fff;display:inline-block;font-weight:600;font-size:12px;line-height:32px;text-decoration:none;border-radius:999px;padding:0 18px;min-width:0;"
+                  >
+                    Visit Support
+                  </a>
+                  <div style="color:#64748b;font-size:12px;margin-top:8px;">
+                    ${BRAND}
+                  </div>
                 </div>
               </td>
             </tr>
 
           </table>
-          <div style="font-size:10px;color:#94a3b8;margin-top:10px;">This is an automated message, please do not reply.</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:10px;">
+            This is an automated notification from ${APP}.
+          </div>
         </td>
       </tr>
     </table>
@@ -192,12 +215,19 @@ export class EmailServiceImpl implements EmailService {
 
   /* ---------------------------- Auth / OTP / Welcome --------------------------- */
 
-  async sendEmailVerificationOTP(email: string, fullName: string, otp: string): Promise<void> {
+  async sendEmailVerificationOTP(
+    email: string,
+    fullName: string,
+    otp: string
+  ): Promise<void> {
     const body = `
       <p style="margin:0 0 8px;">Hi ${fullName || "there"},</p>
       <p style="margin:0 0 12px;">Use the code below to verify your email address for <b>${APP}</b>.</p>
       ${otpBlock(otp)}
-      ${infoCard("Security tip", `<p style="margin:0;color:#475569;">We will never ask you for this code. If you didn’t request it, you can ignore this email.</p>`)}
+      ${infoCard(
+      "Security tip",
+      `<p style="margin:0;color:#475569;">We will never ask you for this code. If you didn’t request it, you can ignore this email.</p>`
+    )}
     `;
 
     await this.sendEmail({
@@ -208,12 +238,16 @@ export class EmailServiceImpl implements EmailService {
         preheader: "Use your code to finish email verification",
         bodyHtml: body,
         cta: { label: "Open dashboard", href: FRONTEND_URL },
-        footerNoteHtml: `<div style="font-size:12px;color:#64748b;text-align:center;">Having trouble? We can help you finish verification from your account settings.</div>`,
+        footerNoteHtml: `<div style="font-size:12px;color:#64748b;text-align:center;">Having trouble? You can always return to your account settings to complete verification.</div>`,
       }),
     });
   }
 
-  async sendLoginOTP(email: string, fullName: string, otp: string): Promise<void> {
+  async sendLoginOTP(
+    email: string,
+    fullName: string,
+    otp: string
+  ): Promise<void> {
     const body = `
       <p style="margin:0 0 8px;">Hi ${fullName || "there"},</p>
       <p style="margin:0 0 12px;">Enter this code to complete your sign-in to <b>${APP}</b>.</p>
@@ -236,13 +270,16 @@ export class EmailServiceImpl implements EmailService {
     const body = `
       <p style="margin:0 0 10px;">Hi ${userName || "there"},</p>
       <p style="margin:0 0 12px;">Welcome to <b>${APP}</b> — we’re excited to have you on board.</p>
-      ${infoCard("Quick start", `
+      ${infoCard(
+      "Quick start",
+      `
         <ul style="margin:0;padding-left:18px;color:#0f172a;">
           <li>Complete your profile</li>
           <li>Explore membership benefits</li>
           <li>Enable 2-step verification</li>
         </ul>
-      `)}
+      `
+    )}
     `;
     await this.sendEmail({
       to: email,
@@ -256,8 +293,13 @@ export class EmailServiceImpl implements EmailService {
     });
   }
 
-  async sendPasswordResetEmail(email: string, tokenOrLink: string): Promise<void> {
-    const link = tokenOrLink.startsWith("http") ? tokenOrLink : `${FRONTEND_URL}/auth/reset?token=${encodeURIComponent(tokenOrLink)}`;
+  async sendPasswordResetEmail(
+    email: string,
+    tokenOrLink: string
+  ): Promise<void> {
+    const link = tokenOrLink.startsWith("http")
+      ? tokenOrLink
+      : `${FRONTEND_URL}/auth/reset?token=${encodeURIComponent(tokenOrLink)}`;
     const body = `
       <p style="margin:0 0 10px;">You requested a password reset for <b>${APP}</b>.</p>
       <p style="margin:0 0 12px;">Click the button below to choose a new password. The link expires in 60 minutes.</p>
@@ -266,12 +308,21 @@ export class EmailServiceImpl implements EmailService {
     await this.sendEmail({
       to: email,
       subject: `Reset your password — ${APP}`,
-      html: layout({ title: "Reset your password", preheader: "Use the link to set a new password", bodyHtml: body, cta: { label: "Reset password", href: link } }),
+      html: layout({
+        title: "Reset your password",
+        preheader: "Use the link to set a new password",
+        bodyHtml: body,
+        cta: { label: "Reset password", href: link },
+      }),
     });
   }
 
-  async sendEmailVerifiedNotice(email: string, fullName: string): Promise<void> {
-    const body = `<p style="margin:0;">Hi ${fullName || "there"}, your email address has been successfully verified. You’re all set.</p>`;
+  async sendEmailVerifiedNotice(
+    email: string,
+    fullName: string
+  ): Promise<void> {
+    const body = `<p style="margin:0;">Hi ${fullName || "there"
+      }, your email address has been successfully verified. You’re all set.</p>`;
     await this.sendEmail({
       to: email,
       subject: `Email verified — ${APP}`,
@@ -286,10 +337,18 @@ export class EmailServiceImpl implements EmailService {
 
   /* --------------------------------- Membership -------------------------------- */
 
-  async sendMembershipPurchaseReceived(email: string, fullName: string, planName: string) {
+  async sendMembershipPurchaseReceived(
+    email: string,
+    fullName: string,
+    planName: string
+  ) {
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, we’ve received your request for the <b>${planName}</b> plan.</p>
-      ${infoCard("What happens next?", `<p style="margin:0;color:#475569;">We’re reviewing your purchase and will notify you once it’s activated.</p>`)}
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, we’ve received your request for the <b>${planName}</b> plan.</p>
+      ${infoCard(
+        "What happens next?",
+        `<p style="margin:0;color:#475569;">We’re reviewing your purchase and will notify you once it’s activated.</p>`
+      )}
     `;
     await this.sendEmail({
       to: email,
@@ -303,15 +362,24 @@ export class EmailServiceImpl implements EmailService {
     });
   }
 
-  async sendMembershipActivated(email: string, fullName: string, planName: string, expiresAt: Date) {
+  async sendMembershipActivated(
+    email: string,
+    fullName: string,
+    planName: string,
+    expiresAt: Date
+  ) {
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your <b>${planName}</b> membership is now active.</p>
-      ${infoCard("Details", `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your <b>${planName}</b> membership is now active.</p>
+      ${infoCard(
+        "Details",
+        `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
           ${detail("Plan", planName)}
           ${detail("Expires", fmtDate(expiresAt))}
         </table>
-      `)}
+      `
+      )}
     `;
     await this.sendEmail({
       to: email,
@@ -320,7 +388,10 @@ export class EmailServiceImpl implements EmailService {
         title: "Membership activated ✅",
         preheader: "Your plan is live — enjoy the benefits",
         bodyHtml: body,
-        cta: { label: "Manage membership", href: `${FRONTEND_URL}/membership` },
+        cta: {
+          label: "Manage membership",
+          href: `${FRONTEND_URL}/membership`,
+        },
       }),
     });
   }
@@ -333,14 +404,18 @@ export class EmailServiceImpl implements EmailService {
     newStatus: string
   ) {
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your membership status changed.</p>
-      ${infoCard("Status update", `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your membership status changed.</p>
+      ${infoCard(
+        "Status update",
+        `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("Plan", planName)}
           ${detail("From", oldStatus)}
           ${detail("To", newStatus)}
         </table>
-      `)}
+      `
+      )}
     `;
     await this.sendEmail({
       to: email,
@@ -354,15 +429,24 @@ export class EmailServiceImpl implements EmailService {
     });
   }
 
-  async sendMembershipUpgraded(email: string, fullName: string, fromPlan: string, toPlan: string) {
+  async sendMembershipUpgraded(
+    email: string,
+    fullName: string,
+    fromPlan: string,
+    toPlan: string
+  ) {
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, we’ve received your upgrade request.</p>
-      ${infoCard("Upgrade summary", `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, we’ve received your upgrade request.</p>
+      ${infoCard(
+        "Upgrade summary",
+        `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("From", fromPlan)}
           ${detail("To", toPlan)}
         </table>
-      `)}
+      `
+      )}
     `;
     await this.sendEmail({
       to: email,
@@ -376,15 +460,24 @@ export class EmailServiceImpl implements EmailService {
     });
   }
 
-  async sendMembershipExpiringSoon(email: string, fullName: string, planName: string, expiresAt: Date) {
+  async sendMembershipExpiringSoon(
+    email: string,
+    fullName: string,
+    planName: string,
+    expiresAt: Date
+  ) {
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your <b>${planName}</b> membership expires soon.</p>
-      ${infoCard("Expiry", `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your <b>${planName}</b> membership expires soon.</p>
+      ${infoCard(
+        "Expiry",
+        `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("Plan", planName)}
           ${detail("Expires", fmtDate(expiresAt))}
         </table>
-      `)}
+      `
+      )}
       <p style="margin:12px 0 0;color:#475569;">Turn on auto-renew to stay uninterrupted.</p>
     `;
     await this.sendEmail({
@@ -401,8 +494,12 @@ export class EmailServiceImpl implements EmailService {
 
   /* ---------------------------------- Account ---------------------------------- */
 
-  async sendProfileUpdated(email: string, fullName: string): Promise<void> {
-    const body = `<p style="margin:0;">Hi ${fullName || "there"}, your profile details were updated successfully.</p>`;
+  async sendProfileUpdated(
+    email: string,
+    fullName: string
+  ): Promise<void> {
+    const body = `<p style="margin:0;">Hi ${fullName || "there"
+      }, your profile details were updated successfully.</p>`;
     await this.sendEmail({
       to: email,
       subject: `Profile updated — ${APP}`,
@@ -410,15 +507,22 @@ export class EmailServiceImpl implements EmailService {
         title: "Profile updated",
         preheader: "Your account details were changed",
         bodyHtml: body,
-        cta: { label: "Review profile", href: `${FRONTEND_URL}/settings/profile` },
+        cta: {
+          label: "Review profile",
+          href: `${FRONTEND_URL}/settings/profile`,
+        },
       }),
     });
   }
 
-  async sendAdminAccountUpdated(email: string, fullName: string): Promise<void> {
+  async sendAdminAccountUpdated(
+    email: string,
+    fullName: string
+  ): Promise<void> {
     const body = `
-      <p style="margin:0 0 8px;">Hi ${fullName || "there"}, an administrator updated your account.</p>
-      <p style="margin:0;color:#475569;">If you didn’t request changes, contact support immediately.</p>
+      <p style="margin:0 0 8px;">Hi ${fullName || "there"
+      }, an administrator updated your account.</p>
+      <p style="margin:0;color:#475569;">If you didn’t request changes, review your account activity as soon as possible.</p>
     `;
     await this.sendEmail({
       to: email,
@@ -427,15 +531,22 @@ export class EmailServiceImpl implements EmailService {
         title: "Account changes applied",
         preheader: "An administrator updated your account",
         bodyHtml: body,
-        cta: { label: "Open security", href: `${FRONTEND_URL}/settings/security` },
+        cta: {
+          label: "Open security",
+          href: `${FRONTEND_URL}/settings/security`,
+        },
       }),
     });
   }
 
-  async sendPasswordChanged(email: string, fullName: string): Promise<void> {
+  async sendPasswordChanged(
+    email: string,
+    fullName: string
+  ): Promise<void> {
     const body = `
-      <p style="margin:0 0 8px;">Hi ${fullName || "there"}, your password has been changed.</p>
-      <p style="margin:0;color:#475569;">If this wasn’t you, reset your password and contact support immediately.</p>
+      <p style="margin:0 0 8px;">Hi ${fullName || "there"
+      }, your password has been changed.</p>
+      <p style="margin:0;color:#475569;">If this wasn’t you, reset your password and then review your security settings.</p>
     `;
     await this.sendEmail({
       to: email,
@@ -444,15 +555,22 @@ export class EmailServiceImpl implements EmailService {
         title: "Password changed",
         preheader: "Your password was just updated",
         bodyHtml: body,
-        cta: { label: "Review security", href: `${FRONTEND_URL}/settings/security` },
+        cta: {
+          label: "Review security",
+          href: `${FRONTEND_URL}/settings/security`,
+        },
       }),
     });
   }
 
-  async sendAccountDeleted(email: string, fullName: string): Promise<void> {
+  async sendAccountDeleted(
+    email: string,
+    fullName: string
+  ): Promise<void> {
     const body = `
-      <p style="margin:0 0 8px;">Hi ${fullName || "there"}, your ${APP} account has been deleted.</p>
-      <p style="margin:0;color:#475569;">If this was a mistake, please reply to this email.</p>
+      <p style="margin:0 0 8px;">Hi ${fullName || "there"
+      }, your ${APP} account has been deleted.</p>
+      <p style="margin:0;color:#475569;">If this was a mistake, you can visit our website to explore your options.</p>
     `;
     await this.sendEmail({
       to: email,
@@ -480,7 +598,10 @@ export class EmailServiceImpl implements EmailService {
         title: "Platform updated",
         preheader: "Recent platform changes",
         bodyHtml: body,
-        cta: { label: "Open audit logs", href: `${FRONTEND_URL}/admin/audits` },
+        cta: {
+          label: "Open audit logs",
+          href: `${FRONTEND_URL}/admin/audits`,
+        },
       }),
     });
   }
@@ -491,7 +612,13 @@ export class EmailServiceImpl implements EmailService {
     email: string,
     fullName: string,
     optionName: string,
-    address: { street: string; city: string; state: string; country: string; zipCode: string },
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      country: string;
+      zipCode: string;
+    },
     specialInstruction?: string
   ): Promise<void> {
     const addressTable = `
@@ -504,10 +631,20 @@ export class EmailServiceImpl implements EmailService {
       </table>
     `;
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your delivery request is now <b>Pending</b>.</p>
-      ${infoCard("Delivery option", `<p style="margin:0;"><b>${optionName}</b></p>`)}
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your delivery request is now <b>Pending</b>.</p>
+      ${infoCard(
+        "Delivery option",
+        `<p style="margin:0;"><b>${optionName}</b></p>`
+      )}
       ${infoCard("Delivery address", addressTable)}
-      ${specialInstruction ? infoCard("Special instruction", `<p style="margin:0;">${specialInstruction}</p>`) : ""}
+      ${specialInstruction
+        ? infoCard(
+          "Special instruction",
+          `<p style="margin:0;">${specialInstruction}</p>`
+        )
+        : ""
+      }
       <p style="margin:10px 0 0;color:#475569;">We’ll keep you posted as the status changes.</p>
     `;
     await this.sendEmail({
@@ -530,19 +667,30 @@ export class EmailServiceImpl implements EmailService {
     reason?: string
   ): Promise<void> {
     const nice =
-      status === "APPROVED" ? "Approved ✅" :
-        status === "COMPLETED" ? "Completed 🎉" :
-          status === "REJECTED" ? "Rejected ❌" : "Pending ⏳";
+      status === "APPROVED"
+        ? "Approved ✅"
+        : status === "COMPLETED"
+          ? "Completed 🎉"
+          : status === "REJECTED"
+            ? "Rejected ❌"
+            : "Pending ⏳";
 
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your delivery request status changed.</p>
-      ${infoCard("Update", `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your delivery request status changed.</p>
+      ${infoCard(
+        "Update",
+        `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("Option", optionName)}
           ${detail("Status", nice)}
-          ${reason && status === "REJECTED" ? detail("Reason", reason) : ""}
+          ${reason && status === "REJECTED"
+          ? detail("Reason", reason)
+          : ""
+        }
         </table>
-      `)}
+      `
+      )}
     `;
     await this.sendEmail({
       to: email,
@@ -559,19 +707,40 @@ export class EmailServiceImpl implements EmailService {
   async sendDeliveryOptionDigestToAdmin(
     email: string,
     action: "CREATED" | "UPDATED" | "DELETED" | "TOGGLED",
-    payload: { name: string; price?: number; deliveryTime?: string; isActive?: boolean; description?: string }
+    payload: {
+      name: string;
+      price?: number;
+      deliveryTime?: string;
+      isActive?: boolean;
+      description?: string;
+    }
   ): Promise<void> {
     const body = `
       <p style="margin:0 0 10px;">A delivery option was <b>${action}</b>.</p>
-      ${infoCard("Details", `
+      ${infoCard(
+      "Details",
+      `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("Name", payload.name)}
-          ${payload.price !== undefined ? detail("Price", nf().format(payload.price)) : ""}
-          ${payload.deliveryTime ? detail("Delivery time", payload.deliveryTime) : ""}
-          ${payload.isActive !== undefined ? detail("Active", String(payload.isActive)) : ""}
-          ${payload.description ? detail("Description", payload.description) : ""}
+          ${payload.price !== undefined
+        ? detail("Price", nf().format(payload.price))
+        : ""
+      }
+          ${payload.deliveryTime
+        ? detail("Delivery time", payload.deliveryTime)
+        : ""
+      }
+          ${payload.isActive !== undefined
+        ? detail("Active", String(payload.isActive))
+        : ""
+      }
+          ${payload.description
+        ? detail("Description", payload.description)
+        : ""
+      }
         </table>
-      `)}
+      `
+    )}
       <p style="margin:10px 0 0;color:#475569;">Check audit logs for more details.</p>
     `;
     await this.sendEmail({
@@ -581,29 +750,35 @@ export class EmailServiceImpl implements EmailService {
         title: "Delivery option update",
         preheader: `${payload.name} was ${action.toLowerCase()}`,
         bodyHtml: body,
-        cta: { label: "Open audit logs", href: `${FRONTEND_URL}/admin/audits` },
+        cta: {
+          label: "Open audit logs",
+          href: `${FRONTEND_URL}/admin/audits`,
+        },
       }),
     });
   }
 
   /* -------------------------- Bookings & Celebrities --------------------------- */
 
-  /**
-   * Notifies internal recipients (NOTIFY_EMAILS) when a celebrity is published.
-   * If NOTIFY_EMAILS is empty, this method becomes a no-op resolve.
-   */
-  async sendCelebrityPublished(celebrityName: string, slug: string, category: string): Promise<void> {
+  async sendCelebrityPublished(
+    celebrityName: string,
+    slug: string,
+    category: string
+  ): Promise<void> {
     if (!NOTIFY_EMAILS.length) return;
 
     const body = `
       <p style="margin:0 0 8px;">A new celebrity profile is live.</p>
-      ${infoCard("Celebrity", `
+      ${infoCard(
+      "Celebrity",
+      `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("Name", celebrityName)}
           ${detail("Category", category)}
           ${detail("Slug", slug)}
         </table>
-      `)}
+      `
+    )}
     `;
 
     await this.sendEmail({
@@ -613,7 +788,10 @@ export class EmailServiceImpl implements EmailService {
         title: "Celebrity published",
         preheader: `${celebrityName} is now live`,
         bodyHtml: body,
-        cta: { label: "View profile", href: `${FRONTEND_URL}/celebrities/${slug}` },
+        cta: {
+          label: "View profile",
+          href: `${FRONTEND_URL}/celebrities/${slug}`,
+        },
       }),
     });
   }
@@ -628,15 +806,19 @@ export class EmailServiceImpl implements EmailService {
     currency?: string
   ): Promise<void> {
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your booking has been submitted.</p>
-      ${infoCard("Booking summary", `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your booking has been submitted.</p>
+      ${infoCard(
+        "Booking summary",
+        `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("Celebrity", celebrityName)}
           ${detail("Type", bookingTypeName)}
           ${detail("Quantity", String(quantity))}
           ${detail("Total", nf(currency).format(totalAmount))}
         </table>
-      `)}
+      `
+      )}
       <p style="margin:10px 0 0;color:#475569;">We’ll notify you as soon as the status changes.</p>
     `;
     await this.sendEmail({
@@ -662,22 +844,34 @@ export class EmailServiceImpl implements EmailService {
     totalAmount?: number
   ): Promise<void> {
     const pretty =
-      status === "APPROVED" ? "Approved ✅" :
-        status === "CONFIRMED" ? "Confirmed ✅" :
-          status === "COMPLETED" ? "Completed 🎉" :
-            status === "REJECTED" ? "Rejected ❌" :
-              status === "CANCELLED" ? "Cancelled" :
-                "Pending ⏳";
+      status === "APPROVED"
+        ? "Approved ✅"
+        : status === "CONFIRMED"
+          ? "Confirmed ✅"
+          : status === "COMPLETED"
+            ? "Completed 🎉"
+            : status === "REJECTED"
+              ? "Rejected ❌"
+              : status === "CANCELLED"
+                ? "Cancelled"
+                : "Pending ⏳";
 
-    const extra = reason && (status === "REJECTED" || status === "CANCELLED")
-      ? detail("Reason", reason) : "";
+    const extra =
+      reason && (status === "REJECTED" || status === "CANCELLED")
+        ? detail("Reason", reason)
+        : "";
 
-    const totalRow = typeof totalAmount === "number"
-      ? detail("Total", nf(currency).format(totalAmount)) : "";
+    const totalRow =
+      typeof totalAmount === "number"
+        ? detail("Total", nf(currency).format(totalAmount))
+        : "";
 
     const body = `
-      <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your booking status changed.</p>
-      ${infoCard("Update", `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your booking status changed.</p>
+      ${infoCard(
+        "Update",
+        `
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
           ${detail("Celebrity", celebrityName)}
           ${detail("Type", bookingTypeName)}
@@ -685,7 +879,8 @@ export class EmailServiceImpl implements EmailService {
           ${extra}
           ${totalRow}
         </table>
-      `)}
+      `
+      )}
     `;
 
     await this.sendEmail({
@@ -726,7 +921,10 @@ export class EmailServiceImpl implements EmailService {
         title: "Event published",
         preheader: `${eventTitle} is now live`,
         bodyHtml: infoCard("Event", details),
-        cta: { label: "View event", href: `${FRONTEND_URL}/events/${slug}` },
+        cta: {
+          label: "View event",
+          href: `${FRONTEND_URL}/events/${slug}`,
+        },
       }),
     });
   }
@@ -741,15 +939,19 @@ export class EmailServiceImpl implements EmailService {
     currency?: string
   ): Promise<void> {
     const body = `
-    <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your ticket purchase has been submitted.</p>
-    ${infoCard("Order summary", `
+    <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your ticket purchase has been submitted.</p>
+    ${infoCard(
+        "Order summary",
+        `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         ${detail("Event", eventTitle)}
         ${detail("Ticket", ticketTypeName)}
         ${detail("Quantity", String(quantity))}
         ${detail("Total", nf(currency).format(totalAmount))}
       </table>
-    `)}
+    `
+      )}
     <p style="margin:10px 0 0;color:#475569;">We’ll notify you as soon as the status changes.</p>
   `;
     await this.sendEmail({
@@ -764,6 +966,131 @@ export class EmailServiceImpl implements EmailService {
     });
   }
 
+  /* --------------------- Offline ticket with QR (FIXED) ----------------------- */
+
+  async sendOfflineTicketWithQr(params: {
+    email: string;
+    fullName: string;
+    eventTitle: string;
+    eventSlug: string;
+    ticketTypeName: string;
+    quantity: number;
+    totalAmount: number;
+    currency?: string;
+    checkinCode: string;
+    ticketId: string;
+    eventDate?: string | Date;
+    eventLocation?: string;
+  }): Promise<void> {
+    const {
+      email,
+      fullName,
+      eventTitle,
+      eventSlug,
+      ticketTypeName,
+      quantity,
+      totalAmount,
+      currency,
+      checkinCode,
+      ticketId,
+      eventDate,
+      eventLocation,
+    } = params;
+
+    // Payload encoded in QR
+    const qrPayload = `${FRONTEND_URL}/tickets/checkin?code=${encodeURIComponent(
+      checkinCode
+    )}&id=${encodeURIComponent(ticketId)}`;
+
+    // Generate QR as a PNG buffer (more reliable for emails than data URLs)
+    const qrBuffer = await QRCode.toBuffer(qrPayload, {
+      type: "png",
+      margin: 1,
+      scale: 6,
+    });
+
+    // Unique CID for this ticket's QR image
+    const qrCid = `ticket-qr-${ticketId}@${APP.toLowerCase()}`;
+
+    const formattedDate =
+      eventDate != null ? fmtDate(new Date(eventDate)) : "To be announced";
+
+    const body = `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"},</p>
+      <p style="margin:0 0 10px;">
+        Your ticket purchase has been received. Please keep this email safe – 
+        you’ll need the QR code or ticket code below for entry.
+      </p>
+
+      ${infoCard(
+      "Event details",
+      `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          ${detail("Event", eventTitle)}
+          ${detail("Date", formattedDate)}
+          ${eventLocation ? detail("Location", eventLocation) : ""}
+          ${detail("Ticket type", ticketTypeName)}
+          ${detail("Quantity", String(quantity))}
+          ${detail("Total", nf(currency).format(totalAmount))}
+        </table>
+      `
+    )}
+
+      ${infoCard(
+      "Your ticket code",
+      `
+        <p style="margin:0 0 6px;color:#0f172a;">
+          Present this code at the gate or let the usher scan your QR code:
+        </p>
+        <div style="font-size:16px;font-weight:700;font-family:monospace;color:#0f172a;background:#f1f5f9;padding:10px 12px;border-radius:8px;display:inline-block;">
+          ${checkinCode}
+        </div>
+      `
+    )}
+
+      ${infoCard(
+      "QR code",
+      `
+        <div style="text-align:center;">
+          <img src="cid:${qrCid}" alt="Ticket QR Code" style="max-width:220px;width:100%;height:auto;border-radius:12px;border:1px solid #e2e8f0;" />
+          <p style="margin:8px 0 0;font-size:12px;color:#64748b;">
+            Show this QR code at entry – our team will scan it to verify your ticket.
+          </p>
+        </div>
+      `
+    )}
+
+      <p style="margin:16px 0 0;color:#475569;font-size:13px;">
+        If you believe there is any mistake with your ticket or payment, please visit our support page at
+        <a href="${FRONTEND_URL}/support" style="color:${COLOR};text-decoration:none;">${FRONTEND_URL}/support</a>.
+      </p>
+    `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `Your offline ticket — ${eventTitle}`,
+      html: layout({
+        title: "Your ticket is almost ready 🎟️",
+        preheader: `Offline ticket for ${eventTitle}`,
+        bodyHtml: body,
+        cta: {
+          label: "View event details",
+          href: `${FRONTEND_URL}/events/${eventSlug}`,
+        },
+        footerNoteHtml:
+          '<div style="font-size:12px;color:#64748b;text-align:center;">Bring a valid ID and arrive early to avoid queues.</div>',
+      }),
+      attachments: [
+        {
+          filename: `ticket-${ticketId}-qr.png`,
+          content: qrBuffer,
+          contentType: "image/png",
+          cid: qrCid,
+        },
+      ],
+    });
+  }
+
   async sendTicketStatusChanged(
     email: string,
     fullName: string,
@@ -775,21 +1102,34 @@ export class EmailServiceImpl implements EmailService {
     totalAmount?: number
   ): Promise<void> {
     const pretty =
-      status === "APPROVED" ? "Approved ✅" :
-        status === "CONFIRMED" ? "Confirmed ✅" :
-          status === "COMPLETED" ? "Completed 🎉" :
-            status === "REJECTED" ? "Rejected ❌" :
-              status === "CANCELLED" ? "Cancelled" : "Pending ⏳";
+      status === "APPROVED"
+        ? "Approved ✅"
+        : status === "CONFIRMED"
+          ? "Confirmed ✅"
+          : status === "COMPLETED"
+            ? "Completed 🎉"
+            : status === "REJECTED"
+              ? "Rejected ❌"
+              : status === "CANCELLED"
+                ? "Cancelled"
+                : "Pending ⏳";
 
-    const extra = reason && (status === "REJECTED" || status === "CANCELLED")
-      ? detail("Reason", reason) : "";
+    const extra =
+      reason && (status === "REJECTED" || status === "CANCELLED")
+        ? detail("Reason", reason)
+        : "";
 
-    const totalRow = typeof totalAmount === "number"
-      ? detail("Total", nf(currency).format(totalAmount)) : "";
+    const totalRow =
+      typeof totalAmount === "number"
+        ? detail("Total", nf(currency).format(totalAmount))
+        : "";
 
     const body = `
-    <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your ticket status changed.</p>
-    ${infoCard("Update", `
+    <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your ticket status changed.</p>
+    ${infoCard(
+        "Update",
+        `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         ${detail("Event", eventTitle)}
         ${detail("Ticket", ticketTypeName)}
@@ -797,7 +1137,8 @@ export class EmailServiceImpl implements EmailService {
         ${extra}
         ${totalRow}
       </table>
-    `)}
+    `
+      )}
   `;
 
     await this.sendEmail({
@@ -811,6 +1152,7 @@ export class EmailServiceImpl implements EmailService {
       }),
     });
   }
+
   async sendDepositReceived(
     email: string,
     fullName: string,
@@ -818,14 +1160,18 @@ export class EmailServiceImpl implements EmailService {
     depositId: string
   ): Promise<void> {
     const body = `
-    <p style="margin:0 0 10px;">Hi ${fullName || "there"}, we’ve received your deposit request.</p>
-    ${infoCard("Deposit details", `
+    <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, we’ve received your deposit request.</p>
+    ${infoCard(
+        "Deposit details",
+        `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         ${detail("Amount", nf().format(amount))}
         ${detail("Reference", depositId)}
         ${detail("Status", "Received ⏳")}
       </table>
-    `)}
+    `
+      )}
     <p style="margin:10px 0 0;color:#475569;">We’ll notify you as it moves through review.</p>
   `;
 
@@ -836,7 +1182,12 @@ export class EmailServiceImpl implements EmailService {
         title: "Deposit received",
         preheader: `We received your deposit ${depositId}`,
         bodyHtml: body,
-        cta: { label: "View transaction", href: `${FRONTEND_URL}/wallet/transactions/${encodeURIComponent(depositId)}` },
+        cta: {
+          label: "View transaction",
+          href: `${FRONTEND_URL}/wallet/transactions/${encodeURIComponent(
+            depositId
+          )}`,
+        },
       }),
     });
   }
@@ -848,14 +1199,18 @@ export class EmailServiceImpl implements EmailService {
     depositId: string
   ): Promise<void> {
     const body = `
-    <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your deposit is queued for manual review.</p>
-    ${infoCard("Deposit details", `
+    <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your deposit is queued for manual review.</p>
+    ${infoCard(
+        "Deposit details",
+        `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         ${detail("Amount", nf().format(amount))}
         ${detail("Reference", depositId)}
         ${detail("Status", "Queued for review 🔎")}
       </table>
-    `)}
+    `
+      )}
     <p style="margin:10px 0 0;color:#475569;">We’ll update you once the review is complete.</p>
   `;
 
@@ -866,7 +1221,12 @@ export class EmailServiceImpl implements EmailService {
         title: "Queued for review",
         preheader: `Deposit ${depositId} is awaiting review`,
         bodyHtml: body,
-        cta: { label: "Track status", href: `${FRONTEND_URL}/wallet/transactions/${encodeURIComponent(depositId)}` },
+        cta: {
+          label: "Track status",
+          href: `${FRONTEND_URL}/wallet/transactions/${encodeURIComponent(
+            depositId
+          )}`,
+        },
       }),
     });
   }
@@ -878,14 +1238,18 @@ export class EmailServiceImpl implements EmailService {
     depositId: string
   ): Promise<void> {
     const body = `
-    <p style="margin:0 0 10px;">Hi ${fullName || "there"}, your deposit has been approved.</p>
-    ${infoCard("Deposit details", `
+    <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, your deposit has been approved.</p>
+    ${infoCard(
+        "Deposit details",
+        `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         ${detail("Amount", nf().format(amount))}
         ${detail("Reference", depositId)}
         ${detail("Status", "Approved ✅")}
       </table>
-    `)}
+    `
+      )}
     <p style="margin:10px 0 0;color:#475569;">Funds have been added to your balance.</p>
   `;
 
@@ -909,16 +1273,20 @@ export class EmailServiceImpl implements EmailService {
     reason: string
   ): Promise<void> {
     const body = `
-    <p style="margin:0 0 10px;">Hi ${fullName || "there"}, unfortunately your deposit could not be completed.</p>
-    ${infoCard("Deposit details", `
+    <p style="margin:0 0 10px;">Hi ${fullName || "there"
+      }, unfortunately your deposit could not be completed.</p>
+    ${infoCard(
+        "Deposit details",
+        `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         ${detail("Amount", nf().format(amount))}
         ${detail("Reference", depositId)}
         ${detail("Status", "Failed ❌")}
         ${detail("Reason", reason)}
       </table>
-    `)}
-    <p style="margin:10px 0 0;color:#475569;">You can try again or contact support if you need help.</p>
+    `
+      )}
+    <p style="margin:10px 0 0;color:#475569;">You can try again, or visit our support page if you need help.</p>
   `;
 
     await this.sendEmail({
@@ -928,7 +1296,146 @@ export class EmailServiceImpl implements EmailService {
         title: "Deposit failed",
         preheader: `Deposit ${depositId} failed`,
         bodyHtml: body,
-        cta: { label: "Try again", href: `${FRONTEND_URL}/wallet/deposit` },
+        cta: {
+          label: "Try again",
+          href: `${FRONTEND_URL}/wallet/deposit`,
+        },
+      }),
+    });
+  }
+
+  /* ------------------------------ Support Emails ------------------------------- */
+
+  async sendSupportTicketReceived(params: {
+    email: string;
+    fullName: string;
+    subject: string;
+    message: string;
+    ticketId: string; // kept for signature compatibility, not displayed
+  }): Promise<void> {
+    const { email, fullName, subject, message } = params;
+
+    const body = `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"},</p>
+      <p style="margin:0 0 10px;">
+        We've received your support message. Our team will review it and get back to you as soon as possible.
+      </p>
+      ${infoCard(
+      "Message summary",
+      `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          ${detail("Subject", subject)}
+        </table>
+      `
+    )}
+      ${infoCard(
+      "Your message",
+      `
+        <p style="margin:0;white-space:pre-line;color:#0f172a;">${message}</p>
+      `
+    )}
+      <p style="margin:12px 0 0;color:#475569;font-size:13px;">
+        You can follow up or add more details anytime from your support page.
+      </p>
+    `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `We received your support message — ${APP}`,
+      html: layout({
+        title: "Support message received",
+        preheader: "We’ve received your support message",
+        bodyHtml: body,
+        cta: { label: "Visit website", href: FRONTEND_URL },
+      }),
+    });
+  }
+
+  async sendSupportTicketReply(params: {
+    email: string;
+    fullName: string;
+    subject: string;
+    ticketId: string; // kept for signature compatibility, not displayed
+    replyBody: string;
+  }): Promise<void> {
+    const { email, fullName, subject, replyBody } = params;
+
+    const body = `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"},</p>
+      <p style="margin:0 0 10px;">
+        Our team has replied to your support message.
+      </p>
+      ${infoCard(
+      "Conversation",
+      `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          ${detail("Subject", subject)}
+        </table>
+      `
+    )}
+      ${infoCard(
+      "Our reply",
+      `
+        <p style="margin:0;white-space:pre-line;color:#0f172a;">${replyBody}</p>
+      `
+    )}
+      <p style="margin:12px 0 0;color:#475569;font-size:13px;">
+        If you still need help, you can view and continue this conversation from your support page.
+      </p>
+    `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `Update on your support message — ${APP}`,
+      html: layout({
+        title: "We’ve replied to your message",
+        preheader: "There’s a new message from our team",
+        bodyHtml: body,
+        cta: { label: "Visit website", href: FRONTEND_URL },
+      }),
+    });
+  }
+
+  async sendSupportTicketNotificationToAdmin(params: {
+    subject: string;
+    fromEmail: string;
+    fromName: string;
+    message: string;
+    ticketId: string; // kept for signature compatibility, not displayed to user
+  }): Promise<void> {
+    const { subject, fromEmail, fromName, message } = params;
+    if (!NOTIFY_EMAILS.length) return;
+
+    const body = `
+      <p style="margin:0 0 8px;">A new support message was created.</p>
+      ${infoCard(
+      "Message details",
+      `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          ${detail("Subject", subject)}
+          ${detail("From", `${fromName} &lt;${fromEmail}&gt;`)}
+        </table>
+      `
+    )}
+      ${infoCard(
+      "Message",
+      `
+        <p style="margin:0;white-space:pre-line;color:#0f172a;">${message}</p>
+      `
+    )}
+    `;
+
+    await this.sendEmail({
+      to: NOTIFY_EMAILS,
+      subject: `New support message — ${subject}`,
+      html: layout({
+        title: "New support message",
+        preheader: `New support message from ${fromEmail}`,
+        bodyHtml: body,
+        cta: {
+          label: "View in admin",
+          href: `${FRONTEND_URL}/admin/support`,
+        },
       }),
     });
   }

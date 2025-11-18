@@ -1,9 +1,10 @@
 import type { ITicket } from "@/lib/models/ticket.model";
-import { CreateTicketDto, TicketQueryDto, AdminUpdateTicketStatusDto } from "@/lib/dto/ticket.dto";
+import { CreateTicketDto, TicketQueryDto, AdminUpdateTicketStatusDto, CreateOfflineTicketDto } from "@/lib/dto/ticket.dto";
 
 export interface TicketService {
     // USER
     create(userId: string, dto: CreateTicketDto): Promise<ITicket>;
+    createOffline(dto: CreateOfflineTicketDto): Promise<ITicket>;
     myList(userId: string, query: TicketQueryDto): Promise<{ items: ITicket[]; total: number; page: number; limit: number }>;
     myGetById(userId: string, id: string): Promise<ITicket>;
 

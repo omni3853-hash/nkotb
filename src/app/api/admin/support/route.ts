@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/utils/dbConnect.utils";
+import { isLoggedIn, AuthRequest } from "@/lib/middleware/isLoggedIn.middleware";
+import { adminListSupportTicketsController } from "@/lib/controllers/support-ticket.controller";
 import { CustomError } from "@/lib/utils/customError.utils";
-import { getMediaByIdController } from "@/lib/controllers/media.controller";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest) {
     try {
         await dbConnect();
-        return await getMediaByIdController(req, { params });
-    } catch (e) {
+        const middlewareResponse = await isLoggedIn(req as AuthRequest);
+        if (middlewareResponse.status !== 200) return middlewareResponse;
+        return await adminListSupportTicketsController(req as AuthRequest);
+    } catch (e: any) {
         if (e instanceof CustomError) {
             return NextResponse.json({ message: e.message }, { status: e.statusCode });
         }

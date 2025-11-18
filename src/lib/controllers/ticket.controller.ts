@@ -4,7 +4,7 @@ import { validator } from "@/lib/utils/validator.utils";
 import { CustomError } from "@/lib/utils/customError.utils";
 import { TicketService } from "@/lib/services/ticket.service";
 import TicketServiceImpl from "@/lib/services/impl/ticket.service.impl";
-import { CreateTicketDto, TicketQueryDto, AdminUpdateTicketStatusDto } from "@/lib/dto/ticket.dto";
+import { CreateTicketDto, TicketQueryDto, AdminUpdateTicketStatusDto, CreateOfflineTicketDto } from "@/lib/dto/ticket.dto";
 
 const service: TicketService = new TicketServiceImpl();
 
@@ -25,6 +25,31 @@ export async function createTicketController(req: AuthRequest) {
         return NextResponse.json({ message: "Ticket submitted", ticket }, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ message: error.message || "Internal server error" }, { status: error.statusCode || 500 });
+    }
+}
+
+export async function createOfflineTicketController(req: Request) {
+    try {
+        const body = await req.json();
+        const dto = new CreateOfflineTicketDto(body);
+        const errors = validator(CreateOfflineTicketDto, dto);
+        if (errors) {
+            return NextResponse.json(
+                { message: "Validation Error", errors: errors.details },
+                { status: 400 }
+            );
+        }
+
+        const ticket = await service.createOffline(dto);
+        return NextResponse.json(
+            { message: "Offline ticket submitted", ticket },
+            { status: 201 }
+        );
+    } catch (error: any) {
+        return NextResponse.json(
+            { message: error.message || "Internal server error" },
+            { status: error.statusCode || 500 }
+        );
     }
 }
 

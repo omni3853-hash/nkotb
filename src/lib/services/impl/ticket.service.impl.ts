@@ -3,7 +3,7 @@ import { TicketService } from "@/lib/services/ticket.service";
 import { Ticket, ITicket } from "@/lib/models/ticket.model";
 import { Event } from "@/lib/models/event.model";
 import { User } from "@/lib/models/user.model";
-import { CreateTicketDto, TicketQueryDto, AdminUpdateTicketStatusDto } from "@/lib/dto/ticket.dto";
+import { CreateTicketDto, TicketQueryDto, AdminUpdateTicketStatusDto, CreateOfflineTicketDto } from "@/lib/dto/ticket.dto";
 import { TicketStatus } from "@/lib/enums/event.enums";
 import { CustomError } from "@/lib/utils/customError.utils";
 import { logAudit } from "@/lib/utils/auditLogger";
@@ -112,6 +112,101 @@ export default class TicketServiceImpl implements TicketService {
 
                 return ticket;
             }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+        } finally {
+            await session.endSession();
+        }
+    }
+
+    async createOffline(dto: CreateOfflineTicketDto): Promise<ITicket> {
+        const session = await mongoose.startSession();
+        try {
+            return await session.withTransaction(
+                async () => {
+                    const event = await Event.findById(dto.event).session(session);
+                    if (!event || !event.isActive) {
+                        throw new CustomError(400, "Event not available");
+                    }
+
+                    const tt = event.ticketTypes.id(dto.ticketTypeId as any);
+                    if (!tt) throw new CustomError(400, "Invalid ticket type");
+
+                    const unitPrice = Number(tt.price);
+                    if (unitPrice <= 0) throw new CustomError(400, "Invalid ticket price");
+
+                    const quantity = Number(dto.quantity);
+                    if (quantity <= 0) throw new CustomError(400, "Quantity must be at least 1");
+
+                    const remaining = Math.max(0, Number(tt.total) - Number(tt.sold || 0));
+                    if (remaining < quantity) throw new CustomError(400, "Insufficient tickets available");
+
+                    const totalAmount = unitPrice * quantity;
+
+                    // Generate a human-friendly check-in code
+                    const checkinCode = `TKT-${Date.now()}-${Math.random()
+                        .toString(36)
+                        .slice(2, 8)
+                        .toUpperCase()}`;
+
+                    // Create offline ticket document (no user)
+                    const ticket = new Ticket({
+                        user: null, // guest
+                        event: event._id,
+
+                        eventTitleSnapshot: event.title,
+                        eventSlugSnapshot: event.slug,
+
+                        ticketTypeId: tt._id,
+                        ticketTypeName: tt.name,
+                        unitPrice,
+                        quantity,
+                        totalAmount,
+                        notes: dto.notes || "",
+                        status: TicketStatus.PENDING, // offline payments usually verified by admin
+
+                        isGuest: true,
+                        buyer: {
+                            fullName: dto.buyerFullName,
+                            email: dto.buyerEmail,
+                            phone: dto.buyerPhone,
+                        },
+                        offlinePayment: {
+                            paymentMethod: dto.paymentMethodId
+                                ? new mongoose.Types.ObjectId(dto.paymentMethodId)
+                                : undefined,
+                            amount: dto.paidAmount ?? totalAmount,
+                            proofOfPayment: dto.proofOfPayment,
+                            reference: undefined,
+                        },
+                        checkinCode,
+                    });
+
+                    await ticket.save({ session });
+
+                    // Inventory updates as with normal tickets
+                    tt.sold = Number(tt.sold || 0) + quantity;
+                    event.ticketsSold = Number(event.ticketsSold || 0) + quantity;
+                    await event.save({ session });
+
+                    // Send email + QR to guest
+                    await this.email.sendOfflineTicketWithQr?.({
+                        email: dto.buyerEmail,
+                        fullName: dto.buyerFullName,
+                        eventTitle: event.title,
+                        eventSlug: event.slug,
+                        ticketTypeName: tt.name,
+                        quantity,
+                        totalAmount,
+                        currency: (event as any).currency || undefined,
+                        checkinCode,
+                        ticketId: ticket._id.toString(),
+                        eventDate: (event as any).date ?? undefined,
+                        eventLocation: (event as any).location ?? undefined,
+                    });
+
+                    return ticket;
+                },
+                { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } }
+            );
         } finally {
             await session.endSession();
         }

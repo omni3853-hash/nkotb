@@ -716,15 +716,17 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Tabs */}
-            <Tabs defaultValue="general" className="w-full">
+            <Tabs defaultValue="payments" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger
+                {/* <div>
+<TabsTrigger
                   value="general"
                   className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white"
                 >
                   <Globe className="w-4 h-4 mr-2" />
                   General
                 </TabsTrigger>
+
                 <TabsTrigger
                   value="platform"
                   className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white"
@@ -732,6 +734,7 @@ export default function AdminSettingsPage() {
                   <Users className="w-4 h-4 mr-2" />
                   Platform
                 </TabsTrigger>
+            </div> */}
                 <TabsTrigger
                   value="payments"
                   className="data-[state=active]:bg-emerald-800 data-[state=active]:text-white"
@@ -740,6 +743,213 @@ export default function AdminSettingsPage() {
                   Payments
                 </TabsTrigger>
               </TabsList>
+
+              {/* Payments */}
+              <TabsContent value="payments" className="space-y-6">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-emerald-900">Payment Methods</CardTitle>
+                        <CardDescription>Manage methods and quickly filter by type, status, default, or search.</CardDescription>
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                        <Button
+                          variant="outline"
+                          onClick={loadPaymentMethods}
+                          className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                          disabled={loadingPayments}
+                          isLoading={loadingPayments}
+                          loadingText="Refreshing…"
+                        >
+                          {!loadingPayments ? <RefreshCw className="w-4 h-4 mr-2" /> : null}
+                          Refresh
+                        </Button>
+                        <Button
+                          onClick={handleAddPaymentMethod}
+                          className="bg-emerald-800 hover:bg-emerald-700 text-white"
+                          disabled={loadingPayments}
+                        >
+                          Add Payment Method
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-6">
+                    {/* Filters */}
+                    <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-1 md:grid-cols-4 gap-3 p-3 rounded-lg border border-zinc-200 bg-zinc-50">
+                      <div className="space-y-1">
+                        <Label className="text-emerald-900 flex items-center gap-2 text-sm">
+                          <Filter className="w-4 h-4" /> Type
+                        </Label>
+                        <select
+                          value={filterType}
+                          onChange={(e) => setFilterType(e.target.value as FilterType)}
+                          className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                        >
+                          <option value="ALL">All</option>
+                          <option value={AccountType.BANK_ACCOUNT}>Bank Account</option>
+                          <option value={AccountType.CRYPTO_WALLET}>Crypto Wallet</option>
+                          <option value={AccountType.MOBILE_PAYMENT}>Mobile Payment</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-emerald-900 text-sm">Status</Label>
+                        <select
+                          value={filterStatus}
+                          onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
+                          className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                        >
+                          <option value="ALL">All</option>
+                          <option value="ENABLED">Enabled</option>
+                          <option value="DISABLED">Disabled</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-emerald-900 text-sm">Default</Label>
+                        <select
+                          value={filterDefault}
+                          onChange={(e) => setFilterDefault(e.target.value as FilterDefault)}
+                          className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                        >
+                          <option value="ALL">All</option>
+                          <option value="DEFAULT">Default only</option>
+                          <option value="NON_DEFAULT">Non-default only</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-emerald-900 text-sm">Search</Label>
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Bank, provider, coin, account #..."
+                          className="bg-white w-full"
+                        />
+                      </div>
+
+                      <div className="md:col-span-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-2">
+                        <Badge variant="outline" className="border-zinc-300 text-zinc-700 w-full sm:w-auto text-center sm:text-left">
+                          {filteredPayments.length} result{filteredPayments.length === 1 ? "" : "s"}
+                        </Badge>
+                        <Button variant="outline" onClick={clearFilters} className="border-zinc-300 text-zinc-700 hover:bg-zinc-100 w-full sm:w-auto">
+                          Reset Filters
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* List */}
+                    {loadingPayments ? (
+                      <div className="flex items-center gap-2 text-zinc-500">
+                        <RefreshCw className="w-4 h-4 animate-spin" /> loading payment methods…
+                      </div>
+                    ) : filteredPayments.length === 0 ? (
+                      <div className="text-sm text-zinc-600">No payment methods match your filters.</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {filteredPayments.map((m) => (
+                          <Card key={asId(m._id)} className="bg-zinc-50 border-zinc-200">
+                            <CardContent className="p-3 sm:p-4">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <div className="font-medium text-emerald-900">
+                                      {m.bankName || m.provider || m.cryptocurrency || m.accountName || m.type}
+                                    </div>
+                                    <Badge
+                                      variant="outline"
+                                      className={
+                                        m.type === AccountType.CRYPTO_WALLET
+                                          ? "border-orange-200 text-orange-800"
+                                          : m.type === AccountType.MOBILE_PAYMENT
+                                            ? "border-green-200 text-green-800"
+                                            : "border-blue-200 text-blue-800"
+                                      }
+                                    >
+                                      {m.type.replace("_", " ")}
+                                    </Badge>
+                                    {m.isDefault && (
+                                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                                        <Star className="w-3 h-3 mr-1" /> Default
+                                      </Badge>
+                                    )}
+                                    <Badge className={m.status ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-zinc-100 text-zinc-700 border-zinc-200"}>
+                                      {m.status ? "Enabled" : "Disabled"}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-sm text-zinc-600 mt-2 grid sm:grid-cols-2 gap-2">
+                                    {m.type === AccountType.CRYPTO_WALLET && (
+                                      <>
+                                        <div>Coin: <span className="text-zinc-900">{m.cryptocurrency || "—"}</span></div>
+                                        <div>Network: <span className="text-zinc-900">{m.network || "—"}</span></div>
+                                        <div className="sm:col-span-2 truncate">Wallet: <span className="text-zinc-900">{m.walletAddress || "—"}</span></div>
+                                      </>
+                                    )}
+                                    {m.type === AccountType.BANK_ACCOUNT && (
+                                      <>
+                                        <div>Bank: <span className="text-zinc-900">{m.bankName || "—"}</span></div>
+                                        <div>Account Name: <span className="text-zinc-900">{m.accountName || "—"}</span></div>
+                                        <div>Account #: <span className="text-zinc-900">{m.accountNumber || "—"}</span></div>
+                                        <div>Routing #: <span className="text-zinc-900">{m.routingNumber || "—"}</span></div>
+                                        <div>SWIFT: <span className="text-zinc-900">{m.swiftCode || "—"}</span></div>
+                                      </>
+                                    )}
+                                    {m.type === AccountType.MOBILE_PAYMENT && (
+                                      <>
+                                        <div>Provider: <span className="text-zinc-900">{m.provider || "—"}</span></div>
+                                        <div>Handle: <span className="text-zinc-900">{m.handle || "—"}</span></div>
+                                        <div>Email: <span className="text-zinc-900">{m.email || "—"}</span></div>
+                                      </>
+                                    )}
+                                    <div>Processing: <span className="text-zinc-900">{m.processingTime}</span></div>
+                                    <div>Fee: <span className="text-zinc-900">{m.fee}</span></div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+                                    <input
+                                      type="checkbox"
+                                      checked={!!m.status}
+                                      onChange={() => askTogglePaymentStatus(m)}
+                                      className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                                    />
+                                    Enabled
+                                  </label>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <MoreVertical className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => handleEditPaymentMethod(m)}>
+                                        <Edit className="w-4 h-4 mr-2" />
+                                        Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => askSetDefault(m)}>
+                                        <Star className="w-4 h-4 mr-2" />
+                                        Set as Default
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleDeletePaymentMethod(m)} className="text-red-600">
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               {/* General */}
               <TabsContent value="general" className="space-y-6">
@@ -750,7 +960,7 @@ export default function AdminSettingsPage() {
                         <CardTitle className="text-emerald-900">General Settings</CardTitle>
                         <CardDescription>Basic site information and support contacts</CardDescription>
                       </div>
-                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         {generalHasChanges && (
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
                             Unsaved Changes
@@ -860,7 +1070,7 @@ export default function AdminSettingsPage() {
                         <CardTitle className="text-emerald-900">Platform Settings</CardTitle>
                         <CardDescription>Booking fees and platform policies</CardDescription>
                       </div>
-                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         {platformHasChanges && (
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
                             Unsaved Changes
@@ -933,213 +1143,6 @@ export default function AdminSettingsPage() {
                         />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Payments */}
-              <TabsContent value="payments" className="space-y-6">
-                <Card className="bg-white">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-emerald-900">Payment Methods</CardTitle>
-                        <CardDescription>Manage methods and quickly filter by type, status, default, or search.</CardDescription>
-                      </div>
-                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                        <Button
-                          variant="outline"
-                          onClick={loadPaymentMethods}
-                          className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-                          disabled={loadingPayments}
-                          isLoading={loadingPayments}
-                          loadingText="Refreshing…"
-                        >
-                          {!loadingPayments ? <RefreshCw className="w-4 h-4 mr-2" /> : null}
-                          Refresh
-                        </Button>
-                        <Button
-                          onClick={handleAddPaymentMethod}
-                          className="bg-emerald-800 hover:bg-emerald-700 text-white"
-                          disabled={loadingPayments}
-                        >
-                          Add Payment Method
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-6">
-                    {/* Filters */}
-                    <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-1 md:grid-cols-4 gap-3 p-3 rounded-lg border border-zinc-200 bg-zinc-50">
-                      <div className="space-y-1">
-                        <Label className="text-emerald-900 flex items-center gap-2 text-sm">
-                          <Filter className="w-4 h-4" /> Type
-                        </Label>
-                        <select
-                          value={filterType}
-                          onChange={(e) => setFilterType(e.target.value as FilterType)}
-                          className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-                        >
-                          <option value="ALL">All</option>
-                          <option value={AccountType.BANK_ACCOUNT}>Bank Account</option>
-                          <option value={AccountType.CRYPTO_WALLET}>Crypto Wallet</option>
-                          <option value={AccountType.MOBILE_PAYMENT}>Mobile Payment</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label className="text-emerald-900 text-sm">Status</Label>
-                        <select
-                          value={filterStatus}
-                          onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-                          className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-                        >
-                          <option value="ALL">All</option>
-                          <option value="ENABLED">Enabled</option>
-                          <option value="DISABLED">Disabled</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label className="text-emerald-900 text-sm">Default</Label>
-                        <select
-                          value={filterDefault}
-                          onChange={(e) => setFilterDefault(e.target.value as FilterDefault)}
-                          className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-                        >
-                          <option value="ALL">All</option>
-                          <option value="DEFAULT">Default only</option>
-                          <option value="NON_DEFAULT">Non-default only</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label className="text-emerald-900 text-sm">Search</Label>
-                        <Input
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Bank, provider, coin, account #..."
-                          className="bg-white w-full"
-                        />
-                      </div>
-
-                      <div className="md:col-span-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:justify-end gap-2">
-                        <Badge variant="outline" className="border-zinc-300 text-zinc-700 w-full sm:w-auto text-center sm:text-left">
-                          {filteredPayments.length} result{filteredPayments.length === 1 ? "" : "s"}
-                        </Badge>
-                        <Button variant="outline" onClick={clearFilters} className="border-zinc-300 text-zinc-700 hover:bg-zinc-100 w-full sm:w-auto">
-                          Reset Filters
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* List */}
-                    {loadingPayments ? (
-                      <div className="flex items-center gap-2 text-zinc-500">
-                        <RefreshCw className="w-4 h-4 animate-spin" /> loading payment methods…
-                      </div>
-                    ) : filteredPayments.length === 0 ? (
-                      <div className="text-sm text-zinc-600">No payment methods match your filters.</div>
-                    ) : (
-                      <div className="space-y-3">
-                        {filteredPayments.map((m) => (
-                            <Card key={asId(m._id)} className="bg-zinc-50 border-zinc-200">
-                            <CardContent className="p-3 sm:p-4">
-                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <div className="font-medium text-emerald-900">
-                                      {m.bankName || m.provider || m.cryptocurrency || m.accountName || m.type}
-                                    </div>
-                                    <Badge
-                                      variant="outline"
-                                      className={
-                                        m.type === AccountType.CRYPTO_WALLET
-                                          ? "border-orange-200 text-orange-800"
-                                          : m.type === AccountType.MOBILE_PAYMENT
-                                            ? "border-green-200 text-green-800"
-                                            : "border-blue-200 text-blue-800"
-                                      }
-                                    >
-                                      {m.type.replace("_", " ")}
-                                    </Badge>
-                                    {m.isDefault && (
-                                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">
-                                        <Star className="w-3 h-3 mr-1" /> Default
-                                      </Badge>
-                                    )}
-                                    <Badge className={m.status ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-zinc-100 text-zinc-700 border-zinc-200"}>
-                                      {m.status ? "Enabled" : "Disabled"}
-                                    </Badge>
-                                  </div>
-                                  <div className="text-sm text-zinc-600 mt-2 grid sm:grid-cols-2 gap-2">
-                                    {m.type === AccountType.CRYPTO_WALLET && (
-                                      <>
-                                        <div>Coin: <span className="text-zinc-900">{m.cryptocurrency || "—"}</span></div>
-                                        <div>Network: <span className="text-zinc-900">{m.network || "—"}</span></div>
-                                        <div className="sm:col-span-2 truncate">Wallet: <span className="text-zinc-900">{m.walletAddress || "—"}</span></div>
-                                      </>
-                                    )}
-                                    {m.type === AccountType.BANK_ACCOUNT && (
-                                      <>
-                                        <div>Bank: <span className="text-zinc-900">{m.bankName || "—"}</span></div>
-                                        <div>Account Name: <span className="text-zinc-900">{m.accountName || "—"}</span></div>
-                                        <div>Account #: <span className="text-zinc-900">{m.accountNumber || "—"}</span></div>
-                                        <div>Routing #: <span className="text-zinc-900">{m.routingNumber || "—"}</span></div>
-                                        <div>SWIFT: <span className="text-zinc-900">{m.swiftCode || "—"}</span></div>
-                                      </>
-                                    )}
-                                    {m.type === AccountType.MOBILE_PAYMENT && (
-                                      <>
-                                        <div>Provider: <span className="text-zinc-900">{m.provider || "—"}</span></div>
-                                        <div>Handle: <span className="text-zinc-900">{m.handle || "—"}</span></div>
-                                        <div>Email: <span className="text-zinc-900">{m.email || "—"}</span></div>
-                                      </>
-                                    )}
-                                    <div>Processing: <span className="text-zinc-900">{m.processingTime}</span></div>
-                                    <div>Fee: <span className="text-zinc-900">{m.fee}</span></div>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
-                                    <input
-                                      type="checkbox"
-                                      checked={!!m.status}
-                                      onChange={() => askTogglePaymentStatus(m)}
-                                      className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-                                    />
-                                    Enabled
-                                  </label>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm">
-                                        <MoreVertical className="w-4 h-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={() => handleEditPaymentMethod(m)}>
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Edit
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => askSetDefault(m)}>
-                                        <Star className="w-4 h-4 mr-2" />
-                                        Set as Default
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => handleDeletePaymentMethod(m)} className="text-red-600">
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Anton } from "next/font/google"; 
+import { Anton } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import UserProvider from "@/contexts/UserContext";
+import { SupportFloatingButton } from "@/components/support/SupportFloatingButton";
 
 const anton = Anton({
   variable: "--font-anton",
@@ -85,6 +86,7 @@ export default function RootLayout({
           {children}
         </UserProvider>
         <Toaster />
+        <SupportFloatingButton />
       </body>
     </html>
   );
