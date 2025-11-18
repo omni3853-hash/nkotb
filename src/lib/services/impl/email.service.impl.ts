@@ -108,17 +108,39 @@ function layout(params: {
               <td class="px" style="padding:16px 24px 22px;">
                 <div style="height:1px;background:#eef0f4;margin:8px 0 12px;"></div>
                 ${footerNoteHtml || ""}
+
+                <!-- Visit Website button -->
                 <div style="text-align:center;margin-top:12px;">
                   <a
-                    href="${FRONTEND_URL}/support"
+                    href="${FRONTEND_URL}"
                     class="btn"
                     style="background:${COLOR};border:1px solid ${COLOR};color:#fff;display:inline-block;font-weight:600;font-size:12px;line-height:32px;text-decoration:none;border-radius:999px;padding:0 18px;min-width:0;"
                   >
+                    Visit Website
+                  </a>
+                </div>
+
+                <!-- Visit Support button -->
+                <div style="text-align:center;margin-top:8px;">
+                  <a
+                    href="${FRONTEND_URL}/support"
+                    class="btn"
+                    style="background:#0f172a;border:1px solid #0f172a;color:#fff;display:inline-block;font-weight:600;font-size:12px;line-height:32px;text-decoration:none;border-radius:999px;padding:0 18px;min-width:0;"
+                  >
                     Visit Support
                   </a>
-                  <div style="color:#64748b;font-size:12px;margin-top:8px;">
-                    ${BRAND}
-                  </div>
+                </div>
+
+                <!-- Raw support link under the button -->
+                <div style="text-align:center;margin-top:6px;font-size:11px;color:#64748b;word-break:break-all;">
+                  Support page:
+                  <a href="${FRONTEND_URL}/support" style="color:${COLOR};text-decoration:none;">
+                    ${FRONTEND_URL}/support
+                  </a>
+                </div>
+
+                <div style="text-align:center;margin-top:8px;color:#64748b;font-size:12px;">
+                  ${BRAND}
                 </div>
               </td>
             </tr>
@@ -966,7 +988,7 @@ export class EmailServiceImpl implements EmailService {
     });
   }
 
-  /* --------------------- Offline ticket with QR (FIXED) ----------------------- */
+  /* --------------------- Offline ticket with QR (fixed) ----------------------- */
 
   async sendOfflineTicketWithQr(params: {
     email: string;
@@ -997,19 +1019,16 @@ export class EmailServiceImpl implements EmailService {
       eventLocation,
     } = params;
 
-    // Payload encoded in QR
     const qrPayload = `${FRONTEND_URL}/tickets/checkin?code=${encodeURIComponent(
       checkinCode
     )}&id=${encodeURIComponent(ticketId)}`;
 
-    // Generate QR as a PNG buffer (more reliable for emails than data URLs)
     const qrBuffer = await QRCode.toBuffer(qrPayload, {
       type: "png",
       margin: 1,
       scale: 6,
     });
 
-    // Unique CID for this ticket's QR image
     const qrCid = `ticket-qr-${ticketId}@${APP.toLowerCase()}`;
 
     const formattedDate =
