@@ -104,7 +104,7 @@ export class AssistanceApplicationServiceImpl implements AssistanceApplicationSe
         await logAudit({
             user: adminId,
             action: "UPDATE",
-            resource: "ASSISTANCE_APPLICATION.",
+            resource: "ASSISTANCE_APPLICATION",
             resourceId: id,
             description: `Application ${prev} -> ${dto.status}${dto.grantAmount ? `, grant: $${dto.grantAmount}` : ""}`,
         });
