@@ -149,6 +149,7 @@ export async function adminUpdateTicketStatusController(req: AuthRequest, { para
         const ticket = await service.adminUpdateStatus(adminId, resolved.id, dto);
         return NextResponse.json({ message: "Ticket status updated", ticket }, { status: 200 });
     } catch (error: any) {
+        console.log("This is the error", error)
         return NextResponse.json({ message: error.message || "Internal server error" }, { status: error.statusCode || 500 });
     }
 }

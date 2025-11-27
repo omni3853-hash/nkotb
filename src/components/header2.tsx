@@ -7,7 +7,7 @@ const navigation = [
     { name: "News", href: "/news" },
     { name: "Events", href: "/events" },
     { name: "VIP", href: "/vip" },
-    { name: "Remember Betty", href: "https://www.rememberbetty.com/" },
+    { name: "Remember Betty", href: "/remember-betty" },
     { name: "Media", href: "/media" },
 ];
 

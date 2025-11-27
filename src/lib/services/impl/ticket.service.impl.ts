@@ -260,42 +260,101 @@ export default class TicketServiceImpl implements TicketService {
         return doc;
     }
 
-    async adminUpdateStatus(adminId: string, id: string, dto: AdminUpdateTicketStatusDto): Promise<ITicket> {
-        const doc = await Ticket.findById(id).populate("user", "firstName lastName email");
+    async adminUpdateStatus(
+        adminId: string,
+        id: string,
+        dto: AdminUpdateTicketStatusDto
+    ): Promise<ITicket> {
+        const doc = await Ticket.findById(id)
+            .populate("user", "firstName lastName email")
+            .populate("event", "title slug");
+
         if (!doc) throw new CustomError(404, "Ticket not found");
 
-        const prev = doc.status;
+        const prevStatus = doc.status;
         doc.status = dto.status;
         await doc.save();
 
+        // Audit log
         await logAudit({
             user: adminId,
             action: "UPDATE",
             resource: "TICKET",
             resourceId: id,
-            description: `Ticket status ${prev} -> ${dto.status}${dto.reason ? " (" + dto.reason + ")" : ""}`,
+            description: `Ticket status ${prevStatus} -> ${dto.status}${dto.reason ? " (" + dto.reason + ")" : ""
+                }`,
         });
 
-        const owner = doc.user as any;
+        const hasRegisteredUser = !!doc.user;
+        const isGuestTicket = !!doc.isGuest;
+        const buyer = (doc as any).buyer as
+            | {
+                fullName?: string;
+                email?: string;
+                phone?: string;
+            }
+            | undefined;
 
-        await this.notif.create(
-            new CreateNotificationDto({
-                user: owner._id.toString(),
-                type: "TICKET",
-                title: "Ticket status updated",
-                message: `Your ticket is now ${doc.status}.`,
-            })
-        );
+        /**
+         * CASE 1: Registered user – send in-app notification + email
+         */
+        if (hasRegisteredUser) {
+            const owner = doc.user as any;
 
-        await this.email.sendTicketStatusChanged?.(
-            owner.email,
-            `${owner.firstName} ${owner.lastName}`,
-            doc.eventTitleSnapshot,
-            doc.ticketTypeName,
-            doc.status,
-            dto.reason
-        );
+            // Defensive: only send if owner has _id
+            if (owner && owner._id) {
+                await this.notif.create(
+                    new CreateNotificationDto({
+                        user: owner._id.toString(),
+                        type: "TICKET",
+                        title: "Ticket status updated",
+                        message: `Your ticket is now ${doc.status}.`,
+                    })
+                );
+            }
 
+            // Defensive: only send email if email exists
+            if (owner && owner.email) {
+                await this.email.sendTicketStatusChanged?.(
+                    owner.email,
+                    `${owner.firstName ?? ""} ${owner.lastName ?? ""}`.trim(),
+                    doc.eventTitleSnapshot,
+                    doc.ticketTypeName,
+                    doc.status,
+                    dto.reason
+                );
+            }
+
+            return doc;
+        }
+
+        /**
+         * CASE 2: Guest / offline buyer – no user in DB
+         * - Do NOT create in-app notification (no userId)
+         * - But send email if we have buyer email
+         */
+        if (isGuestTicket && buyer && buyer.email) {
+            const displayName =
+                buyer.fullName && buyer.fullName.trim().length > 0
+                    ? buyer.fullName
+                    : "Guest";
+
+            await this.email.sendTicketStatusChanged?.(
+                buyer.email,
+                displayName,
+                doc.eventTitleSnapshot,
+                doc.ticketTypeName,
+                doc.status,
+                dto.reason
+            );
+
+            return doc;
+        }
+
+        /**
+         * CASE 3: No user & no buyer email – just return doc
+         * We already logged audit; nothing else to notify.
+         */ 
         return doc;
     }
 }

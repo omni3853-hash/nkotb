@@ -631,6 +631,106 @@ body {
   white-space: nowrap;
 }
 
+.support-floating-button {
+    position: fixed;
+    right: 1.75rem;
+    bottom: 1.75rem;
+    z-index: 50;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    padding: 0.9rem 1.4rem;              /* bigger button */
+    min-width: 4.25rem;
+    border-radius: 9999px;
+
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 600;
+
+    box-shadow:
+        0 12px 30px rgba(15, 23, 42, 0.25),
+        0 3px 10px rgba(15, 23, 42, 0.18);
+
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    outline: none;
+
+    transform-origin: center;
+    animation: support-bounce 2.2s ease-in-out infinite;
+    will-change: transform;
+
+    transition:
+        transform 160ms ease-out,
+        box-shadow 160ms ease-out,
+        background 160ms ease-out;
+}
+
+.support-floating-button__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;    /* larger icon container */
+    height: 2.4rem;
+    border-radius: 9999px;
+    background: rgba(15, 23, 42, 0.1);
+}
+
+.support-floating-button__svg {
+    width: 1.4rem;    /* bigger svg */
+    height: 1.4rem;
+    fill: currentColor;
+}
+
+.support-floating-button__label {
+    white-space: nowrap;
+}
+
+/* Hover / active refinements */
+.support-floating-button:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow:
+        0 16px 40px rgba(15, 23, 42, 0.28),
+        0 4px 14px rgba(15, 23, 42, 0.22);
+}
+
+.support-floating-button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow:
+        0 6px 18px rgba(15, 23, 42, 0.22),
+        0 2px 8px rgba(15, 23, 42, 0.18);
+}
+
+/* Subtle, professional bounce */
+@keyframes support-bounce {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    20% {
+        transform: translateY(-4px);
+    }
+    40% {
+        transform: translateY(0);
+    }
+    60% {
+        transform: translateY(-2px);
+    }
+    80% {
+        transform: translateY(0);
+    }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .support-floating-button {
+        animation: none;
+    }
+}
+
 /* Mobile tweaks: tighter spacing & optionally hide label on very small screens */
 @media (max-width: 640px) {
   .support-floating-button {

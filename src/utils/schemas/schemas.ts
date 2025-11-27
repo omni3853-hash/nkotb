@@ -760,3 +760,125 @@ export const AdminUpdateSupportStatusSchema = z.object({
 export type AdminUpdateSupportStatusFormData = z.infer<
     typeof AdminUpdateSupportStatusSchema
 >;
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+export const DonationStatusEnum = z.enum(["PENDING", "COMPLETED", "FAILED", "REFUNDED"]);
+export const DonationFrequencyEnum = z.enum(["ONE_TIME", "MONTHLY", "QUARTERLY", "YEARLY"]);
+export const ApplicationStatusEnum = z.enum([
+    "SUBMITTED",
+    "UNDER_REVIEW",
+    "APPROVED",
+    "REJECTED",
+    "GRANT_ISSUED",
+]);
+export const VolunteerStatusEnum = z.enum(["PENDING", "ACTIVE", "INACTIVE"]);
+
+// ============================================================================
+// DONATION SCHEMAS
+// ============================================================================
+
+export const CreateDonationSchema = z.object({
+    donorName: z.string().min(2, "Name is required"),
+    donorEmail: z.string().email("Valid email is required"),
+    donorPhone: z.string().optional(),
+    amount: z.number().positive("Amount must be greater than 0"),
+    frequency: DonationFrequencyEnum.default("ONE_TIME"),
+    dedicatedTo: z.string().optional(),
+    isAnonymous: z.boolean().default(false),
+    paymentMethodId: z.string().optional(),
+    proofOfPayment: z.string().optional(),
+    notes: z.string().optional(),
+});
+
+export type CreateDonationFormData = z.infer<typeof CreateDonationSchema>;
+
+export const DonationQuerySchema = z.object({
+    status: DonationStatusEnum.optional(),
+    donorEmail: z.string().email().optional(),
+    page: z.number().int().min(1).optional().default(1),
+    limit: z.number().int().min(1).max(100).optional().default(10),
+});
+
+export type DonationQuery = z.infer<typeof DonationQuerySchema>;
+
+export const AdminUpdateDonationStatusSchema = z.object({
+    status: DonationStatusEnum,
+    notes: z.string().optional(),
+});
+
+export type AdminUpdateDonationStatusFormData = z.infer<typeof AdminUpdateDonationStatusSchema>;
+
+// ============================================================================
+// ASSISTANCE APPLICATION SCHEMAS
+// ============================================================================
+
+export const CreateAssistanceApplicationSchema = z.object({
+    applicantName: z.string().min(2, "Name is required"),
+    applicantEmail: z.string().email("Valid email is required"),
+    applicantPhone: z.string().optional(),
+    mailingAddress: z.string().min(10, "Complete address is required"),
+    birthDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid date required"),
+    ssnLast4: z.string().length(4, "Last 4 digits of SSN required").regex(/^\d{4}$/, "Must be 4 digits"),
+    diagnosisDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Valid date required"),
+    diagnosisDescription: z.string().min(10, "Diagnosis description is required"),
+    monthlyIncome: z.number().min(0, "Income must be 0 or greater"),
+    isEmployed: z.boolean().default(false),
+    inActiveTreatment: z.boolean().default(false),
+    socialWorkerName: z.string().optional(),
+    socialWorkerFacility: z.string().optional(),
+    applicationPdfUrl: z.string().url("Valid PDF URL required"),
+    diagnosisLetterUrl: z.string().url("Valid diagnosis letter URL required"),
+    personalStatementUrl: z.string().url().optional(),
+});
+
+export type CreateAssistanceApplicationFormData = z.infer<typeof CreateAssistanceApplicationSchema>;
+
+export const ApplicationQuerySchema = z.object({
+    status: ApplicationStatusEnum.optional(),
+    submissionMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+    page: z.number().int().min(1).optional().default(1),
+    limit: z.number().int().min(1).max(100).optional().default(10),
+});
+
+export type ApplicationQuery = z.infer<typeof ApplicationQuerySchema>;
+
+export const AdminReviewApplicationSchema = z.object({
+    status: ApplicationStatusEnum,
+    grantAmount: z.number().min(500).max(1000).optional(),
+    reviewNotes: z.string().optional(),
+});
+
+export type AdminReviewApplicationFormData = z.infer<typeof AdminReviewApplicationSchema>;
+
+// ============================================================================
+// VOLUNTEER SCHEMAS
+// ============================================================================
+
+export const CreateVolunteerSchema = z.object({
+    fullName: z.string().min(2, "Name is required"),
+    email: z.string().email("Valid email is required"),
+    phone: z.string().optional(),
+    interests: z.array(z.string()).min(1, "At least one interest is required"),
+    availability: z.string().optional(),
+    notes: z.string().optional(),
+});
+
+export type CreateVolunteerFormData = z.infer<typeof CreateVolunteerSchema>;
+
+export const VolunteerQuerySchema = z.object({
+    status: VolunteerStatusEnum.optional(),
+    page: z.number().int().min(1).optional().default(1),
+    limit: z.number().int().min(1).max(100).optional().default(10),
+});
+
+export type VolunteerQuery = z.infer<typeof VolunteerQuerySchema>;
+
+export const AdminUpdateVolunteerStatusSchema = z.object({
+    status: VolunteerStatusEnum,
+    notes: z.string().optional(),
+});
+
+export type AdminUpdateVolunteerStatusFormData = z.infer<typeof AdminUpdateVolunteerStatusSchema>;

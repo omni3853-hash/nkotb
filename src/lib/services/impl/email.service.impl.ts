@@ -1457,6 +1457,188 @@ export class EmailServiceImpl implements EmailService {
       }),
     });
   }
+
+  async sendApplicationConfirmation(
+    email: string,
+    fullName: string,
+    submissionMonth: string
+  ): Promise<void> {
+    const body = `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"},</p>
+      <p style="margin:0 0 10px;">
+        We’ve received your assistance application for <b>${submissionMonth}</b>.
+      </p>
+      ${infoCard(
+      "Application window",
+      `
+        <p style="margin:0 0 6px;color:#0f172a;">
+          Applications are reviewed after the monthly submission window closes.
+        </p>
+        <p style="margin:0;color:#475569;">
+          Our team will carefully review your documents and reach out to you by email once a decision has been made.
+        </p>
+      `
+    )}
+      <p style="margin:12px 0 0;color:#475569;font-size:13px;">
+        You don’t need to reply to this email — we’ll contact you if any additional information is required.
+      </p>
+    `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `We received your assistance application — ${APP}`,
+      html: layout({
+        title: "Application received",
+        preheader: "Your assistance application has been submitted",
+        bodyHtml: body,
+        cta: {
+          label: "Visit website",
+          href: FRONTEND_URL,
+        },
+      }),
+    });
+  }
+
+  async sendApplicationStatusUpdate(
+    email: string,
+    fullName: string,
+    status: string,
+    grantAmount?: number
+  ): Promise<void> {
+    const pretty =
+      status === "APPROVED"
+        ? "Approved ✅"
+        : status === "REJECTED"
+          ? "Not approved ❌"
+          : status === "UNDER_REVIEW"
+            ? "Under review 🔎"
+            : status === "WAITLISTED"
+              ? "Waitlisted ⏳"
+              : status;
+
+    const grantRow =
+      typeof grantAmount === "number"
+        ? detail("Grant amount", nf().format(grantAmount))
+        : "";
+
+    const body = `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"},</p>
+      <p style="margin:0 0 10px;">
+        There is an update on your assistance application.
+      </p>
+      ${infoCard(
+      "Status update",
+      `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          ${detail("Status", pretty)}
+          ${grantRow}
+        </table>
+      `
+    )}
+      <p style="margin:12px 0 0;color:#475569;font-size:13px;">
+        If you have questions about this decision, you can reach out through our support page.
+      </p>
+    `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `Your application status — ${APP}`,
+      html: layout({
+        title: "Application status updated",
+        preheader: `Your application is now ${status}`,
+        bodyHtml: body,
+        cta: {
+          label: "Visit support",
+          href: `${FRONTEND_URL}/support`,
+        },
+      }),
+    });
+  }
+
+  async sendDonationConfirmation(
+    email: string,
+    fullName: string,
+    amount: number,
+    frequency?: string
+  ): Promise<void> {
+    const frequencyLabel = frequency
+      ? frequency.charAt(0).toUpperCase() + frequency.slice(1).toLowerCase()
+      : "One-time";
+
+    const body = `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"},</p>
+      <p style="margin:0 0 10px;">
+        Thank you for your generous donation to <b>${APP}</b>.
+      </p>
+      ${infoCard(
+      "Donation summary",
+      `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          ${detail("Amount", nf().format(amount))}
+          ${detail("Frequency", frequencyLabel)}
+        </table>
+      `
+    )}
+      <p style="margin:12px 0 0;color:#475569;font-size:13px;">
+        Your support helps us continue providing assistance to those who need it most.
+        This email can serve as a record of your contribution.
+      </p>
+    `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `Thank you for your donation — ${APP}`,
+      html: layout({
+        title: "Donation received",
+        preheader: "We’ve received your donation",
+        bodyHtml: body,
+        cta: {
+          label: "Visit website",
+          href: FRONTEND_URL,
+        },
+      }),
+    });
+  }
+
+  async sendVolunteerConfirmation(
+    email: string,
+    fullName: string
+  ): Promise<void> {
+    const body = `
+      <p style="margin:0 0 10px;">Hi ${fullName || "there"},</p>
+      <p style="margin:0 0 10px;">
+        Thank you for signing up to volunteer with <b>${APP}</b>.
+      </p>
+      ${infoCard(
+      "What happens next",
+      `
+        <p style="margin:0 0 6px;color:#0f172a;">
+          Our team will review your interests and availability.
+        </p>
+        <p style="margin:0;color:#475569;">
+          We’ll contact you by email with opportunities that match your profile or to schedule a brief follow-up.
+        </p>
+      `
+    )}
+      <p style="margin:12px 0 0;color:#475569;font-size:13px;">
+        We’re grateful you’re willing to share your time and energy to support our community.
+      </p>
+    `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `Volunteer registration received — ${APP}`,
+      html: layout({
+        title: "Volunteer application received",
+        preheader: "We’ve received your volunteer registration",
+        bodyHtml: body,
+        cta: {
+          label: "Visit website",
+          href: FRONTEND_URL,
+        },
+      }),
+    });
+  }
 }
 
 export default EmailServiceImpl;

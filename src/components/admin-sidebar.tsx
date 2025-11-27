@@ -15,6 +15,9 @@ import {
   Settings as SettingsIcon,
   Shield,
   LogOut,
+  HandHeart,
+  ClipboardList,
+  Handshake,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -32,6 +35,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { UserContext } from "@/contexts/UserContext";
+
 
 export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -63,14 +67,27 @@ export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
         icon: LayoutDashboard,
         isActive: pathname === "/admin-dashboard",
       },
-      // { title: "Manage Celebrities", url: "/admin-dashboard/manage-celebrities", icon: Star },
       { title: "User Management", url: "/admin-dashboard/manage-users", icon: Users },
-      // { title: "Manage Memberships", url: "/admin-dashboard/manage-membership", icon: Crown },
       { title: "Blog Management", url: "/admin-dashboard/manage-posts", icon: Activity },
       { title: "Event Management", url: "/admin-dashboard/manage-events", icon: Calendar },
       { title: "Media Management", url: "/admin-dashboard/media", icon: PictureInPicture },
+      { title: "Remember Betty Media", url: "/admin-dashboard/rememberbettymedia", icon: PictureInPicture },
+      {
+        title: "Remember Betty Donations",
+        url: "/admin-dashboard/donations",
+        icon: HandHeart, 
+      },
+      {
+        title: "Remember Betty Applications",
+        url: "/admin-dashboard/applications",
+        icon: ClipboardList, 
+      },
+      {
+        title: "Remember Betty Volunteers",
+        url: "/admin-dashboard/volunteers",
+        icon: Handshake,  
+      },
       { title: "Support Management", url: "/admin-dashboard/support", icon: Users },
-      // { title: "Deposit Management", url: "/admin-dashboard/manage-deposits", icon: CreditCard },
       { title: "Activity Log", url: "/admin-dashboard/activity-log", icon: Activity },
       { title: "System Settings", url: "/admin-dashboard/settings", icon: SettingsIcon },
     ],

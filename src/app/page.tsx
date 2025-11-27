@@ -54,7 +54,6 @@ const Page: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch events (no pagination UI, just limit client-side)
         const res = await EventsApi.list();
         if (!mounted) return;
 
@@ -81,15 +80,23 @@ const Page: React.FC = () => {
       <Header2 />
 
       {/* Hero Carousel */}
-      <section className="relative h-[100vh] sm:h-[80vh] lg:h-[60vh] overflow-hidden">
+      {/* Mobile: ~65vh, not full screen; sm: 80vh; lg: keep 60vh as before */}
+      <section className="relative h-[65vh] sm:h-[80vh] lg:h-[60vh] overflow-hidden">
         <div className="relative w-full h-full">
           {heroSlides.map((slide, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100" : "opacity-0"
-                }`}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentSlide ? "opacity-100" : "opacity-0"
+              }`}
             >
-              <img src={slide.image} className="w-full h-full object-cover" />
+              <img
+                src={slide.image}
+                alt={`Hero slide ${index + 1}`}
+                className="w-full h-full object-cover object-center"
+              />
+              {/* Optional subtle gradient for readability / polish */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
             </div>
           ))}
         </div>
@@ -97,27 +104,28 @@ const Page: React.FC = () => {
         {/* Carousel Controls */}
         <button
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all"
+          className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2.5 sm:p-3 rounded-full transition-all"
           aria-label="Previous slide"
         >
-          <ChevronLeft className="w-8 h-8" />
+          <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all"
+          className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2.5 sm:p-3 rounded-full transition-all"
           aria-label="Next slide"
         >
-          <ChevronRight className="w-8 h-8" />
+          <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
         </button>
 
         {/* Carousel Indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
           {heroSlides.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all ${index === currentSlide ? "bg-white w-8" : "bg-white/50"
-                }`}
+              className={`h-2.5 rounded-full transition-all ${
+                index === currentSlide ? "bg-white w-7 sm:w-8" : "bg-white/60 w-2.5"
+              }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
@@ -211,7 +219,7 @@ const Page: React.FC = () => {
                       TICKETS
                     </Link>
 
-                    {/* VIP UPGRADE stays as a button (no URL specified) */}
+                    {/* VIP UPGRADE */}
                     <Link
                       href={`/events/${event.slug}`}
                       className="bg-black text-white px-8 py-3 font-black uppercase text-sm tracking-wider hover:bg-gray-800 transition-colors flex items-center justify-center"
@@ -234,7 +242,7 @@ const Page: React.FC = () => {
           <div className="relative aspect-video bg-gradient-to-r from-blue-900 via-purple-900 to-pink-900 rounded-lg overflow-hidden shadow-2xl">
             <iframe
               className="w-full h-full"
-              src="//cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fwww.youtube.com%2Fembed%2FmQsfU8Y6XyU%3Ffeature%3Doembed&display_name=YouTube&url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DmQsfU8Y6XyU&image=https%3A%2F%2Fi.ytimg.com%2Fvi%2FmQsfU8Y6XyU%2Fhqdefault.jpg&key=96f1f04c5f4143bcb0f2e68c87d65feb&type=text%2Fhtml&schema=youtube"
+              src="//cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fwww.youtube.com%2Fembed%2FmQsfU8Y6XyU%3Ffeature%3Doembed&display_name=YouTube&url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DmQsfU8Y6XyU&image=https%3A%2Fi.ytimg.com%2Fvi%2FmQsfU8Y6XyU%2Fhqdefault.jpg&key=96f1f04c5f4143bcb0f2e68c87d65feb&type=text%2Fhtml&schema=youtube"
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

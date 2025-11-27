@@ -70,11 +70,11 @@ export async function maybeSeed() {
     await dbConnect();
 
     // Dynamically import to avoid model execution before connect
-    const { default: runSeed } = await import("./seed.utils");
-    await runSeed();
+    const { default: seedNkotbEvents } = await import("./seed.utils");
+    await seedNkotbEvents();
   } catch (e) {
     console.error("[SEED] Skipped or failed:", (e as Error).message);
   }
 }
 
-// maybeSeed()
+maybeSeed()

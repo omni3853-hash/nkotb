@@ -175,4 +175,29 @@ export interface EmailService {
     message: string;
     ticketId: string;
   }): Promise<void>;
+
+  sendApplicationConfirmation?(
+    email: string,
+    fullName: string,
+    submissionMonth: string
+  ): Promise<void>;
+
+  sendApplicationStatusUpdate?(
+    email: string,
+    fullName: string,
+    status: string,
+    grantAmount?: number
+  ): Promise<void>;
+
+  sendDonationConfirmation?(
+    email: string,
+    fullName: string,
+    amount: number,
+    frequency?: string
+  ): Promise<void>;
+
+  sendVolunteerConfirmation?(
+    email: string,
+    fullName: string
+  ): Promise<void>;
 }

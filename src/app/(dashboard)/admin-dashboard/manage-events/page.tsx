@@ -21,7 +21,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,18 +78,13 @@ import {
   ShieldCheck,
   CheckCircle2,
   TrendingUp,
-  Clock,
-  Filter,
   RefreshCw,
   Download,
   MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  AdminEventsApi,
-  type Event,
-} from "@/api/events.api";
+import { AdminEventsApi, type Event } from "@/api/events.api";
 import { AdminTicketsApi, type Ticket } from "@/api/tickets.api";
 import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
 
@@ -98,10 +99,6 @@ import {
   AdminUpdateTicketStatusSchema,
   type AdminUpdateTicketStatusFormData,
 } from "@/utils/schemas/schemas";
-
-/* ----------------------------------------------------------------------------
- * Local helpers & types
- * --------------------------------------------------------------------------*/
 
 type Paginated<T> = { items: T[]; total: number; page: number; limit: number };
 
@@ -118,15 +115,16 @@ const categories = [
 
 const availabilityOptions = EventAvailabilityEnum.options;
 
-// Use z.output to match what zodResolver returns after defaults/coercions.
 type CreateValues = z.output<typeof CreateEventSchema>;
 type UpdateValues = z.output<typeof UpdateEventSchema>;
 
-// Narrow resolvers to the exact shapes to avoid RHF "Resolver mismatch" errors.
-const createResolver = zodResolver(CreateEventSchema) as Resolver<CreateValues>;
-const updateResolver = zodResolver(UpdateEventSchema) as Resolver<UpdateValues>;
+const createResolver = zodResolver(
+  CreateEventSchema
+) as Resolver<CreateValues>;
+const updateResolver = zodResolver(
+  UpdateEventSchema
+) as Resolver<UpdateValues>;
 
-// Chips Input Component (reused from original)
 function ChipsInput({
   label,
   values,
@@ -174,7 +172,11 @@ function ChipsInput({
       {!!values.length && (
         <div className="flex flex-wrap gap-2">
           {values.map((t) => (
-            <Badge key={t} variant="secondary" className="flex items-center gap-1">
+            <Badge
+              key={t}
+              variant="secondary"
+              className="flex items-center gap-1"
+            >
               {t}
               <button
                 type="button"
@@ -192,15 +194,14 @@ function ChipsInput({
   );
 }
 
-// Stats Cards Component
 function EventStatsCards({ events }: { events: Event[] }) {
   const totalEvents = events.length;
-  const activeEvents = events.filter(e => e.isActive).length;
-  const featuredEvents = events.filter(e => e.featured).length;
+  const activeEvents = events.filter((e) => e.isActive).length;
+  const featuredEvents = events.filter((e) => e.featured).length;
   const totalRevenue = events.reduce((sum, event) => {
     const ticketsSold = event.ticketsSold || 0;
     const basePrice = event.basePrice || 0;
-    return sum + (ticketsSold * basePrice);
+    return sum + ticketsSold * basePrice;
   }, 0);
 
   return (
@@ -214,12 +215,8 @@ function EventStatsCards({ events }: { events: Event[] }) {
             {totalEvents}
           </Badge>
         </div>
-        <p className="text-xs font-mono text-zinc-600 mb-1">
-          TOTAL EVENTS
-        </p>
-        <p className="text-2xl font-bold text-emerald-900">
-          {totalEvents}
-        </p>
+        <p className="text-xs font-mono text-zinc-600 mb-1">TOTAL EVENTS</p>
+        <p className="text-2xl font-bold text-emerald-900">{totalEvents}</p>
       </Card>
 
       <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
@@ -228,15 +225,13 @@ function EventStatsCards({ events }: { events: Event[] }) {
             <CheckCircle2 className="size-5 text-emerald-900" />
           </div>
           <Badge className="bg-emerald-50 text-emerald-900 border-2 border-emerald-900 font-mono text-xs">
-            {Math.round((activeEvents / totalEvents) * 100)}%
+            {totalEvents === 0
+              ? "0%"
+              : `${Math.round((activeEvents / totalEvents) * 100)}%`}
           </Badge>
         </div>
-        <p className="text-xs font-mono text-zinc-600 mb-1">
-          ACTIVE EVENTS
-        </p>
-        <p className="text-2xl font-bold text-emerald-900">
-          {activeEvents}
-        </p>
+        <p className="text-xs font-mono text-zinc-600 mb-1">ACTIVE EVENTS</p>
+        <p className="text-2xl font-bold text-emerald-900">{activeEvents}</p>
       </Card>
 
       <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white hover:border-emerald-900 transition-all">
@@ -248,9 +243,7 @@ function EventStatsCards({ events }: { events: Event[] }) {
             {featuredEvents}
           </Badge>
         </div>
-        <p className="text-xs font-mono text-zinc-600 mb-1">
-          FEATURED EVENTS
-        </p>
+        <p className="text-xs font-mono text-zinc-600 mb-1">FEATURED EVENTS</p>
         <p className="text-2xl font-bold text-emerald-900">
           {featuredEvents}
         </p>
@@ -265,9 +258,7 @@ function EventStatsCards({ events }: { events: Event[] }) {
             ${(totalRevenue / 1000).toFixed(0)}K
           </Badge>
         </div>
-        <p className="text-xs font-mono text-zinc-600 mb-1">
-          TOTAL REVENUE
-        </p>
+        <p className="text-xs font-mono text-zinc-600 mb-1">TOTAL REVENUE</p>
         <p className="text-2xl font-bold text-emerald-900">
           ${totalRevenue.toLocaleString()}
         </p>
@@ -276,7 +267,6 @@ function EventStatsCards({ events }: { events: Event[] }) {
   );
 }
 
-// Enhanced Filters Component
 function EventFilters({
   searchTerm,
   onSearchChange,
@@ -301,9 +291,7 @@ function EventFilters({
   return (
     <Card className="border-2 border-zinc-200 rounded-2xl p-6 bg-white">
       <CardHeader>
-        <CardTitle className="text-emerald-900">
-          Filters & Search
-        </CardTitle>
+        <CardTitle className="text-emerald-900">Filters & Search</CardTitle>
         <CardDescription>
           Filter events by category, status, and search terms
         </CardDescription>
@@ -326,7 +314,11 @@ function EventFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              {categories.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -371,9 +363,14 @@ function EventFilters({
   );
 }
 
-/* ----------------------------------------------------------------------------
- * Admin: Event Details modal + ticket history
- * --------------------------------------------------------------------------*/
+type TicketConfirmState = {
+  open: boolean;
+  tone?: "danger" | "default";
+  title: React.ReactNode;
+  onYes?: () => Promise<void> | void;
+  confirming?: boolean;
+};
+
 function AdminEventDetailsModal({
   open,
   onOpenChange,
@@ -388,6 +385,13 @@ function AdminEventDetailsModal({
   const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedProof, setSelectedProof] = useState<string | null>(null);
+  const [ticketConfirm, setTicketConfirm] = useState<TicketConfirmState>({
+    open: false,
+    title: <></>,
+    tone: "default",
+    confirming: false,
+  });
 
   const loadTickets = async () => {
     if (!event?._id) return;
@@ -396,7 +400,9 @@ function AdminEventDetailsModal({
       const res = await AdminTicketsApi.list({ page, limit, eventId: event._id });
       setTickets(res);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Failed to load tickets");
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to load tickets"
+      );
     } finally {
       setLoading(false);
     }
@@ -404,232 +410,424 @@ function AdminEventDetailsModal({
 
   useEffect(() => {
     if (open) loadTickets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, page, limit, event?._id]);
 
-  const handleUpdateStatus = async (id: string, status: z.infer<typeof TicketStatusEnum>) => {
+  const handleUpdateStatus = async (
+    id: string,
+    status: z.infer<typeof TicketStatusEnum>
+  ) => {
     try {
       setUpdatingId(id);
-      const payload: AdminUpdateTicketStatusFormData = AdminUpdateTicketStatusSchema.parse({
-        status,
-      });
+      const payload: AdminUpdateTicketStatusFormData =
+        AdminUpdateTicketStatusSchema.parse({
+          status,
+        });
       await AdminTicketsApi.updateStatus(id, payload);
       toast.success("Ticket status updated");
       await loadTickets();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Update failed");
+      toast.error(
+        err?.response?.data?.message || err?.message || "Update failed"
+      );
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const totalPages = tickets ? Math.max(1, Math.ceil(tickets.total / tickets.limit)) : 1;
+  const totalPages = tickets
+    ? Math.max(1, Math.ceil(tickets.total / tickets.limit))
+    : 1;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <Eye className="size-5" />
-            Event Details
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Eye className="size-5" />
+              Event Details
+            </DialogTitle>
+          </DialogHeader>
 
-        {!event ? null : (
-          <div className="space-y-6">
-            {/* Snapshot */}
-            <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
-              <div className="flex items-start gap-4">
-                <div className="size-20 rounded-lg overflow-hidden border-2 border-zinc-200 shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={event.image || "/placeholder.svg"}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="text-xl font-bold">{event.title}</h3>
-                    {event.featured ? <Badge className="text-xs">Featured</Badge> : null}
-                    {event.trending ? <Badge className="text-xs">Trending</Badge> : null}
-                    {event.verified ? (
+          {!event ? null : (
+            <div className="space-y-6">
+              <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
+                <div className="flex items-start gap-4">
+                  <div className="size-20 rounded-lg overflow-hidden border-2 border-zinc-200 shrink-0">
+                    <img
+                      src={event.image || "/placeholder.svg"}
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-xl font-bold">{event.title}</h3>
+                      {event.featured ? (
+                        <Badge className="text-xs">Featured</Badge>
+                      ) : null}
+                      {event.trending ? (
+                        <Badge className="text-xs">Trending</Badge>
+                      ) : null}
+                      {event.verified ? (
+                        <Badge variant="outline" className="text-xs">
+                          Verified
+                        </Badge>
+                      ) : null}
+                      {event.isActive ? (
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-emerald-700 text-emerald-800"
+                        >
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-zinc-400 text-zinc-700"
+                        >
+                          Inactive
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span>
+                          {event.date} · {event.time}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>
+                          {event.attendees?.toLocaleString?.() || 0} attendees
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground mt-3">
+                      {event.description}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        Views: {event.views?.toLocaleString?.() ?? 0}
+                      </span>
+                      <span>
+                        Tickets Sold:{" "}
+                        {event.ticketsSold?.toLocaleString?.() ?? 0}
+                      </span>
+                      <span>
+                        Rating:{" "}
+                        {typeof event.rating === "number"
+                          ? event.rating.toFixed(1)
+                          : "—"}{" "}
+                        ⭐
+                      </span>
+                      <span>
+                        Reviews: {event.totalReviews?.toLocaleString?.() ?? 0}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right font-mono">
+                    <div className="flex items-center justify-end gap-1">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-lg font-semibold">
+                        ${event.basePrice}
+                      </span>
+                    </div>
+                    <div className="mt-2">
                       <Badge variant="outline" className="text-xs">
-                        Verified
+                        {event.availability || "—"}
                       </Badge>
-                    ) : null}
-                    {event.isActive ? (
-                      <Badge variant="outline" className="text-xs border-emerald-700 text-emerald-800">
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs border-zinc-400 text-zinc-700">
-                        Inactive
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>{event.date} · {event.time}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="truncate">{event.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{event.attendees?.toLocaleString?.() || 0} attendees</span>
                     </div>
                   </div>
+                </div>
+              </Card>
 
-                  <p className="text-sm text-muted-foreground mt-3">{event.description}</p>
-
-                  {/* Read-only metrics */}
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <TrendingUp className="h-3.5 w-3.5" />
-                      Views: {event.views?.toLocaleString?.() ?? 0}
-                    </span>
-                    <span>Tickets Sold: {event.ticketsSold?.toLocaleString?.() ?? 0}</span>
-                    <span>Rating: {typeof event.rating === "number" ? event.rating.toFixed(1) : "—"} ⭐</span>
-                    <span>Reviews: {event.totalReviews?.toLocaleString?.() ?? 0}</span>
+              <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-emerald-900" />
+                    <h4 className="font-semibold">Ticket Purchase History</h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={String(limit)}
+                      onValueChange={(v) => {
+                        setPage(1);
+                        setLimit(Number(v));
+                      }}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                <div className="text-right font-mono">
-                  <div className="flex items-center justify-end gap-1">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-lg font-semibold">${event.basePrice}</span>
-                  </div>
-                  <div className="mt-2">
-                    <Badge variant="outline" className="text-xs">
-                      {event.availability || "—"}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Ticket history */}
-            <Card className="border-2 border-zinc-200 rounded-2xl p-4 bg-white">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-emerald-900" />
-                  <h4 className="font-semibold">Ticket Purchase History</h4>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={String(limit)}
-                    onValueChange={(v) => { setPage(1); setLimit(Number(v)); }}
-                  >
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="border rounded-xl overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-zinc-50">
-                    <TableRow>
-                      <TableHead className="font-mono text-xs">USER</TableHead>
-                      <TableHead className="font-mono text-xs">TYPE</TableHead>
-                      <TableHead className="font-mono text-xs">QTY</TableHead>
-                      <TableHead className="font-mono text-xs">AMOUNT</TableHead>
-                      <TableHead className="font-mono text-xs">STATUS</TableHead>
-                      <TableHead className="font-mono text-xs">DATE</TableHead>
-                      <TableHead className="font-mono text-xs">ACTION</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(tickets?.items ?? []).map((t) => (
-                      <TableRow key={t._id}>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p className="font-medium">{t?.user?.name || "—"}</p>
-                            <p className="text-muted-foreground text-xs">{t?.user?.email || "—"}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">{t.ticketTypeName}</TableCell>
-                        <TableCell className="font-mono text-sm">{t.quantity}</TableCell>
-                        <TableCell className="font-mono text-sm">${t.totalAmount}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">{t.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {new Date(t.createdAt).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={t.status}
-                            onValueChange={(v) => handleUpdateStatus(t._id, v as any)}
-                            disabled={updatingId === t._id}
-                          >
-                            <SelectTrigger className="w-40">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {TicketStatusEnum.options.map((s) => (
-                                <SelectItem key={s} value={s}>{s}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {(!loading && (tickets?.items.length ?? 0) === 0) && (
+                <div className="border rounded-xl overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-zinc-50">
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-sm text-muted-foreground">
-                          No ticket purchases yet.
-                        </TableCell>
+                        <TableHead className="font-mono text-xs">USER</TableHead>
+                        <TableHead className="font-mono text-xs">TYPE</TableHead>
+                        <TableHead className="font-mono text-xs">QTY</TableHead>
+                        <TableHead className="font-mono text-xs">
+                          AMOUNT
+                        </TableHead>
+                        <TableHead className="font-mono text-xs">
+                          STATUS
+                        </TableHead>
+                        <TableHead className="font-mono text-xs">
+                          PROOF
+                        </TableHead>
+                        <TableHead className="font-mono text-xs">
+                          DATE
+                        </TableHead>
+                        <TableHead className="font-mono text-xs">
+                          ACTION
+                        </TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-xs text-muted-foreground">
-                  {tickets?.total ?? 0} total · page {tickets?.page ?? page} / {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={loading || page <= 1}
-                  >
-                    Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => (tickets ? Math.min(Math.ceil(tickets.total / tickets.limit), p + 1) : p + 1))}
-                    disabled={loading || (tickets ? page >= Math.ceil(tickets.total / tickets.limit) : false)}
-                  >
-                    Next
-                  </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {(tickets?.items ?? []).map((t) => (
+                        <TableRow key={t._id}>
+                          <TableCell>
+                            <div className="text-sm">
+                              <p className="font-medium">
+                                {t?.user?.name ||
+                                  t?.buyer?.fullName ||
+                                  "—"}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                {t?.user?.email || t?.buyer?.email || "—"}
+                              </p>
+                              {t.isGuest && (
+                                <div className="mt-1">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] uppercase tracking-wide"
+                                  >
+                                    Guest
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {t.ticketTypeName}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {t.quantity}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            ${t.totalAmount}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {t.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {t.offlinePayment?.proofOfPayment ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  setSelectedProof(
+                                    t.offlinePayment?.proofOfPayment || null
+                                  )
+                                }
+                              >
+                                <Eye className="h-3.5 w-3.5 mr-1" />
+                                View
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                —
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {new Date(t.createdAt).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={t.status}
+                              onValueChange={(v) => {
+                                const nextStatus =
+                                  v as z.infer<typeof TicketStatusEnum>;
+                                if (nextStatus === t.status) return;
+                                setTicketConfirm({
+                                  open: true,
+                                  tone: "default",
+                                  title: (
+                                    <>
+                                      Change ticket status to "
+                                      {nextStatus}"?
+                                    </>
+                                  ),
+                                  onYes: async () => {
+                                    await handleUpdateStatus(t._id, nextStatus);
+                                  },
+                                  confirming: false,
+                                });
+                              }}
+                              disabled={updatingId === t._id}
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TicketStatusEnum.options.map((s) => (
+                                  <SelectItem key={s} value={s}>
+                                    {s}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {!loading && (tickets?.items.length ?? 0) === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={8}
+                            className="text-center py-8 text-sm text-muted-foreground"
+                          >
+                            No ticket purchases yet.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
+
+                <div className="flex items-center justify-between mt-4">
+                  <p className="text-xs text-muted-foreground">
+                    {tickets?.total ?? 0} total · page {tickets?.page ?? page} /{" "}
+                    {totalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={loading || page <= 1}
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setPage((p) =>
+                          tickets
+                            ? Math.min(
+                              Math.ceil(tickets.total / tickets.limit),
+                              p + 1
+                            )
+                            : p + 1
+                        )
+                      }
+                      disabled={
+                        loading ||
+                        (tickets
+                          ? page >=
+                          Math.ceil(tickets.total / tickets.limit)
+                          : false)
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!selectedProof}
+        onOpenChange={(v) => {
+          if (!v) setSelectedProof(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">
+              Proof of Payment
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProof &&
+            (selectedProof.startsWith("http") ||
+              selectedProof.startsWith("data:")) ? (
+            <div className="space-y-4">
+              <div className="w-full max-h-[70vh] overflow-auto rounded-lg border bg-black/5 flex items-center justify-center">
+                <img
+                  src={selectedProof}
+                  alt="Proof of payment"
+                  className="max-h-[70vh] w-auto object-contain"
+                />
               </div>
-            </Card>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+              <a
+                href={selectedProof}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-emerald-700 underline"
+              >
+                Open in new tab
+              </a>
+            </div>
+          ) : selectedProof ? (
+            <div className="rounded-md border bg-zinc-50 p-3 text-sm font-mono break-all">
+              {selectedProof}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={ticketConfirm.open}
+        onOpenChange={(v) =>
+          setTicketConfirm((c) => ({
+            ...c,
+            open: v,
+          }))
+        }
+        title={ticketConfirm.title || "Are you sure?"}
+        tone={ticketConfirm.tone || "default"}
+        confirming={ticketConfirm.confirming}
+        onConfirm={async () => {
+          if (!ticketConfirm.onYes) return;
+          setTicketConfirm((c) => ({ ...c, confirming: true }));
+          await ticketConfirm.onYes();
+          setTicketConfirm((c) => ({
+            ...c,
+            confirming: false,
+            open: false,
+            onYes: undefined,
+          }));
+        }}
+      />
+    </>
   );
 }
 
-/* ----------------------------------------------------------------------------
- * Create Event Form — strictly typed to CreateValues
- * --------------------------------------------------------------------------*/
 function CreateEventForm({
   onSubmit,
   submitting,
@@ -670,7 +868,11 @@ function CreateEventForm({
     mode: "onChange",
   });
 
-  const { fields, append, remove } = useFieldArray<CreateValues, "ticketTypes", "id">({
+  const { fields, append, remove } = useFieldArray<
+    CreateValues,
+    "ticketTypes",
+    "id"
+  >({
     control,
     name: "ticketTypes",
   });
@@ -692,42 +894,55 @@ function CreateEventForm({
     try {
       const setPct = target === "image" ? setImgProgress : setCoverProgress;
       setPct(0);
-      const res = await uploadToCloudinary(file, { onProgress: (p) => setPct(p) });
-      setValue(target, res.url as any, { shouldValidate: true, shouldTouch: true });
+      const res = await uploadToCloudinary(file, {
+        onProgress: (p) => setPct(p),
+      });
+      setValue(target, res.url as any, {
+        shouldValidate: true,
+        shouldTouch: true,
+      });
       toast.success("Image uploaded");
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Upload failed");
+      toast.error(
+        err?.response?.data?.message || err?.message || "Upload failed"
+      );
     } finally {
       setImgProgress(0);
       setCoverProgress(0);
     }
   };
 
-  const submit: SubmitHandler<CreateValues> = (data) => onSubmit(data as CreateEventFormData);
+  const submit: SubmitHandler<CreateValues> = (data) =>
+    onSubmit(data as CreateEventFormData);
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-8">
-      {/* Basic Information */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
           <div className="p-2 bg-emerald-50 rounded-lg">
             <Calendar className="h-5 w-5 text-emerald-900" />
           </div>
-          <h3 className="text-lg font-semibold text-zinc-900">Basic Information</h3>
+          <h3 className="text-lg font-semibold text-zinc-900">
+            Basic Information
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="title">Event Title *</Label>
             <Input id="title" {...register("title")} placeholder="Enter event title" />
-            {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
+            {errors.title && (
+              <p className="text-xs text-red-600">{errors.title.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
             <Select
               value={categoryValue || ""}
-              onValueChange={(v) => setValue("category", v, { shouldValidate: true })}
+              onValueChange={(v) =>
+                setValue("category", v, { shouldValidate: true })
+              }
             >
               <SelectTrigger id="category">
                 <SelectValue placeholder="Select category" />
@@ -740,44 +955,67 @@ function CreateEventForm({
                 ))}
               </SelectContent>
             </Select>
-            {errors.category && <p className="text-xs text-red-600">{errors.category.message}</p>}
+            {errors.category && (
+              <p className="text-xs text-red-600">{errors.category.message}</p>
+            )}
           </div>
         </div>
 
-        {/* Date/Time/Price */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label htmlFor="date">Date</Label>
             <Input id="date" type="date" {...register("date")} />
-            {errors.date && <p className="text-xs text-red-600">{errors.date.message}</p>}
+            {errors.date && (
+              <p className="text-xs text-red-600">{errors.date.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="time">Time</Label>
             <Input id="time" type="time" {...register("time")} />
-            {errors.time && <p className="text-xs text-red-600">{errors.time.message}</p>}
+            {errors.time && (
+              <p className="text-xs text-red-600">{errors.time.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="basePrice">Base Price ($) *</Label>
-            <Input id="basePrice" type="number" step="0.01" {...register("basePrice", { valueAsNumber: true })} />
-            {errors.basePrice && <p className="text-xs text-red-600">{errors.basePrice.message}</p>}
+            <Input
+              id="basePrice"
+              type="number"
+              step="0.01"
+              {...register("basePrice", { valueAsNumber: true })}
+            />
+            {errors.basePrice && (
+              <p className="text-xs text-red-600">
+                {errors.basePrice.message}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
-          <Input id="location" {...register("location")} placeholder="Enter event location" />
-          {errors.location && <p className="text-xs text-red-600">{errors.location.message}</p>}
+          <Input
+            id="location"
+            {...register("location")}
+            placeholder="Enter event location"
+          />
+          {errors.location && (
+            <p className="text-xs text-red-600">{errors.location.message}</p>
+          )}
         </div>
 
-        {/* Images */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label>Image</Label>
             <div className="flex items-center gap-3">
-              <Input type="file" accept="image/*" onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) doUpload(f, "image");
-              }} />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) doUpload(f, "image");
+                }}
+              />
               <Button type="button" variant="outline" disabled>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
@@ -785,20 +1023,31 @@ function CreateEventForm({
             </div>
             {!!imageUrl && (
               <div className="mt-2 size-24 rounded-md overflow-hidden border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl ?? undefined} alt="image" className="w-full h-full object-cover" />
+                <img
+                  src={imageUrl ?? undefined}
+                  alt="image"
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
-            {imgProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {imgProgress}%</p>}
+            {imgProgress > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Uploading… {imgProgress}%
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Cover Image</Label>
             <div className="flex items-center gap-3">
-              <Input type="file" accept="image/*" onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) doUpload(f, "coverImage");
-              }} />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) doUpload(f, "coverImage");
+                }}
+              />
               <Button type="button" variant="outline" disabled>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
@@ -806,73 +1055,145 @@ function CreateEventForm({
             </div>
             {!!coverUrl && (
               <div className="mt-2 size-24 rounded-md overflow-hidden border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={coverUrl ?? undefined} alt="cover" className="w-full h-full object-cover" />
+                <img
+                  src={coverUrl ?? undefined}
+                  alt="cover"
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
-            {coverProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {coverProgress}%</p>}
+            {coverProgress > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Uploading… {coverProgress}%
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" {...register("description")} className="min-h-[120px]" />
-          {errors.description && <p className="text-xs text-red-600">{errors.description as any}</p>}
+          <Textarea
+            id="description"
+            {...register("description")}
+            className="min-h-[120px]"
+          />
+          {errors.description && (
+            <p className="text-xs text-red-600">
+              {errors.description as any}
+            </p>
+          )}
         </div>
 
-        {/* Tags */}
         <ChipsInput
           label="Tags"
           values={tagValues}
-          onChange={(next) => setValue("tags", next, { shouldValidate: true })}
+          onChange={(next) =>
+            setValue("tags", next, { shouldValidate: true })
+          }
           placeholder="Type a tag and press Enter"
           icon={<TagIcon className="h-4 w-4 text-muted-foreground" />}
         />
 
-        {/* Flags */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
           <div className="flex items-center gap-2">
-            <Checkbox checked={featured} onCheckedChange={(v) => setValue("featured", !!v, { shouldValidate: true })} id="featured" />
-            <Label htmlFor="featured" className="flex items-center gap-1"><Star className="h-4 w-4" /> Featured</Label>
+            <Checkbox
+              checked={featured}
+              onCheckedChange={(v) =>
+                setValue("featured", !!v, { shouldValidate: true })
+              }
+              id="featured"
+            />
+            <Label
+              htmlFor="featured"
+              className="flex items-center gap-1"
+            >
+              <Star className="h-4 w-4" /> Featured
+            </Label>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox checked={trending} onCheckedChange={(v) => setValue("trending", !!v, { shouldValidate: true })} id="trending" />
-            <Label htmlFor="trending" className="flex items-center gap-1"><Flame className="h-4 w-4" /> Trending</Label>
+            <Checkbox
+              checked={trending}
+              onCheckedChange={(v) =>
+                setValue("trending", !!v, { shouldValidate: true })
+              }
+              id="trending"
+            />
+            <Label
+              htmlFor="trending"
+              className="flex items-center gap-1"
+            >
+              <Flame className="h-4 w-4" /> Trending
+            </Label>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox checked={verified} onCheckedChange={(v) => setValue("verified", !!v, { shouldValidate: true })} id="verified" />
-            <Label htmlFor="verified" className="flex items-center gap-1"><ShieldCheck className="h-4 w-4" /> Verified</Label>
+            <Checkbox
+              checked={verified}
+              onCheckedChange={(v) =>
+                setValue("verified", !!v, { shouldValidate: true })
+              }
+              id="verified"
+            />
+            <Label
+              htmlFor="verified"
+              className="flex items-center gap-1"
+            >
+              <ShieldCheck className="h-4 w-4" /> Verified
+            </Label>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox checked={isActive} onCheckedChange={(v) => setValue("isActive", !!v, { shouldValidate: true })} id="isActive" />
-            <Label htmlFor="isActive" className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Active</Label>
+            <Checkbox
+              checked={isActive}
+              onCheckedChange={(v) =>
+                setValue("isActive", !!v, { shouldValidate: true })
+              }
+              id="isActive"
+            />
+            <Label
+              htmlFor="isActive"
+              className="flex items-center gap-1"
+            >
+              <CheckCircle2 className="h-4 w-4" /> Active
+            </Label>
           </div>
         </div>
 
-        {/* Availability */}
         <div className="space-y-2">
           <Label>Availability</Label>
-          <Select value={availability || ""} onValueChange={(v) => setValue("availability", v as any, { shouldValidate: true })}>
+          <Select
+            value={availability || ""}
+            onValueChange={(v) =>
+              setValue("availability", v as any, { shouldValidate: true })
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select availability" />
             </SelectTrigger>
             <SelectContent>
-              {availabilityOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {availabilityOptions.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          {errors.availability && <p className="text-xs text-red-600">{errors.availability as any}</p>}
+          {errors.availability && (
+            <p className="text-xs text-red-600">
+              {errors.availability as any}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Event Details */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
-          <div className="p-2 bg-blue-50 rounded-lg"><Users className="h-5 w-5 text-blue-900" /></div>
-          <h3 className="text-lg font-semibold text-zinc-900">Event Details</h3>
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <Users className="h-5 w-5 text-blue-900" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900">
+            Event Details
+          </h3>
         </div>
 
-        {/* Ticket Types (Create — no 'sold') */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label>Ticket Types</Label>
@@ -880,7 +1201,16 @@ function CreateEventForm({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => append({ name: "", price: 0, description: "", features: [], total: 0, popular: false })}
+              onClick={() =>
+                append({
+                  name: "",
+                  price: 0,
+                  description: "",
+                  features: [],
+                  total: 0,
+                  popular: false,
+                })
+              }
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               Add Ticket Type
@@ -889,7 +1219,8 @@ function CreateEventForm({
 
           <div className="space-y-4">
             {fields.map((f, idx) => {
-              const features = (watch(`ticketTypes.${idx}.features`) ?? []) as string[];
+              const features =
+                (watch(`ticketTypes.${idx}.features`) ?? []) as string[];
               const popular = watch(`ticketTypes.${idx}.popular`) ?? false;
 
               return (
@@ -899,48 +1230,98 @@ function CreateEventForm({
                       <Label>Name *</Label>
                       <Input {...register(`ticketTypes.${idx}.name`)} />
                       {(errors.ticketTypes?.[idx] as any)?.name && (
-                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.name?.message}</p>
+                        <p className="text-xs text-red-600">
+                          {
+                            (errors.ticketTypes?.[idx] as any)?.name
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label>Price *</Label>
-                      <Input type="number" step="0.01" {...register(`ticketTypes.${idx}.price`, { valueAsNumber: true })} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...register(`ticketTypes.${idx}.price`, {
+                          valueAsNumber: true,
+                        })}
+                      />
                       {(errors.ticketTypes?.[idx] as any)?.price && (
-                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.price?.message}</p>
+                        <p className="text-xs text-red-600">
+                          {
+                            (errors.ticketTypes?.[idx] as any)?.price
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label>Total *</Label>
-                      <Input type="number" {...register(`ticketTypes.${idx}.total`, { valueAsNumber: true })} />
+                      <Input
+                        type="number"
+                        {...register(`ticketTypes.${idx}.total`, {
+                          valueAsNumber: true,
+                        })}
+                      />
                       {(errors.ticketTypes?.[idx] as any)?.total && (
-                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.total?.message}</p>
+                        <p className="text-xs text-red-600">
+                          {
+                            (errors.ticketTypes?.[idx] as any)?.total
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label>Popular</Label>
                       <div className="flex items-center h-10 px-3 border rounded-md">
-                        <Checkbox checked={!!popular} onCheckedChange={(v) => setValue(`ticketTypes.${idx}.popular`, !!v, { shouldValidate: true })} />
-                        <span className="ml-2 text-sm text-muted-foreground">Mark as popular</span>
+                        <Checkbox
+                          checked={!!popular}
+                          onCheckedChange={(v) =>
+                            setValue(
+                              `ticketTypes.${idx}.popular`,
+                              !!v,
+                              { shouldValidate: true }
+                            )
+                          }
+                        />
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          Mark as popular
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2 mt-3">
                     <Label>Description</Label>
-                    <Textarea {...register(`ticketTypes.${idx}.description`)} />
+                    <Textarea
+                      {...register(`ticketTypes.${idx}.description`)}
+                    />
                   </div>
 
                   <div className="mt-3">
                     <ChipsInput
                       label="Features"
                       values={features}
-                      onChange={(next) => setValue(`ticketTypes.${idx}.features`, next, { shouldValidate: true })}
+                      onChange={(next) =>
+                        setValue(
+                          `ticketTypes.${idx}.features`,
+                          next,
+                          { shouldValidate: true }
+                        )
+                      }
                       placeholder="Type a feature and press Enter"
                     />
                   </div>
 
                   <div className="flex justify-end mt-3">
-                    <Button type="button" variant="outline" size="sm" onClick={() => remove(idx)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => remove(idx)}
+                    >
                       Remove
                     </Button>
                   </div>
@@ -952,16 +1333,17 @@ function CreateEventForm({
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" isLoading={submitting}>Create Event</Button>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" isLoading={submitting}>
+          Create Event
+        </Button>
       </div>
     </form>
   );
 }
 
-/* ----------------------------------------------------------------------------
- * Edit Event Form — strictly typed to UpdateValues (supports sold & _id)
- * --------------------------------------------------------------------------*/
 function EditEventForm({
   defaultValues,
   onSubmit,
@@ -988,7 +1370,11 @@ function EditEventForm({
     mode: "onChange",
   });
 
-  const { fields, append, remove } = useFieldArray<UpdateValues, "ticketTypes", "id">({
+  const { fields, append, remove } = useFieldArray<
+    UpdateValues,
+    "ticketTypes",
+    "id"
+  >({
     control,
     name: "ticketTypes" as any,
   });
@@ -1010,88 +1396,132 @@ function EditEventForm({
     try {
       const setPct = target === "image" ? setImgProgress : setCoverProgress;
       setPct(0);
-      const res = await uploadToCloudinary(file, { onProgress: (p) => setPct(p) });
-      setValue(target, res.url as any, { shouldValidate: true, shouldTouch: true });
+      const res = await uploadToCloudinary(file, {
+        onProgress: (p) => setPct(p),
+      });
+      setValue(target, res.url as any, {
+        shouldValidate: true,
+        shouldTouch: true,
+      });
       toast.success("Image uploaded");
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Upload failed");
+      toast.error(
+        err?.response?.data?.message || err?.message || "Upload failed"
+      );
     } finally {
       setImgProgress(0);
       setCoverProgress(0);
     }
   };
 
-  const submit: SubmitHandler<UpdateValues> = (data) => onSubmit(data as UpdateEventFormData);
+  const submit: SubmitHandler<UpdateValues> = (data) =>
+    onSubmit(data as UpdateEventFormData);
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-8">
-      {/* Basic Information */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
           <div className="p-2 bg-emerald-50 rounded-lg">
             <Calendar className="h-5 w-5 text-emerald-900" />
           </div>
-          <h3 className="text-lg font-semibold text-zinc-900">Basic Information</h3>
+          <h3 className="text-lg font-semibold text-zinc-900">
+            Basic Information
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="title">Event Title</Label>
-            <Input id="title" {...register("title")} placeholder="Enter event title" />
-            {errors.title && <p className="text-xs text-red-600">{errors.title as any}</p>}
+            <Input
+              id="title"
+              {...register("title")}
+              placeholder="Enter event title"
+            />
+            {errors.title && (
+              <p className="text-xs text-red-600">{errors.title as any}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Select
               value={categoryValue || ""}
-              onValueChange={(v) => setValue("category", v, { shouldValidate: true })}
+              onValueChange={(v) =>
+                setValue("category", v, { shouldValidate: true })
+              }
             >
               <SelectTrigger id="category">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            {errors.category && <p className="text-xs text-red-600">{errors.category as any}</p>}
+            {errors.category && (
+              <p className="text-xs text-red-600">{errors.category as any}</p>
+            )}
           </div>
         </div>
 
-        {/* Date/Time/Price */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label htmlFor="date">Date</Label>
             <Input id="date" type="date" {...register("date")} />
-            {errors.date && <p className="text-xs text-red-600">{errors.date as any}</p>}
+            {errors.date && (
+              <p className="text-xs text-red-600">{errors.date as any}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="time">Time</Label>
             <Input id="time" type="time" {...register("time")} />
-            {errors.time && <p className="text-xs text-red-600">{errors.time as any}</p>}
+            {errors.time && (
+              <p className="text-xs text-red-600">{errors.time as any}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="basePrice">Base Price ($)</Label>
-            <Input id="basePrice" type="number" step="0.01" {...register("basePrice", { valueAsNumber: true })} />
-            {errors.basePrice && <p className="text-xs text-red-600">{errors.basePrice as any}</p>}
+            <Input
+              id="basePrice"
+              type="number"
+              step="0.01"
+              {...register("basePrice", { valueAsNumber: true })}
+            />
+            {errors.basePrice && (
+              <p className="text-xs text-red-600">
+                {errors.basePrice as any}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
-          <Input id="location" {...register("location")} placeholder="Enter event location" />
-          {errors.location && <p className="text-xs text-red-600">{errors.location as any}</p>}
+          <Input
+            id="location"
+            {...register("location")}
+            placeholder="Enter event location"
+          />
+          {errors.location && (
+            <p className="text-xs text-red-600">{errors.location as any}</p>
+          )}
         </div>
 
-        {/* Images */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label>Image</Label>
             <div className="flex items-center gap-3">
-              <Input type="file" accept="image/*" onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) doUpload(f, "image");
-              }} />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) doUpload(f, "image");
+                }}
+              />
               <Button type="button" variant="outline" disabled>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
@@ -1099,20 +1529,31 @@ function EditEventForm({
             </div>
             {!!imageUrl && (
               <div className="mt-2 size-24 rounded-md overflow-hidden border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl ?? undefined} alt="image" className="w-full h-full object-cover" />
+                <img
+                  src={imageUrl ?? undefined}
+                  alt="image"
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
-            {imgProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {imgProgress}%</p>}
+            {imgProgress > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Uploading… {imgProgress}%
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Cover Image</Label>
             <div className="flex items-center gap-3">
-              <Input type="file" accept="image/*" onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) doUpload(f, "coverImage");
-              }} />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) doUpload(f, "coverImage");
+                }}
+              />
               <Button type="button" variant="outline" disabled>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
@@ -1120,68 +1561,143 @@ function EditEventForm({
             </div>
             {!!coverUrl && (
               <div className="mt-2 size-24 rounded-md overflow-hidden border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={coverUrl ?? undefined} alt="cover" className="w-full h-full object-cover" />
+                <img
+                  src={coverUrl ?? undefined}
+                  alt="cover"
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
-            {coverProgress > 0 && <p className="text-xs text-muted-foreground">Uploading… {coverProgress}%</p>}
+            {coverProgress > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Uploading… {coverProgress}%
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" {...register("description")} className="min-h-[120px]" />
-          {errors.description && <p className="text-xs text-red-600">{errors.description as any}</p>}
+          <Textarea
+            id="description"
+            {...register("description")}
+            className="min-h-[120px]"
+          />
+          {errors.description && (
+            <p className="text-xs text-red-600">
+              {errors.description as any}
+            </p>
+          )}
         </div>
 
-        {/* Tags */}
         <ChipsInput
           label="Tags"
           values={tagValues}
-          onChange={(next) => setValue("tags", next, { shouldValidate: true })}
+          onChange={(next) =>
+            setValue("tags", next, { shouldValidate: true })
+          }
           placeholder="Type a tag and press Enter"
           icon={<TagIcon className="h-4 w-4 text-muted-foreground" />}
         />
 
-        {/* Flags */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
           <div className="flex items-center gap-2">
-            <Checkbox checked={featured} onCheckedChange={(v) => setValue("featured", !!v, { shouldValidate: true })} id="featured_e" />
-            <Label htmlFor="featured_e" className="flex items-center gap-1"><Star className="h-4 w-4" /> Featured</Label>
+            <Checkbox
+              checked={featured}
+              onCheckedChange={(v) =>
+                setValue("featured", !!v, { shouldValidate: true })
+              }
+              id="featured_e"
+            />
+            <Label
+              htmlFor="featured_e"
+              className="flex items-center gap-1"
+            >
+              <Star className="h-4 w-4" /> Featured
+            </Label>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox checked={trending} onCheckedChange={(v) => setValue("trending", !!v, { shouldValidate: true })} id="trending_e" />
-            <Label htmlFor="trending_e" className="flex items-center gap-1"><Flame className="h-4 w-4" /> Trending</Label>
+            <Checkbox
+              checked={trending}
+              onCheckedChange={(v) =>
+                setValue("trending", !!v, { shouldValidate: true })
+              }
+              id="trending_e"
+            />
+            <Label
+              htmlFor="trending_e"
+              className="flex items-center gap-1"
+            >
+              <Flame className="h-4 w-4" /> Trending
+            </Label>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox checked={verified} onCheckedChange={(v) => setValue("verified", !!v, { shouldValidate: true })} id="verified_e" />
-            <Label htmlFor="verified_e" className="flex items-center gap-1"><ShieldCheck className="h-4 w-4" /> Verified</Label>
+            <Checkbox
+              checked={verified}
+              onCheckedChange={(v) =>
+                setValue("verified", !!v, { shouldValidate: true })
+              }
+              id="verified_e"
+            />
+            <Label
+              htmlFor="verified_e"
+              className="flex items-center gap-1"
+            >
+              <ShieldCheck className="h-4 w-4" /> Verified
+            </Label>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox checked={isActive} onCheckedChange={(v) => setValue("isActive", !!v, { shouldValidate: true })} id="active_e" />
-            <Label htmlFor="active_e" className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Active</Label>
+            <Checkbox
+              checked={isActive}
+              onCheckedChange={(v) =>
+                setValue("isActive", !!v, { shouldValidate: true })
+              }
+              id="active_e"
+            />
+            <Label
+              htmlFor="active_e"
+              className="flex items-center gap-1"
+            >
+              <CheckCircle2 className="h-4 w-4" /> Active
+            </Label>
           </div>
         </div>
 
-        {/* Availability */}
         <div className="space-y-2">
           <Label>Availability</Label>
-          <Select value={availability || ""} onValueChange={(v) => setValue("availability", v as any, { shouldValidate: true })}>
-            <SelectTrigger><SelectValue placeholder="Select availability" /></SelectTrigger>
+          <Select
+            value={availability || ""}
+            onValueChange={(v) =>
+              setValue("availability", v as any, { shouldValidate: true })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select availability" />
+            </SelectTrigger>
             <SelectContent>
-              {availabilityOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {availabilityOptions.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          {errors.availability && <p className="text-xs text-red-600">{errors.availability as any}</p>}
+          {errors.availability && (
+            <p className="text-xs text-red-600">
+              {errors.availability as any}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Ticket Types (Update — supports sold & _id) */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 pb-2 border-b border-zinc-200">
-          <div className="p-2 bg-blue-50 rounded-lg"><Users className="h-5 w-5 text-blue-900" /></div>
-          <h3 className="text-lg font-semibold text-zinc-900">Ticket Types</h3>
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <Users className="h-5 w-5 text-blue-900" />
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900">
+            Ticket Types
+          </h3>
         </div>
 
         <div className="space-y-3">
@@ -1210,7 +1726,8 @@ function EditEventForm({
 
           <div className="space-y-4">
             {fields.map((f, idx) => {
-              const features = (watch(`ticketTypes.${idx}.features`) ?? []) as string[];
+              const features =
+                (watch(`ticketTypes.${idx}.features`) ?? []) as string[];
               const popular = watch(`ticketTypes.${idx}.popular`) ?? false;
 
               return (
@@ -1220,28 +1737,64 @@ function EditEventForm({
                       <Label>Name</Label>
                       <Input {...register(`ticketTypes.${idx}.name`)} />
                       {(errors.ticketTypes?.[idx] as any)?.name && (
-                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.name?.message}</p>
+                        <p className="text-xs text-red-600">
+                          {
+                            (errors.ticketTypes?.[idx] as any)?.name
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label>Price</Label>
-                      <Input type="number" step="0.01" {...register(`ticketTypes.${idx}.price`, { valueAsNumber: true })} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...register(`ticketTypes.${idx}.price`, {
+                          valueAsNumber: true,
+                        })}
+                      />
                       {(errors.ticketTypes?.[idx] as any)?.price && (
-                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.price?.message}</p>
+                        <p className="text-xs text-red-600">
+                          {
+                            (errors.ticketTypes?.[idx] as any)?.price
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label>Total</Label>
-                      <Input type="number" {...register(`ticketTypes.${idx}.total`, { valueAsNumber: true })} />
+                      <Input
+                        type="number"
+                        {...register(`ticketTypes.${idx}.total`, {
+                          valueAsNumber: true,
+                        })}
+                      />
                       {(errors.ticketTypes?.[idx] as any)?.total && (
-                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.total?.message}</p>
+                        <p className="text-xs text-red-600">
+                          {
+                            (errors.ticketTypes?.[idx] as any)?.total
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label>Sold</Label>
-                      <Input type="number" {...register(`ticketTypes.${idx}.sold`, { valueAsNumber: true })} />
+                      <Input
+                        type="number"
+                        {...register(`ticketTypes.${idx}.sold`, {
+                          valueAsNumber: true,
+                        })}
+                      />
                       {(errors.ticketTypes?.[idx] as any)?.sold && (
-                        <p className="text-xs text-red-600">{(errors.ticketTypes?.[idx] as any)?.sold?.message}</p>
+                        <p className="text-xs text-red-600">
+                          {
+                            (errors.ticketTypes?.[idx] as any)?.sold
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
@@ -1249,29 +1802,50 @@ function EditEventForm({
                       <div className="flex items-center h-10 px-3 border rounded-md">
                         <Checkbox
                           checked={!!popular}
-                          onCheckedChange={(v) => setValue(`ticketTypes.${idx}.popular`, !!v, { shouldValidate: true })}
+                          onCheckedChange={(v) =>
+                            setValue(
+                              `ticketTypes.${idx}.popular`,
+                              !!v,
+                              { shouldValidate: true }
+                            )
+                          }
                         />
-                        <span className="ml-2 text-sm text-muted-foreground">Mark as popular</span>
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          Mark as popular
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2 mt-3">
                     <Label>Description</Label>
-                    <Textarea {...register(`ticketTypes.${idx}.description`)} />
+                    <Textarea
+                      {...register(`ticketTypes.${idx}.description`)}
+                    />
                   </div>
 
                   <div className="mt-3">
                     <ChipsInput
                       label="Features"
                       values={features}
-                      onChange={(next) => setValue(`ticketTypes.${idx}.features`, next, { shouldValidate: true })}
+                      onChange={(next) =>
+                        setValue(
+                          `ticketTypes.${idx}.features`,
+                          next,
+                          { shouldValidate: true }
+                        )
+                      }
                       placeholder="Type a feature and press Enter"
                     />
                   </div>
 
                   <div className="flex justify-end mt-3">
-                    <Button type="button" variant="outline" size="sm" onClick={() => remove(idx)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => remove(idx)}
+                    >
                       Remove
                     </Button>
                   </div>
@@ -1283,16 +1857,17 @@ function EditEventForm({
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" isLoading={submitting}>Save Changes</Button>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" isLoading={submitting}>
+          Save Changes
+        </Button>
       </div>
     </form>
   );
 }
 
-/* ----------------------------------------------------------------------------
- * Page: ManageEventsPage (with new design matching ManageDepositsPage)
- * --------------------------------------------------------------------------*/
 type ConfirmState = {
   open: boolean;
   tone?: "danger" | "default";
@@ -1337,7 +1912,9 @@ export default function ManageEventsPage() {
       setItems(res.items);
       setTotal(res.total);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Failed to load events");
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to load events"
+      );
     } finally {
       setLoading(false);
     }
@@ -1345,12 +1922,10 @@ export default function ManageEventsPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, searchTerm, category, onlyActive]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  // Create
   const [submittingCreate, setSubmittingCreate] = useState(false);
   const handleCreate = (data: CreateEventFormData) => {
     setConfirm({
@@ -1367,17 +1942,19 @@ export default function ManageEventsPage() {
           setSelected(created);
           setDetailsOpen(true);
         } catch (err: any) {
-          toast.error(err?.response?.data?.message || err?.message || "Create failed");
+          toast.error(
+            err?.response?.data?.message || err?.message || "Create failed"
+          );
         } finally {
           setSubmittingCreate(false);
           setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
         }
       },
       confirming: false,
+      tone: "default",
     });
   };
 
-  // Edit
   const [submittingEdit, setSubmittingEdit] = useState(false);
   const startEdit = (ev: Event) => {
     setSelected(ev);
@@ -1395,20 +1972,25 @@ export default function ManageEventsPage() {
           const updated = await AdminEventsApi.update(selected._id, data);
           toast.success("Event updated");
           setEditOpen(false);
-          setItems((prev) => prev.map((it) => (it._id === updated._id ? updated : it)));
+          setItems((prev) =>
+            prev.map((it) => (it._id === updated._id ? updated : it))
+          );
           setSelected(updated);
           setDetailsOpen(true);
         } catch (err: any) {
-          toast.error(err?.response?.data?.message || err?.message || "Update failed");
+          toast.error(
+            err?.response?.data?.message || err?.message || "Update failed"
+          );
         } finally {
           setSubmittingEdit(false);
           setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
         }
       },
+      confirming: false,
+      tone: "default",
     });
   };
 
-  // Delete (confirmation + danger tone)
   const removeEvent = (ev: Event) => {
     setConfirm({
       open: true,
@@ -1420,40 +2002,61 @@ export default function ManageEventsPage() {
           toast.success("Event deleted");
           await load();
         } catch (err: any) {
-          toast.error(err?.response?.data?.message || err?.message || "Delete failed");
+          toast.error(
+            err?.response?.data?.message || err?.message || "Delete failed"
+          );
         } finally {
           setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
         }
       },
+      confirming: false,
     });
   };
 
-  // Activate/Deactivate (now uses confirmation modal)
   const requestToggleActive = (ev: Event) => {
     const willActivate = !ev.isActive;
     setConfirm({
       open: true,
       tone: willActivate ? "default" : "danger",
-      title: willActivate
-        ? <>Activate "{ev.title}"?</>
-        : <>Deactivate "{ev.title}"? Users will no longer see it in active listings.</>,
+      title: willActivate ? (
+        <>Activate "{ev.title}"?</>
+      ) : (
+        <>Deactivate "{ev.title}"? Users will no longer see it in active listings.</>
+      ),
       onYes: async () => {
         try {
-          const updated = await AdminEventsApi.toggleActive(ev._id, willActivate);
-          setItems((prev) => prev.map((x) => (x._id === ev._id ? updated : x)));
-          toast.success(willActivate ? "Event activated" : "Event deactivated");
+          const updated = await AdminEventsApi.toggleActive(
+            ev._id,
+            willActivate
+          );
+          setItems((prev) =>
+            prev.map((x) => (x._id === ev._id ? updated : x))
+          );
+          toast.success(
+            willActivate ? "Event activated" : "Event deactivated"
+          );
         } catch (err: any) {
-          toast.error(err?.response?.data?.message || err?.message || "Toggle failed");
+          toast.error(
+            err?.response?.data?.message || err?.message || "Toggle failed"
+          );
         } finally {
           setConfirm((c) => ({ ...c, open: false, onYes: undefined }));
         }
       },
+      confirming: false,
     });
   };
 
   const shareEvent = async (ev: Event) => {
-    const url = typeof window !== "undefined" ? `${location.origin}/events/${ev.slug}` : ev.slug;
-    const shareData = { title: ev.title, text: ev.description || ev.title, url };
+    const url =
+      typeof window !== "undefined"
+        ? `${location.origin}/events/${ev.slug}`
+        : ev.slug;
+    const shareData = {
+      title: ev.title,
+      text: ev.description || ev.title,
+      url,
+    };
     try {
       if (navigator.share) {
         await navigator.share(shareData);
@@ -1462,7 +2065,6 @@ export default function ManageEventsPage() {
         toast.success("Event link copied");
       }
     } catch {
-      // no-op
     }
   };
 
@@ -1490,28 +2092,39 @@ export default function ManageEventsPage() {
               }}
             />
 
-            {/* Stats Cards */}
             <EventStatsCards events={items} />
 
-            {/* Enhanced Filters */}
             <EventFilters
               searchTerm={searchTerm}
-              onSearchChange={(value) => { setPage(1); setSearchTerm(value); }}
+              onSearchChange={(value) => {
+                setPage(1);
+                setSearchTerm(value);
+              }}
               category={category}
-              onCategoryChange={(value) => { setPage(1); setCategory(value === "all" ? undefined : value); }}
+              onCategoryChange={(value) => {
+                setPage(1);
+                setCategory(value === "all" ? undefined : value);
+              }}
               onlyActive={onlyActive}
-              onOnlyActiveChange={(value) => { setPage(1); setOnlyActive(value); }}
+              onOnlyActiveChange={(value) => {
+                setPage(1);
+                setOnlyActive(value);
+              }}
               limit={limit}
-              onLimitChange={(value) => { setPage(1); setLimit(value); }}
+              onLimitChange={(value) => {
+                setPage(1);
+                setLimit(value);
+              }}
               onClearFilters={clearFilters}
             />
 
-            {/* Events Table */}
             <Card className="bg-white">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-emerald-900">Events</CardTitle>
+                    <CardTitle className="text-emerald-900">
+                      Events
+                    </CardTitle>
                     <CardDescription>
                       {items.length} events found
                     </CardDescription>
@@ -1563,126 +2176,196 @@ export default function ManageEventsPage() {
                             </div>
                           </TableCell>
                         </TableRow>
-                      ) : items.map((ev) => (
-                        <TableRow key={ev._id} className="hover:bg-zinc-50">
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="size-12 rounded-lg overflow-hidden border-2 border-zinc-200">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={ev.image || "/placeholder.svg"} alt={ev.title} className="w-full h-full object-cover" />
+                      ) : (
+                        items.map((ev) => (
+                          <TableRow
+                            key={ev._id}
+                            className="hover:bg-zinc-50"
+                          >
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="size-12 rounded-lg overflow-hidden border-2 border-zinc-200">
+                                  <img
+                                    src={ev.image || "/placeholder.svg"}
+                                    alt={ev.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div>
+                                  <p className="font-semibold">
+                                    {ev.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {ev.featured && (
+                                      <Badge className="text-xs">
+                                        Featured
+                                      </Badge>
+                                    )}
+                                    {ev.trending && (
+                                      <Badge className="text-xs">
+                                        Trending
+                                      </Badge>
+                                    )}
+                                    {ev.verified && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        Verified
+                                      </Badge>
+                                    )}
+                                    {ev.isActive ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs border-emerald-700 text-emerald-800"
+                                      >
+                                        Active
+                                      </Badge>
+                                    ) : (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs border-zinc-400 text-zinc-700"
+                                      >
+                                        Inactive
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                                    <span>
+                                      ⭐{" "}
+                                      {typeof ev.rating === "number"
+                                        ? ev.rating.toFixed(1)
+                                        : "—"}
+                                    </span>
+                                    <span>
+                                      Reviews: {ev.totalReviews ?? 0}
+                                    </span>
+                                    <span>
+                                      Sold: {ev.ticketsSold ?? 0}
+                                    </span>
+                                    <span>
+                                      Views: {ev.views ?? 0}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {ev.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
                               <div>
-                                <p className="font-semibold">{ev.title}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {ev.featured && <Badge className="text-xs">Featured</Badge>}
-                                  {ev.trending && <Badge className="text-xs">Trending</Badge>}
-                                  {ev.verified && <Badge variant="outline" className="text-xs">Verified</Badge>}
-                                  {ev.isActive ? (
-                                    <Badge variant="outline" className="text-xs border-emerald-700 text-emerald-800">Active</Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="text-xs border-zinc-400 text-zinc-700">Inactive</Badge>
-                                  )}
-                                </div>
-                                <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-                                  <span>⭐ {typeof ev.rating === "number" ? ev.rating.toFixed(1) : "—"}</span>
-                                  <span>Reviews: {ev.totalReviews ?? 0}</span>
-                                  <span>Sold: {ev.ticketsSold ?? 0}</span>
-                                  <span>Views: {ev.views ?? 0}</span>
-                                </div>
+                                <p className="font-medium">{ev.date}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {ev.time}
+                                </p>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell><Badge variant="outline" className="text-xs">{ev.category}</Badge></TableCell>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{ev.date}</p>
-                              <p className="text-sm text-muted-foreground">{ev.time}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm truncate">{ev.location}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3 text-muted-foreground" />
-                              <span className="font-mono font-semibold">${ev.basePrice}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell><Badge variant="outline" className="text-xs">{ev.availability || "—"}</Badge></TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => { setSelected(ev); setDetailsOpen(true); }}
-                                >
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => startEdit(ev)}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Event
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => shareEvent(ev)}
-                                >
-                                  <Share2 className="w-4 h-4 mr-2" />
-                                  Share
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => requestToggleActive(ev)}
-                                >
-                                  {ev.isActive ? (
-                                    <>
-                                      <ToggleLeft className="w-4 h-4 mr-2" />
-                                      Deactivate
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ToggleRight className="w-4 h-4 mr-2" />
-                                      Activate
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => removeEvent(ev)}
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete Event
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-sm truncate">
+                                  {ev.location}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-3 w-3 text-muted-foreground" />
+                                <span className="font-mono font-semibold">
+                                  ${ev.basePrice}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {ev.availability || "—"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                  >
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelected(ev);
+                                      setDetailsOpen(true);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => startEdit(ev)}
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit Event
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => shareEvent(ev)}
+                                  >
+                                    <Share2 className="w-4 h-4 mr-2" />
+                                    Share
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => requestToggleActive(ev)}
+                                  >
+                                    {ev.isActive ? (
+                                      <>
+                                        <ToggleLeft className="w-4 h-4 mr-2" />
+                                        Deactivate
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ToggleRight className="w-4 h-4 mr-2" />
+                                        Activate
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => removeEvent(ev)}
+                                    className="text-red-600"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Event
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
 
                 {!loading && items.length === 0 && (
                   <div className="text-center py-8">
-                    <div className="text-zinc-500 mb-2">No events found</div>
+                    <div className="text-zinc-500 mb-2">
+                      No events found
+                    </div>
                     <div className="text-sm text-zinc-400">
                       Try adjusting your filters or search terms
                     </div>
                   </div>
                 )}
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between mt-4">
                     <div className="text-sm text-zinc-500">
@@ -1714,11 +2397,12 @@ export default function ManageEventsPage() {
         </div>
       </SidebarInset>
 
-      {/* Create Modal */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Create New Event</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">
+              Create New Event
+            </DialogTitle>
           </DialogHeader>
           <CreateEventForm
             submitting={submittingCreate}
@@ -1728,11 +2412,12 @@ export default function ManageEventsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Modal */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Edit Event</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">
+              Edit Event
+            </DialogTitle>
           </DialogHeader>
           {selected && (
             <EditEventForm
@@ -1745,13 +2430,20 @@ export default function ManageEventsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Details Modal */}
-      <AdminEventDetailsModal open={detailsOpen} onOpenChange={setDetailsOpen} event={selected} />
+      <AdminEventDetailsModal
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        event={selected}
+      />
 
-      {/* Global Confirm */}
       <ConfirmDialog
         open={confirm.open}
-        onOpenChange={(v) => setConfirm((c) => ({ ...c, open: v }))}
+        onOpenChange={(v) =>
+          setConfirm((c) => ({
+            ...c,
+            open: v,
+          }))
+        }
         title={confirm.title || "Are you sure?"}
         tone={confirm.tone || "default"}
         confirming={confirm.confirming}
@@ -1759,7 +2451,12 @@ export default function ManageEventsPage() {
           if (!confirm.onYes) return;
           setConfirm((c) => ({ ...c, confirming: true }));
           await confirm.onYes();
-          setConfirm((c) => ({ ...c, confirming: false, open: false, onYes: undefined }));
+          setConfirm((c) => ({
+            ...c,
+            confirming: false,
+            open: false,
+            onYes: undefined,
+          }));
         }}
       />
     </SidebarProvider>
