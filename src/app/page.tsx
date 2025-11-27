@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Header2 } from "@/components/header2";
 import { Footer2 } from "@/components/footer2";
 import { EventsApi, Event } from "@/api/events.api";
+import { sortEventsByClosestDate } from "@/utils/eventSorting";
 
 const heroSlides = [
   { image: "/heroimage1.jpg" },
@@ -57,8 +58,10 @@ const Page: React.FC = () => {
         const res = await EventsApi.list();
         if (!mounted) return;
 
-        const activeEvents = (res.items || []).filter((ev) => ev.isActive);
-        setEvents(activeEvents.slice(0, 7));
+        const activeEvents = (res.items || []).filter((ev: Event) => ev.isActive);
+        const sorted = sortEventsByClosestDate(activeEvents);
+
+        setEvents(sorted.slice(0, 7));
       } catch (err) {
         console.error(err);
         if (mounted) {
@@ -70,6 +73,7 @@ const Page: React.FC = () => {
     };
 
     fetchEvents();
+
     return () => {
       mounted = false;
     };
@@ -86,9 +90,8 @@ const Page: React.FC = () => {
           {heroSlides.map((slide, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentSlide ? "opacity-100" : "opacity-0"
-              }`}
+              className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100" : "opacity-0"
+                }`}
             >
               <img
                 src={slide.image}
@@ -123,9 +126,8 @@ const Page: React.FC = () => {
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`h-2.5 rounded-full transition-all ${
-                index === currentSlide ? "bg-white w-7 sm:w-8" : "bg-white/60 w-2.5"
-              }`}
+              className={`h-2.5 rounded-full transition-all ${index === currentSlide ? "bg-white w-7 sm:w-8" : "bg-white/60 w-2.5"
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}

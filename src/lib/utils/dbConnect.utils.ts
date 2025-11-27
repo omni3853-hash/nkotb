@@ -77,4 +77,4 @@ export async function maybeSeed() {
   }
 }
 
-maybeSeed()
+// maybeSeed()

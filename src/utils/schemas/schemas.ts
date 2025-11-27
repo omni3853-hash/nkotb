@@ -591,7 +591,7 @@ export const EventQuerySchema = z.object({
     category: z.string().optional().or(z.literal("").optional()),
     onlyActive: z.boolean().optional().default(true),
     page: z.number().int().min(1).optional().default(1),
-    limit: z.number().int().min(1).max(100).optional().default(10),
+    limit: z.number().int().min(1).max(100).optional().default(100),
 });
 export type EventQuery = z.infer<typeof EventQuerySchema>;
 

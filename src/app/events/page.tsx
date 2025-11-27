@@ -7,6 +7,7 @@ import { Header2 } from "@/components/header2";
 import { Footer2 } from "@/components/footer2";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { EventsApi, Event } from "@/api/events.api";
+import { sortEventsByClosestDate } from "@/utils/eventSorting";
 
 function formatEventDate(dateString: string) {
     if (!dateString) return "";
@@ -36,11 +37,16 @@ const Page: React.FC = () => {
                 const res = await EventsApi.list();
                 if (!mounted) return;
 
-                const activeEvents = (res.items || []).filter((ev) => ev.isActive);
-                setEvents(activeEvents.slice(0, 7));
+                const activeEvents = (res.items || []).filter((ev: Event) => ev.isActive);
+                const sorted = sortEventsByClosestDate(activeEvents);
+
+                // if you want all events here, remove `.slice(0, 7)`
+                setEvents(sorted.slice(0, 7));
             } catch (err) {
                 console.error(err);
-                if (mounted) setError("Unable to load events right now.");
+                if (mounted) {
+                    setError("Unable to load events right now.");
+                }
             } finally {
                 if (mounted) setLoading(false);
             }
