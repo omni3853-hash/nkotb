@@ -1,9 +1,17 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import React from "react";
 
 export const SupportFloatingButton: React.FC = () => {
+    const pathname = usePathname();
+
+    // Check if the current route includes /admin-dashboard
+    if (pathname.includes("/admin-dashboard")) {
+        return null; // Don't render the button if the path includes /admin-dashboard
+    }
+
     return (
         <Link
             href="/support"
