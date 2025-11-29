@@ -256,17 +256,47 @@ type NkotbEventConfig = {
     basePrice: number; // lowest starting price
 };
 
+// const NKOTB_VEGAS_EVENTS: NkotbEventConfig[] = [
+//     { date: "2026-02-14", label: "February 14, 2026", basePrice: 124 },
+//     { date: "2026-02-15", label: "February 15, 2026", basePrice: 106 },
+//     { date: "2026-02-18", label: "February 18, 2026", basePrice: 134 },
+//     { date: "2026-02-20", label: "February 20, 2026", basePrice: 116 },
+//     { date: "2026-02-21", label: "February 21, 2026", basePrice: 106 },
+//     { date: "2026-02-25", label: "February 25, 2026", basePrice: 89 },
+//     { date: "2026-02-27", label: "February 27, 2026", basePrice: 113 },
+//     { date: "2026-02-28", label: "February 28, 2026", basePrice: 119 },
+//     { date: "2026-06-19", label: "June 19, 2026", basePrice: 131 },
+//     { date: "2026-06-20", label: "June 20, 2026", basePrice: 131 },
+// ];
+
 const NKOTB_VEGAS_EVENTS: NkotbEventConfig[] = [
-    { date: "2026-02-14", label: "February 14, 2026", basePrice: 124 },
-    { date: "2026-02-15", label: "February 15, 2026", basePrice: 106 },
-    { date: "2026-02-18", label: "February 18, 2026", basePrice: 134 },
-    { date: "2026-02-20", label: "February 20, 2026", basePrice: 116 },
-    { date: "2026-02-21", label: "February 21, 2026", basePrice: 106 },
-    { date: "2026-02-25", label: "February 25, 2026", basePrice: 89 },
-    { date: "2026-02-27", label: "February 27, 2026", basePrice: 113 },
-    { date: "2026-02-28", label: "February 28, 2026", basePrice: 119 },
-    { date: "2026-06-19", label: "June 19, 2026", basePrice: 131 },
-    { date: "2026-06-20", label: "June 20, 2026", basePrice: 131 },
+  // 2025 – November block
+  { date: "2025-11-01", label: "November 1, 2025", basePrice: 105 },
+  { date: "2025-11-02", label: "November 2, 2025", basePrice: 99 },
+  { date: "2025-11-05", label: "November 5, 2025", basePrice: 99 },
+  { date: "2025-11-07", label: "November 7, 2025", basePrice: 115 },
+  { date: "2025-11-08", label: "November 8, 2025", basePrice: 115 },
+  { date: "2025-11-12", label: "November 12, 2025", basePrice: 102 },
+  { date: "2025-11-14", label: "November 14, 2025", basePrice: 120 },
+  { date: "2025-11-15", label: "November 15, 2025", basePrice: 120 },
+
+  // 2026 – June & July block (completed)
+  { date: "2026-06-24", label: "June 24, 2026", basePrice: 130 },
+  { date: "2026-06-26", label: "June 26, 2026", basePrice: 130 },
+  { date: "2026-06-27", label: "June 27, 2026", basePrice: 131 },
+  { date: "2026-07-01", label: "July 1, 2026", basePrice: 130 },
+  { date: "2026-07-03", label: "July 3, 2026", basePrice: 131 },
+  { date: "2026-07-04", label: "July 4, 2026", basePrice: 130 },
+
+  // 2026 – October extension block (through Oct 17, 2026)
+  { date: "2026-10-02", label: "October 2, 2026", basePrice: 131 },
+  { date: "2026-10-03", label: "October 3, 2026", basePrice: 130 },
+  { date: "2026-10-07", label: "October 7, 2026", basePrice: 130 },
+  { date: "2026-10-09", label: "October 9, 2026", basePrice: 130 },
+  { date: "2026-10-10", label: "October 10, 2026", basePrice: 131 },
+  { date: "2026-10-14", label: "October 14, 2026", basePrice: 130 },
+  { date: "2026-10-16", label: "October 16, 2026", basePrice: 131 },
+  { date: "2026-10-17", label: "October 17, 2026", basePrice: 131 },
 ];
 
 function buildNkotbTicketTypes(basePrice: number) {

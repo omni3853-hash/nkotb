@@ -35,13 +35,12 @@ const Page: React.FC = () => {
                 setError(null);
 
                 const res = await EventsApi.list();
+                console.log("This is the event list", res);
                 if (!mounted) return;
 
                 const activeEvents = (res.items || []).filter((ev: Event) => ev.isActive);
                 const sorted = sortEventsByClosestDate(activeEvents);
-
-                // if you want all events here, remove `.slice(0, 7)`
-                setEvents(sorted.slice(0, 7));
+                setEvents(sorted);
             } catch (err) {
                 console.error(err);
                 if (mounted) {
